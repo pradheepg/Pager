@@ -1,4 +1,58 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="1" systemVersion="11A491" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithCloudKit="false" userDefinedModelVersionIdentifier="">
-    <elements/>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="24411" systemVersion="25B78" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
+    <entity name="Book" representedClassName="Book" syncable="YES" codeGenerationType="class">
+        <attribute name="author" attributeType="String"/>
+        <attribute name="bookId" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="contentText" attributeType="String"/>
+        <attribute name="coverImageUrl" optional="YES" attributeType="String"/>
+        <attribute name="descriptionText" attributeType="String"/>
+        <attribute name="genre" attributeType="String"/>
+        <attribute name="publicationDate" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="title" attributeType="String"/>
+        <relationship name="collections" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Collection" inverseName="books" inverseEntity="Collection"/>
+        <relationship name="reviews" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Review" inverseName="book" inverseEntity="Review"/>
+        <relationship name="userRecords" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="UserBookRecord" inverseName="book" inverseEntity="UserBookRecord"/>
+    </entity>
+    <entity name="Collection" representedClassName="Collection" syncable="YES" codeGenerationType="class">
+        <attribute name="collectionId" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="descriptionText" optional="YES" attributeType="String"/>
+        <attribute name="isDefault" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="name" attributeType="String"/>
+        <relationship name="books" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Book" inverseName="collections" inverseEntity="Book"/>
+        <relationship name="owner" optional="YES" maxCount="1" deletionRule="Deny" destinationEntity="User" inverseName="collections" inverseEntity="User"/>
+    </entity>
+    <entity name="Review" representedClassName="Review" syncable="YES" codeGenerationType="class">
+        <attribute name="dataCreated" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="dateEdited" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="rating" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="reviewId" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="reviewText" optional="YES" attributeType="String"/>
+        <attribute name="reviewTitle" optional="YES" attributeType="String"/>
+        <relationship name="book" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Book" inverseName="reviews" inverseEntity="Book"/>
+        <relationship name="postedBy" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="User" inverseName="reviews" inverseEntity="User"/>
+    </entity>
+    <entity name="User" representedClassName="User" syncable="YES" codeGenerationType="class">
+        <attribute name="createDate" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="dailyReadingGoalMinutes" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="email" attributeType="String"/>
+        <attribute name="lastOpenedBookID" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="lastProgressReset" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="password" attributeType="String"/>
+        <attribute name="profileImage" optional="YES" attributeType="Binary"/>
+        <attribute name="profileName" attributeType="String"/>
+        <attribute name="todayReadingMinutes" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="userId" attributeType="UUID" usesScalarValueType="NO"/>
+        <relationship name="collections" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Collection" inverseName="owner" inverseEntity="Collection"/>
+        <relationship name="owned" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="UserBookRecord" inverseName="ownedBy" inverseEntity="UserBookRecord"/>
+        <relationship name="reviews" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Review" inverseName="postedBy" inverseEntity="Review"/>
+    </entity>
+    <entity name="UserBookRecord" representedClassName="UserBookRecord" syncable="YES" codeGenerationType="class">
+        <attribute name="bookMark" optional="YES" attributeType="String"/>
+        <attribute name="lastOpened" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="progressValue" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="purchaseDate" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="userBookRecordId" attributeType="UUID" usesScalarValueType="NO"/>
+        <relationship name="book" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Book" inverseName="userRecords" inverseEntity="Book"/>
+        <relationship name="ownedBy" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="User" inverseName="owned" inverseEntity="User"/>
+    </entity>
 </model>
