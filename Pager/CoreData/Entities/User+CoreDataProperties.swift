@@ -2,7 +2,7 @@
 //  User+CoreDataProperties.swift
 //  Pager
 //
-//  Created by Pradheep G on 21/11/25.
+//  Created by Pradheep G on 22/11/25.
 //
 //
 
@@ -18,19 +18,20 @@ extension User {
         return NSFetchRequest<User>(entityName: "User")
     }
 
-    @NSManaged public var userId: UUID?
-    @NSManaged public var email: String?
-    @NSManaged public var password: String?
-    @NSManaged public var profileName: String?
-    @NSManaged public var profileImage: Data?
     @NSManaged public var createDate: Date?
+    @NSManaged public var dailyReadingGoalMinutes: Int16
+    @NSManaged public var email: String?
     @NSManaged public var lastOpenedBookID: UUID?
     @NSManaged public var lastProgressReset: Date?
-    @NSManaged public var dailyReadingGoalMinutes: Int16
+    @NSManaged public var password: String?
+    @NSManaged public var profileImage: Data?
+    @NSManaged public var profileName: String?
     @NSManaged public var todayReadingMinutes: Int16
+    @NSManaged public var userId: UUID?
+    @NSManaged public var favoriteGenres: String?
     @NSManaged public var collections: NSSet?
-    @NSManaged public var reviews: NSSet?
     @NSManaged public var owned: NSSet?
+    @NSManaged public var reviews: NSSet?
 
 }
 
@@ -51,23 +52,6 @@ extension User {
 
 }
 
-// MARK: Generated accessors for reviews
-extension User {
-
-    @objc(addReviewsObject:)
-    @NSManaged public func addToReviews(_ value: Review)
-
-    @objc(removeReviewsObject:)
-    @NSManaged public func removeFromReviews(_ value: Review)
-
-    @objc(addReviews:)
-    @NSManaged public func addToReviews(_ values: NSSet)
-
-    @objc(removeReviews:)
-    @NSManaged public func removeFromReviews(_ values: NSSet)
-
-}
-
 // MARK: Generated accessors for owned
 extension User {
 
@@ -82,6 +66,23 @@ extension User {
 
     @objc(removeOwned:)
     @NSManaged public func removeFromOwned(_ values: NSSet)
+
+}
+
+// MARK: Generated accessors for reviews
+extension User {
+
+    @objc(addReviewsObject:)
+    @NSManaged public func addToReviews(_ value: Review)
+
+    @objc(removeReviewsObject:)
+    @NSManaged public func removeFromReviews(_ value: Review)
+
+    @objc(addReviews:)
+    @NSManaged public func addToReviews(_ values: NSSet)
+
+    @objc(removeReviews:)
+    @NSManaged public func removeFromReviews(_ values: NSSet)
 
 }
 

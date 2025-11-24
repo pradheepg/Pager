@@ -2,7 +2,7 @@
 //  UserBookRecord+CoreDataProperties.swift
 //  Pager
 //
-//  Created by Pradheep G on 21/11/25.
+//  Created by Pradheep G on 22/11/25.
 //
 //
 
@@ -18,13 +18,14 @@ extension UserBookRecord {
         return NSFetchRequest<UserBookRecord>(entityName: "UserBookRecord")
     }
 
-    @NSManaged public var userBookRecordId: UUID?
-    @NSManaged public var purchaseDate: Date?
-    @NSManaged public var progressValue: Int16
-    @NSManaged public var lastOpened: Date?
     @NSManaged public var bookMark: String?
-    @NSManaged public var ownedBy: User?
+    @NSManaged public var lastOpened: Date?
+    @NSManaged public var progressValue: Int16
+    @NSManaged public var purchaseDate: Date?
+    @NSManaged public var userBookRecordId: UUID?
+    @NSManaged public var pruchasePrice: Double
     @NSManaged public var book: Book?
+    @NSManaged public var ownedBy: User?
 
 }
 

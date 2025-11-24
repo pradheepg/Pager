@@ -2,11 +2,14 @@
 <model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="24411" systemVersion="25B78" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
     <entity name="Book" representedClassName="Book" syncable="YES">
         <attribute name="author" attributeType="String"/>
+        <attribute name="averageRating" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="bookId" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="contentText" attributeType="String"/>
         <attribute name="coverImageUrl" optional="YES" attributeType="String"/>
         <attribute name="descriptionText" attributeType="String"/>
         <attribute name="genre" attributeType="String"/>
+        <attribute name="language" optional="YES" attributeType="String"/>
+        <attribute name="price" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <attribute name="publicationDate" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="title" attributeType="String"/>
         <relationship name="collections" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Collection" inverseName="books" inverseEntity="Collection"/>
@@ -35,6 +38,7 @@
         <attribute name="createDate" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="dailyReadingGoalMinutes" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="email" attributeType="String"/>
+        <attribute name="favoriteGenres" optional="YES" attributeType="String"/>
         <attribute name="lastOpenedBookID" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="lastProgressReset" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="password" attributeType="String"/>
@@ -50,6 +54,7 @@
         <attribute name="bookMark" optional="YES" attributeType="String"/>
         <attribute name="lastOpened" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="progressValue" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="pruchasePrice" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <attribute name="purchaseDate" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="userBookRecordId" attributeType="UUID" usesScalarValueType="NO"/>
         <relationship name="book" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Book" inverseName="userRecords" inverseEntity="Book"/>

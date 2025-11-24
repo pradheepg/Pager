@@ -14,7 +14,7 @@ enum BookError: Error {
     case invalidProgress
 }
 
-class BookRepository {
+final class BookRepository {
     
     func createBook(
         title: String,

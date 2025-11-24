@@ -16,7 +16,7 @@ enum UserError: Error {
 
 }
 
-class UserRepository {
+final class UserRepository {
     private let context: NSManagedObjectContext
     
     init(context: NSManagedObjectContext = CoreDataManager.shared.context) {

@@ -2,7 +2,7 @@
 //  Collection+CoreDataProperties.swift
 //  Pager
 //
-//  Created by Pradheep G on 21/11/25.
+//  Created by Pradheep G on 22/11/25.
 //
 //
 
@@ -19,11 +19,11 @@ extension Collection {
     }
 
     @NSManaged public var collectionId: UUID?
-    @NSManaged public var name: String?
     @NSManaged public var descriptionText: String?
     @NSManaged public var isDefault: Bool
-    @NSManaged public var owner: User?
+    @NSManaged public var name: String?
     @NSManaged public var books: NSSet?
+    @NSManaged public var owner: User?
 
 }
 
