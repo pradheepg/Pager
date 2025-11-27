@@ -2,7 +2,7 @@
 //  Collection+CoreDataProperties.swift
 //  Pager
 //
-//  Created by Pradheep G on 22/11/25.
+//  Created by Pradheep G on 25/11/25.
 //
 //
 

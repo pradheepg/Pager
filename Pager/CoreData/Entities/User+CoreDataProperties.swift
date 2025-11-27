@@ -2,7 +2,7 @@
 //  User+CoreDataProperties.swift
 //  Pager
 //
-//  Created by Pradheep G on 22/11/25.
+//  Created by Pradheep G on 25/11/25.
 //
 //
 
@@ -21,6 +21,7 @@ extension User {
     @NSManaged public var createDate: Date?
     @NSManaged public var dailyReadingGoalMinutes: Int16
     @NSManaged public var email: String?
+    @NSManaged public var favoriteGenres: String?
     @NSManaged public var lastOpenedBookID: UUID?
     @NSManaged public var lastProgressReset: Date?
     @NSManaged public var password: String?
@@ -28,7 +29,6 @@ extension User {
     @NSManaged public var profileName: String?
     @NSManaged public var todayReadingMinutes: Int16
     @NSManaged public var userId: UUID?
-    @NSManaged public var favoriteGenres: String?
     @NSManaged public var collections: NSSet?
     @NSManaged public var owned: NSSet?
     @NSManaged public var reviews: NSSet?

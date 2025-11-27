@@ -35,11 +35,14 @@ final class BookRepository {
         book.descriptionText = description
         book.coverImageUrl = coverImageUrl
         book.contentText = contentText
+        book.publicationDate = Date()
 
         do {
             try CoreDataManager.shared.saveContext()
             return .success(book)
         } catch {
+            print("THis is the erro r",error)
+            print("THis is the context: ",error.localizedDescription)
             return .failure(.saveFailed)
         }
     }
@@ -126,4 +129,20 @@ final class BookRepository {
         }
     }
 
+    func deleteAllBooks() -> Result<Void, Error> {
+        let request: NSFetchRequest<Book> = Book.fetchRequest()
+
+        do {
+            let books = try CoreDataManager.shared.context.fetch(request)
+            books.forEach { CoreDataManager.shared.context.delete($0) }
+
+            try CoreDataManager.shared.context.save()
+            return .success(())
+        } catch {
+            return .failure(error)
+        }
+    }
+
+
+    
 }

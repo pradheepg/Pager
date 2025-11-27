@@ -13,6 +13,8 @@ enum UserError: Error {
     case saveFailed
     case invalidCredentials
     case deleteFailed
+    case userNotFound
+    case unKnownError(Error)
 
 }
 
@@ -29,7 +31,8 @@ final class UserRepository {
         profileName: String,
         profileImage: Data?,
         createDate: Date,
-        dailyReadingGoalMinutes: Int?
+        dailyReadingGoalMinutes: Int?,
+        genre: String
     ) -> Result<User, UserError> {
 
         if emailExists(email) {
@@ -46,6 +49,7 @@ final class UserRepository {
         user.profileName = profileName
         user.profileImage = profileImage
         user.createDate = createDate
+        user.favoriteGenres = genre
 
         if let goal = dailyReadingGoalMinutes {
             user.dailyReadingGoalMinutes = Int16(goal)
@@ -62,7 +66,7 @@ final class UserRepository {
     }
 
     
-    func fetchUser(byEmail email: String) -> User? {
+    private func fetchUser(byEmail email: String) -> User? {
         let request: NSFetchRequest<User> = User.fetchRequest()
         request.predicate = NSPredicate(format: "email == %@", email)
         request.fetchLimit = 1
@@ -76,7 +80,7 @@ final class UserRepository {
 
     func validateUser(email: String, password: String) -> Result<User, UserError> {
         guard let user = fetchUser(byEmail: email) else {
-            return .failure(.invalidCredentials)
+            return .failure(.userNotFound)
         }
         
         let hashed = PasswordHashing.hashFuntion(password: password)
@@ -132,7 +136,22 @@ final class UserRepository {
             return .failure(.saveFailed)
         }
     }
+    
+    func fetchUser(by userId: UUID) -> Result<User, UserError> {
+        let request: NSFetchRequest<User> = User.fetchRequest()
+        request.predicate = NSPredicate(format: "userId == %@", userId as CVarArg)
+        request.fetchLimit = 1
 
+        do {
+            if let user = try context.fetch(request).first {
+                return .success(user)
+            } else {
+                return .failure(.userNotFound)
+            }
+        } catch {
+            return .failure(.unKnownError(error))
+        }
+    }
     
     func deleteUser(_ user: User) -> Result<Void, UserError> {
         context.delete(user)
