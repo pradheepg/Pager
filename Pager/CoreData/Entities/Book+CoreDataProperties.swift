@@ -2,7 +2,7 @@
 //  Book+CoreDataProperties.swift
 //  Pager
 //
-//  Created by Pradheep G on 25/11/25.
+//  Created by Pradheep G on 02/12/25.
 //
 //
 
@@ -19,7 +19,7 @@ extension Book {
     }
 
     @NSManaged public var author: String?
-    @NSManaged public var averageRating: Int16
+    @NSManaged public var averageRating: Float
     @NSManaged public var bookId: UUID?
     @NSManaged public var contentText: String?
     @NSManaged public var coverImageUrl: String?

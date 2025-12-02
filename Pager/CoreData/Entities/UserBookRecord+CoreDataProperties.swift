@@ -2,7 +2,7 @@
 //  UserBookRecord+CoreDataProperties.swift
 //  Pager
 //
-//  Created by Pradheep G on 25/11/25.
+//  Created by Pradheep G on 02/12/25.
 //
 //
 
@@ -21,8 +21,8 @@ extension UserBookRecord {
     @NSManaged public var bookMark: String?
     @NSManaged public var lastOpened: Date?
     @NSManaged public var progressValue: Int16
+    @NSManaged public var pruchaseData: Double
     @NSManaged public var pruchasePrice: Double
-    @NSManaged public var purchaseDate: Date?
     @NSManaged public var userBookRecordId: UUID?
     @NSManaged public var book: Book?
     @NSManaged public var ownedBy: User?

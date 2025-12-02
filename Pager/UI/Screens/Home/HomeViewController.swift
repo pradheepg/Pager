@@ -128,7 +128,7 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
                 return sectionLayout
             } else {
                 let itemSize = NSCollectionLayoutSize(
-                    widthDimension: .fractionalWidth(0.6667),
+                    widthDimension: .fractionalWidth(1),
                     heightDimension: .fractionalHeight(1)
                 )
 
@@ -137,7 +137,7 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
 
                 let groupSize = NSCollectionLayoutSize(
                     widthDimension: .fractionalWidth(0.63),
-                    heightDimension: .absolute(250)
+                    heightDimension: .fractionalWidth(0.63 * 1.5)
                 )
 
                 let group = NSCollectionLayoutGroup.horizontal(
@@ -146,6 +146,7 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
                 )
                 let sectionLayout = NSCollectionLayoutSection(group: group)
                 sectionLayout.orthogonalScrollingBehavior = .paging
+                sectionLayout.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 30, trailing: 0)
                 let headerSize = NSCollectionLayoutSize(
                     widthDimension: .fractionalWidth(1.0),
                     heightDimension: .absolute(40)
@@ -170,6 +171,7 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
         let sampleBooks: Result<[Book], BookError> = demotemp.fetchAllBooks()
         switch sampleBooks {
         case .success(let books):
+            currentBook = books.first
             wantToReadBooks = books
             recentBooks = books
         case .failure(let error):
@@ -177,15 +179,17 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
             print(error)
         }
         
-        var defaultCategoryName = "cat 1"
-
-        categories.append((name: defaultCategoryName, books: wantToReadBooks))
-        defaultCategoryName = "cat 2"
-        categories.append((name: defaultCategoryName, books: wantToReadBooks))
-        defaultCategoryName = "cat 3"
-        categories.append((name: defaultCategoryName, books: wantToReadBooks))
-        defaultCategoryName = "cat 4"
-        categories.append((name: defaultCategoryName, books: wantToReadBooks))
+        
+//
+//        var defaultCategoryName = "cat 1"
+//
+//        categories.append((name: defaultCategoryName, books: wantToReadBooks))
+//        defaultCategoryName = "cat 2"
+//        categories.append((name: defaultCategoryName, books: wantToReadBooks))
+//        defaultCategoryName = "cat 3"
+//        categories.append((name: defaultCategoryName, books: wantToReadBooks))
+//        defaultCategoryName = "cat 4"
+//        categories.append((name: defaultCategoryName, books: wantToReadBooks))
 
         collectionView.reloadData()
   
@@ -255,6 +259,9 @@ extension HomeViewController: UICollectionViewDataSource {
     func configureCurrentCell(_ collectionView: UICollectionView, indexPath: IndexPath) -> UICollectionViewCell {
         if let book = currentBook {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "CurrentBookCell", for: indexPath) as! CurrentBookCell
+            cell.contentView.layer.cornerRadius = 12
+            cell.contentView.layer.masksToBounds = true
+            cell.contentView.backgroundColor = AppColors.secondaryBackground
             cell.configure(with: book)
             cell.moreButtonAction = { [weak self] in self?.currentBookMoreTapped() }
             return cell

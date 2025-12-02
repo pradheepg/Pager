@@ -78,10 +78,18 @@ enum AppColors {
         return UIColor { trait in
             trait.userInterfaceStyle == .dark
                 ? UIColor(white: 0.15, alpha: 1)
-                : UIColor.white
+            : UIColor.systemGray5
         }
     }()
 
+    static let secondaryBackground: UIColor = {
+        return UIColor { trait in
+            trait.userInterfaceStyle == .dark
+                ? .secondarySystemBackground
+                : .secondarySystemBackground
+        }
+    }()
+    
     static let illustrationTint: UIColor = {
         return UIColor { trait in
             trait.userInterfaceStyle == .dark

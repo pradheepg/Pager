@@ -200,7 +200,7 @@ final class CollectionRepository {
         return set.contains(book)
     }
 
-    func fetchBooks(in collection: Collection) -> Result<[Book], CollectionError> {
+    func fetchBooks(in collection: Cosllection) -> Result<[Book], CollectionError> {
         guard let set = collection.books as? Set<Book> else {
             return .success([])
         }

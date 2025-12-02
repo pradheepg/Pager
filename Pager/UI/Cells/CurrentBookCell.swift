@@ -10,6 +10,7 @@ import UIKit
 class CurrentBookCell: UICollectionViewCell {
     let imageView = UIImageView()
     let titleLabel = UILabel()
+    let authorLablel = UILabel()
     let progressLabel = UILabel()
     let moreButton = UIButton(type: .system)
     var moreButtonAction: (() -> Void)?
@@ -17,15 +18,20 @@ class CurrentBookCell: UICollectionViewCell {
         super.init(frame: frame)
         contentView.addSubview(imageView)
         contentView.addSubview(titleLabel)
+        contentView.addSubview(authorLablel)
         contentView.addSubview(progressLabel)
         contentView.addSubview(moreButton)
         imageView.translatesAutoresizingMaskIntoConstraints = false
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        authorLablel.translatesAutoresizingMaskIntoConstraints = false
         progressLabel.translatesAutoresizingMaskIntoConstraints = false
         moreButton.translatesAutoresizingMaskIntoConstraints = false
-        titleLabel.font = .systemFont(ofSize: 14)
+        titleLabel.font = .systemFont(ofSize: 18)
         titleLabel.numberOfLines = 0
         titleLabel.lineBreakMode = .byWordWrapping
+        authorLablel.font = .systemFont(ofSize: 12)
+        authorLablel.numberOfLines = 0
+        authorLablel.lineBreakMode = .byWordWrapping
         progressLabel.font = .systemFont(ofSize: 12)
         moreButton.setTitle("...", for: .normal)
         moreButton.contentHorizontalAlignment = .left
@@ -57,8 +63,13 @@ class CurrentBookCell: UICollectionViewCell {
             titleLabel.leadingAnchor.constraint(equalTo: imageView.trailingAnchor, constant: 12),
             titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -10),
             
+            //Author
+            authorLablel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 6),
+            authorLablel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
+            authorLablel.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor),
+            
             // Progress below title
-            progressLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 6),
+            progressLabel.topAnchor.constraint(equalTo: authorLablel.bottomAnchor, constant: 6),
             progressLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
             progressLabel.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor),
             
@@ -75,6 +86,7 @@ class CurrentBookCell: UICollectionViewCell {
         
         imageView.image = ViewHelper.getCoverImage(of: book)
         titleLabel.text = book.title
+        authorLablel.text = book.author
         var progress = 0
         if let userBookRecords = UserSession.shared.currentUser?.owned as? Set<UserBookRecord> {
             for record in userBookRecords {

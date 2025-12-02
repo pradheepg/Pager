@@ -14,18 +14,18 @@ class BookCell: UICollectionViewCell {
         contentView.addSubview(imageView)
         imageView.translatesAutoresizingMaskIntoConstraints = false
         
-        layer.shadowColor = AppColors.title.cgColor // UIColor.black.cgColor
-        layer.shadowOpacity = 0.8
+        layer.shadowColor = AppColors.title.cgColor
+        layer.shadowOpacity = 0.15
         layer.shadowRadius = 8
-        layer.shadowOffset = CGSize(width: 2, height: 2)
+        layer.shadowOffset = CGSize(width: 0, height: 4)
         layer.masksToBounds = false
         
         NSLayoutConstraint.activate([
             imageView.topAnchor.constraint(equalTo: contentView.topAnchor),
             imageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             imageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            imageView.heightAnchor.constraint(equalTo: imageView.widthAnchor, multiplier: 3.0/2.0),
-//            imageView.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor)
+//            imageView.heightAnchor.constraint(equalTo: imageView.widthAnchor, multiplier: 3.0/2.0),
+            imageView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
         ])
         imageView.contentMode = .scaleAspectFill
         imageView.clipsToBounds = true

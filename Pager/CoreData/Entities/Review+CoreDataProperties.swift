@@ -2,7 +2,7 @@
 //  Review+CoreDataProperties.swift
 //  Pager
 //
-//  Created by Pradheep G on 25/11/25.
+//  Created by Pradheep G on 02/12/25.
 //
 //
 
@@ -18,7 +18,7 @@ extension Review {
         return NSFetchRequest<Review>(entityName: "Review")
     }
 
-    @NSManaged public var dataCreated: Date?
+    @NSManaged public var dateCreated: Date?
     @NSManaged public var dateEdited: Date?
     @NSManaged public var rating: Int16
     @NSManaged public var reviewId: UUID?

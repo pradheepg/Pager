@@ -17,10 +17,10 @@ class BookGridViewController: UIViewController {
         self.books = books
         
         let layout = UICollectionViewFlowLayout()
-        layout.itemSize = CGSize(width: 180, height: 280)
-        layout.sectionInset = UIEdgeInsets(top: 20, left: 16, bottom: 20, right: 16)
-        layout.minimumLineSpacing = 24
-        layout.minimumInteritemSpacing = 10
+        layout.itemSize = CGSize(width: 190, height: 310)
+        layout.sectionInset = UIEdgeInsets(top: 20, left: 10, bottom: 20, right: 10)
+        layout.minimumLineSpacing = 5
+        layout.minimumInteritemSpacing = 0
         
         self.collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         
@@ -76,6 +76,9 @@ extension BookGridViewController: UICollectionViewDataSource, UICollectionViewDe
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: BookGridCell.reuseID, for: indexPath) as! BookGridCell
+        cell.contentView.backgroundColor = AppColors.secondaryBackground
+        cell.layer.cornerRadius = 12
+        cell.layer.masksToBounds = true
         cell.configure(with: books[indexPath.item])
         return cell
     }

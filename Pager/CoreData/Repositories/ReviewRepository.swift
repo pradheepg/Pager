@@ -47,8 +47,10 @@ final class ReviewRepository {
 
         do {
             try CoreDataManager.shared.saveContext()
+            print("Sceuss full")
             return .success(review)
         } catch {
+            print("Failed")
             return .failure(.saveFailed)
         }
     }

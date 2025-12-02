@@ -18,8 +18,6 @@ class BookGridCell: UICollectionViewCell {
         super.init(frame: frame)
         
         coverImageView.contentMode = .scaleAspectFill
-        coverImageView.layer.cornerRadius = 5
-        coverImageView.layer.masksToBounds = true
         
         titleLabel.font = .boldSystemFont(ofSize: 16)
         titleLabel.numberOfLines = 2
@@ -31,7 +29,7 @@ class BookGridCell: UICollectionViewCell {
         let stack = UIStackView(arrangedSubviews: [titleLabel, authorLabel])
         stack.axis = .vertical
         stack.spacing = 2
-        
+//        contentView.backgroundColor = AppColors.secondaryBackground
         contentView.addSubview(coverImageView)
         contentView.addSubview(stack)
         
@@ -39,17 +37,19 @@ class BookGridCell: UICollectionViewCell {
         stack.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
-            coverImageView.topAnchor.constraint(equalTo: contentView.topAnchor),
-            coverImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-//            coverImageView.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-            coverImageView.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 0.9),
-            coverImageView.heightAnchor.constraint(equalTo: contentView.heightAnchor, multiplier: 0.8),
+            coverImageView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 10),
+//            coverImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            coverImageView.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+            coverImageView.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 0.8),
+            coverImageView.heightAnchor.constraint(equalTo: coverImageView.widthAnchor, multiplier: 3/2),
 //            coverImageView.widthAnchor.constraint(equalToConstant: 120),
 //            coverImageView.heightAnchor.constraint(equalToConstant: 160),
             
             stack.topAnchor.constraint(equalTo: coverImageView.bottomAnchor, constant: 8),
-            stack.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            stack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor)
+            stack.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+            stack.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 0.9),
+//            stack.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+//            stack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor)
         ])
     }
     

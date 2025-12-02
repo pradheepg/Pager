@@ -2,7 +2,7 @@
 //  Collection+CoreDataProperties.swift
 //  Pager
 //
-//  Created by Pradheep G on 25/11/25.
+//  Created by Pradheep G on 02/12/25.
 //
 //
 
@@ -18,7 +18,7 @@ extension Collection {
         return NSFetchRequest<Collection>(entityName: "Collection")
     }
 
-    @NSManaged public var collectionId: UUID?
+    @NSManaged public var collectionID: UUID?
     @NSManaged public var descriptionText: String?
     @NSManaged public var isDefault: Bool
     @NSManaged public var name: String?
