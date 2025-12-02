@@ -16,7 +16,7 @@
         <relationship name="reviews" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Review" inverseName="book" inverseEntity="Review"/>
         <relationship name="userRecords" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="UserBookRecord" inverseName="book" inverseEntity="UserBookRecord"/>
     </entity>
-    <entity name="Collection" representedClassName="Collection" syncable="YES" codeGenerationType="class">
+    <entity name="Collection" representedClassName="Collection" syncable="YES">
         <attribute name="collectionID" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="descriptionText" optional="YES" attributeType="String"/>
         <attribute name="isDefault" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
@@ -24,7 +24,7 @@
         <relationship name="books" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Book" inverseName="collections" inverseEntity="Book"/>
         <relationship name="owner" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="User" inverseName="collections" inverseEntity="User"/>
     </entity>
-    <entity name="Review" representedClassName="Review" syncable="YES" codeGenerationType="class">
+    <entity name="Review" representedClassName="Review" syncable="YES">
         <attribute name="dateCreated" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="dateEdited" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="rating" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
@@ -34,7 +34,7 @@
         <relationship name="book" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Book" inverseName="reviews" inverseEntity="Book"/>
         <relationship name="postedBy" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="User" inverseName="reviews" inverseEntity="User"/>
     </entity>
-    <entity name="User" representedClassName="User" syncable="YES" codeGenerationType="class">
+    <entity name="User" representedClassName="User" syncable="YES">
         <attribute name="createDate" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="dailyReadingGoal" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="email" attributeType="String"/>
@@ -50,7 +50,7 @@
         <relationship name="owned" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="UserBookRecord" inverseName="ownedBy" inverseEntity="UserBookRecord"/>
         <relationship name="reviews" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Review" inverseName="postedBy" inverseEntity="Review"/>
     </entity>
-    <entity name="UserBookRecord" representedClassName="UserBookRecord" syncable="YES" codeGenerationType="class">
+    <entity name="UserBookRecord" representedClassName="UserBookRecord" syncable="YES">
         <attribute name="bookMark" optional="YES" attributeType="String"/>
         <attribute name="lastOpened" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="progressValue" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>

@@ -82,7 +82,7 @@ class LibraryViewController: UIViewController {
         }
         var childVC = childVC
         if childVC is MyBooksViewController && myBooks.isEmpty {
-            childVC = EmptyMyBooksViewController()
+            childVC = EmptyMyBooksViewController(message: "You haven’t purchased any books!")
         }
         
         

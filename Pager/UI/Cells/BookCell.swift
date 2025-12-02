@@ -8,7 +8,7 @@ import UIKit
 
 class BookCell: UICollectionViewCell {
     let imageView = UIImageView()
-
+    static let reuseID = "BookCell"
     override init(frame: CGRect) {
         super.init(frame: frame)
         contentView.addSubview(imageView)

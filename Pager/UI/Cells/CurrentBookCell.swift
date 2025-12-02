@@ -14,42 +14,49 @@ class CurrentBookCell: UICollectionViewCell {
     let progressLabel = UILabel()
     let moreButton = UIButton(type: .system)
     var moreButtonAction: (() -> Void)?
+    private let backgroundImageView: UIImageView = {
+        let iv = UIImageView()
+        iv.contentMode = .scaleAspectFill
+        iv.alpha = 0.3
+        iv.clipsToBounds = true
+        return iv
+    }()
     override init(frame: CGRect) {
         super.init(frame: frame)
+        contentView.backgroundColor = UIColor(red: 0.1, green: 0.1, blue: 0.15, alpha: 1.0)
+        contentView.addSubview(backgroundImageView)
         contentView.addSubview(imageView)
         contentView.addSubview(titleLabel)
         contentView.addSubview(authorLablel)
         contentView.addSubview(progressLabel)
         contentView.addSubview(moreButton)
+        backgroundImageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.translatesAutoresizingMaskIntoConstraints = false
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         authorLablel.translatesAutoresizingMaskIntoConstraints = false
         progressLabel.translatesAutoresizingMaskIntoConstraints = false
         moreButton.translatesAutoresizingMaskIntoConstraints = false
-        titleLabel.font = .systemFont(ofSize: 18)
+        titleLabel.font = .systemFont(ofSize: 20)
         titleLabel.numberOfLines = 0
         titleLabel.lineBreakMode = .byWordWrapping
-        authorLablel.font = .systemFont(ofSize: 12)
+        titleLabel.textColor = .white
+        authorLablel.font = .systemFont(ofSize: 14)
         authorLablel.numberOfLines = 0
         authorLablel.lineBreakMode = .byWordWrapping
-        progressLabel.font = .systemFont(ofSize: 12)
+        authorLablel.textColor = .white
+        progressLabel.font = .systemFont(ofSize: 14)
+        progressLabel.textColor = .white
         moreButton.setTitle("...", for: .normal)
         moreButton.contentHorizontalAlignment = .left
         moreButton.addTarget(self, action: #selector(moreTapped), for: .touchUpInside)
-//        NSLayoutConstraint.activate([
-//            imageView.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 0.4),
-//            imageView.topAnchor.constraint(equalTo: contentView.topAnchor),
-//            imageView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
-//            imageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 5),
-//            titleLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor,constant: -10),
-//            titleLabel.leadingAnchor.constraint(equalTo: imageView.trailingAnchor, constant: 10),
-//            titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: 5),
-//            progressLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 5),
-//            progressLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
-//            moreButton.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
-//            moreButton.centerYAnchor.constraint(equalTo:titleLabel.centerYAnchor, constant: 50),
-//        ])
         NSLayoutConstraint.activate([
+            
+            backgroundImageView.topAnchor.constraint(equalTo: contentView.topAnchor),
+            backgroundImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            backgroundImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            backgroundImageView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            
+            
             // Book cover: fixed aspect ratio (2:3, width:height)
             imageView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 10),
             imageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 10),
@@ -83,7 +90,7 @@ class CurrentBookCell: UICollectionViewCell {
     }
     required init?(coder: NSCoder) { fatalError() }
     func configure(with book: Book) {
-        
+        backgroundImageView.image = ViewHelper.getCoverImage(of: book)
         imageView.image = ViewHelper.getCoverImage(of: book)
         titleLabel.text = book.title
         authorLablel.text = book.author

@@ -12,6 +12,16 @@ class EmptyMyBooksViewController: UIViewController {
     private let messageLable: UILabel = UILabel()
     private let bookStoreButton: UIButton = UIButton()
     private let containerView: UIView = UIView()
+    private let message: String
+    
+    init(message: String) {
+        self.message = message
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -27,7 +37,7 @@ class EmptyMyBooksViewController: UIViewController {
         imageView.translatesAutoresizingMaskIntoConstraints = false
         
         containerView.addSubview(messageLable)
-        messageLable.text = "You haven’t purchased any books!"
+        messageLable.text = message
         messageLable.font = .systemFont(ofSize: 20,weight: .semibold)
         messageLable.textColor = AppColors.title
         messageLable.translatesAutoresizingMaskIntoConstraints = false

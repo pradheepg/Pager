@@ -104,3 +104,27 @@ enum KeychainKeys {
     static let accountUserID = "loggedInUserId"
 //    static let accountAuthToken = "authToken"
 }
+
+enum CategoryEnum: String, CaseIterable {
+    case fiction       = "Fiction"
+    case nonFiction    = "Non‑Fiction"
+    case mystery       = "Mystery & Thriller"
+    case romance       = "Romance"
+    case sciFiFantasy  = "Sci‑Fi & Fantasy"
+    case biography     = "Biography & Memoir"
+    case kids          = "Children & Young Adult"
+    case business      = "Business & Finance"
+    
+    var systemImageName: String {
+        switch self {
+        case .fiction:      return "book.fill"
+        case .nonFiction:   return "text.book.closed"
+        case .mystery:      return "magnifyingglass"
+        case .romance:      return "heart.fill"
+        case .sciFiFantasy: return "sparkles"
+        case .biography:    return "person.fill"
+        case .kids:         return "face.smiling"
+        case .business:     return "chart.bar.fill"
+        }
+    }
+}

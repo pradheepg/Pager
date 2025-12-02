@@ -235,17 +235,21 @@ class BookCollectionViewController: UIViewController, UITableViewDataSource, UIT
         }
     }
 
-    // MARK: - Action Handler
-
-    private func handleCollectionTap(for collection: Collection) {
-        print("Thkfhaf nasd kfh")
-//        
-//        if let books = collection.books?.allObjects {
-//            let detailVC = BookGridViewController(categoryTitle: collection.name, books: books as! [Book])
-//            navigationController?.pushViewController(detailVC, animated: true)
-//        } else {
-//            
-//        }
+    private func handleCollectionTap(for collection: Collection) {        
+        if let books = collection.books?.allObjects {
+            if books.isEmpty {
+                let detailVC = EmptyMyBooksViewController(message: "Your collection is empty!")
+                navigationController?.pushViewController(detailVC, animated: true)
+            } else {
+                let detailVC = BookGridViewController(categoryTitle: collection.name ?? "", books: books as! [Book])
+                navigationController?.pushViewController(detailVC, animated: true)
+            }
+        } else {
+            
+        }
     }
-    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationController?.navigationBar.prefersLargeTitles = false
+    }
 }

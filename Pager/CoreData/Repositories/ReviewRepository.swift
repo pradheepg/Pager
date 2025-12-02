@@ -40,7 +40,7 @@ final class ReviewRepository {
         review.rating = Int16(rating)
         review.reviewTitle = title
         review.reviewText = text
-        review.dataCreated = Date()
+        review.dateCreated = Date()
         review.dateEdited = nil
         review.book = book
         review.postedBy = user

@@ -37,7 +37,7 @@ final class CollectionRepository {
         }
 
         let collection = Collection(context: context)
-        collection.collectionId = UUID()
+        collection.collectionID = UUID()
         collection.name = name
         collection.descriptionText = description
         collection.isDefault = isDefault
@@ -200,7 +200,7 @@ final class CollectionRepository {
         return set.contains(book)
     }
 
-    func fetchBooks(in collection: Cosllection) -> Result<[Book], CollectionError> {
+    func fetchBooks(in collection: Collection) -> Result<[Book], CollectionError> {
         guard let set = collection.books as? Set<Book> else {
             return .success([])
         }

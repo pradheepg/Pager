@@ -37,7 +37,7 @@ final class UserBookRecordRepository {
             record.userBookRecordId = UUID()
             record.book = book
             record.ownedBy = user
-            record.purchaseDate = Date()
+//            record.pruchaseData = Date()
             record.progressValue = 0
             record.lastOpened = Date()
 

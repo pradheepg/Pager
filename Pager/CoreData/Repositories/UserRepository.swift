@@ -52,7 +52,7 @@ final class UserRepository {
         user.favoriteGenres = genre
 
         if let goal = dailyReadingGoalMinutes {
-            user.dailyReadingGoalMinutes = Int16(goal)
+            user.dailyReadingGoal = Int16(goal)
         }
 
         do {
@@ -165,7 +165,7 @@ final class UserRepository {
     }
 
     func updateDailyReadingGoal(for user: User, minutes: Int) -> Result<Void, UserError> {
-        user.dailyReadingGoalMinutes = Int16(minutes)
+        user.dailyReadingGoal = Int16(minutes)
 
         do {
             try CoreDataManager.shared.saveContext()

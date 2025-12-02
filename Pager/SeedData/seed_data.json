@@ -1,0 +1,173 @@
+{
+  "users": [
+    {
+      "userId": "11111111-1111-1111-1111-111111111111",
+      "profileName": "Pradheep",
+      "email": "pradheep@zoho.com",
+      "password": "hashed_secret_password",
+      "createDate": "2025-11-25T05:46:53Z",
+      "dailyReadingGoal": 30,
+      "todayReadingMinutes": 15,
+      "favoriteGenres": "Classics, Gothic",
+      "profileImageName": "user_profile_01"
+    },
+    {
+      "userId": "22222222-2222-2222-2222-222222222222",
+      "profileName": "Alice Reader",
+      "email": "alice@example.com",
+      "password": "password123",
+      "createDate": "2025-12-01T10:00:00Z",
+      "dailyReadingGoal": 60,
+      "todayReadingMinutes": 45,
+      "favoriteGenres": "Romance, Drama",
+      "profileImageName": null
+    }
+  ],
+  "books": [
+    {
+      "bookId": "B0000000-0000-0000-0000-000000000084",
+      "title": "Frankenstein; Or, The Modern Prometheus",
+      "author": "Shelley, Mary Wollstonecraft",
+      "genre": "Gothic Fiction",
+      "language": "en",
+      "descriptionText": "The story explores themes of ambition...",
+      "contentText": "The opening of the book introduces Robert Walton...",
+      "coverImageUrl": "Image1",
+      "publicationDate": "1818-01-01T00:00:00Z",
+      "price": 9.99,
+      "averageRating": 4.5
+    },
+    {
+      "bookId": "B0000000-0000-0000-0000-000000002701",
+      "title": "Moby Dick; Or, The Whale",
+      "author": "Melville, Herman",
+      "genre": "Adventure",
+      "language": "en",
+      "descriptionText": "The story follows Ishmael...",
+      "contentText": "Call me Ishmael...",
+      "coverImageUrl": "Image2",
+      "publicationDate": "1851-10-18T00:00:00Z",
+      "price": 12.50,
+      "averageRating": 4.2
+    },
+    {
+      "bookId": "B0000000-0000-0000-0000-000000001342",
+      "title": "Pride and Prejudice",
+      "author": "Austen, Jane",
+      "genre": "Romance",
+      "language": "en",
+      "descriptionText": "The story delves into themes of love...",
+      "contentText": "It is a truth universally acknowledged...",
+      "coverImageUrl": "Image3",
+      "publicationDate": "1813-01-28T00:00:00Z",
+      "price": 8.99,
+      "averageRating": 4.8
+    },
+    {
+      "bookId": "B0000000-0000-0000-0000-000000001513",
+      "title": "Romeo and Juliet",
+      "author": "Shakespeare, William",
+      "genre": "Plays/Drama",
+      "language": "en",
+      "descriptionText": "The play centers on the intense love affair...",
+      "contentText": "Two households, both alike in dignity...",
+      "coverImageUrl": "Image4",
+      "publicationDate": "1597-01-01T00:00:00Z",
+      "price": 6.50,
+      "averageRating": 4.6
+    },
+    {
+      "bookId": "B0000000-0000-0000-0000-000000000043",
+      "title": "The Strange Case of Dr. Jekyll and Mr. Hyde",
+      "author": "Stevenson, Robert Louis",
+      "genre": "Horror",
+      "language": "en",
+      "descriptionText": "A novella that delves into the duality...",
+      "contentText": "Mr. Utterson the lawyer was a man...",
+      "coverImageUrl": "Image5",
+      "publicationDate": "1886-01-05T00:00:00Z",
+      "price": 7.99,
+      "averageRating": 4.4
+    },
+    {
+      "bookId": "B0000000-0000-0000-0000-000000000011",
+      "title": "Alice's Adventures in Wonderland",
+      "author": "Carroll, Lewis",
+      "genre": "Children's Lit",
+      "language": "en",
+      "descriptionText": "A young girl named Alice follows a White Rabbit...",
+      "contentText": "Alice was beginning to get very tired...",
+      "coverImageUrl": "Image6",
+      "publicationDate": "1865-11-26T00:00:00Z",
+      "price": 10.00,
+      "averageRating": 4.7
+    }
+  ],
+  "collections": [
+    {
+      "collectionID": "C1000000-0000-0000-0000-000000000001",
+      "name": "Absolute Classics",
+      "descriptionText": "The books everyone must read at least once.",
+      "isDefault": true,
+      "ownerId": "11111111-1111-1111-1111-111111111111",
+      "bookIds": [
+        "B0000000-0000-0000-0000-000000000084",
+        "B0000000-0000-0000-0000-000000002701",
+        "B0000000-0000-0000-0000-000000001342"
+      ]
+    },
+    {
+      "collectionID": "C1000000-0000-0000-0000-000000000002",
+      "name": "Spooky Season",
+      "descriptionText": "Perfect for Halloween reading.",
+      "isDefault": false,
+      "ownerId": "11111111-1111-1111-1111-111111111111",
+      "bookIds": [
+        "B0000000-0000-0000-0000-000000000084",
+        "B0000000-0000-0000-0000-000000000043"
+      ]
+    }
+  ],
+  "reviews": [
+    {
+      "reviewId": "DA000000-0000-0000-0000-000000000001",
+      "rating": 5,
+      "reviewTitle": "It's alive!",
+      "reviewText": "Much deeper than the movies make it seem. The creature is intelligent and tragic.",
+      "dateCreated": "2025-12-02T12:00:00Z",
+      "bookId": "B0000000-0000-0000-0000-000000000084",
+      "postedByUserId": "22222222-2222-2222-2222-222222222222"
+    },
+    {
+      "reviewId": "DA000000-0000-0000-0000-000000000002",
+      "rating": 4,
+      "reviewTitle": "A bit long",
+      "reviewText": "I loved the whaling details, but sometimes it drags on. Still a masterpiece.",
+      "dateCreated": "2025-12-03T09:30:00Z",
+      "bookId": "B0000000-0000-0000-0000-000000002701",
+      "postedByUserId": "22222222-2222-2222-2222-222222222222"
+    }
+  ],
+  "userBookRecords": [
+    {
+      "userBookRecordId": "EA000000-0000-0000-0000-000000000001",
+      "progressValue": 15,
+      "bookMark": "Chapter 2",
+      "lastOpened": "2025-12-05T08:30:00Z",
+      "purchaseDate": 1733214000.0,
+      "purchasePrice": 9.99,
+      "bookId": "B0000000-0000-0000-0000-000000000084",
+      "ownedByUserId": "11111111-1111-1111-1111-111111111111"
+    },
+    {
+      "userBookRecordId": "EA000000-0000-0000-0000-000000000002",
+      "progressValue": 100,
+      "bookMark": "The End",
+      "lastOpened": "2025-11-20T14:00:00Z",
+      "purchaseDate": 1733000000.0,
+      "purchasePrice": 8.99,
+      "bookId": "B0000000-0000-0000-0000-000000001342",
+      "ownedByUserId": "11111111-1111-1111-1111-111111111111"
+    }
+  ]
+}

@@ -125,7 +125,7 @@ final class ReviewCell: UICollectionViewCell {
         reviewTitleLable.text = review.reviewTitle
         reviewContentLable.text = review.reviewText
         
-        if let date = review.dateEdited ?? review.dataCreated{
+        if let date = review.dateEdited ?? review.dateCreated{
             metaLable.text = "\(formatter.string(from: date)), \(review.postedBy?.profileName ?? "guest user")"
         }
         setUpStarStack(rating: Int(review.rating))

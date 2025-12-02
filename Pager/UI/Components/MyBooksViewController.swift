@@ -46,11 +46,11 @@ class MyBooksViewController: UIViewController, UICollectionViewDataSource, UICol
         
         return UICollectionViewCompositionalLayout(section: section)
     }
-
-    func setUpCollectionView() {
+    
+    private func setUpCollectionView() {
         view.addSubview(collectionView)
         collectionView.translatesAutoresizingMaskIntoConstraints = false
-         collectionView.backgroundColor = AppColors.background // Assumed constant
+        collectionView.backgroundColor = AppColors.background // Assumed constant
         
         collectionView.dataSource = self
         collectionView.delegate = self
@@ -73,7 +73,7 @@ class MyBooksViewController: UIViewController, UICollectionViewDataSource, UICol
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "CurrentBookCell", for: indexPath) as! CurrentBookCell
         cell.contentView.layer.cornerRadius = 12
         cell.contentView.layer.masksToBounds = true
-        cell.contentView.backgroundColor = AppColors.secondaryBackground
+//        cell.contentView.backgroundColor = AppColors.secondaryBackground
         cell.configure(with: books[indexPath.item])
         return cell
     }

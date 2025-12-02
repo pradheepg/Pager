@@ -83,7 +83,6 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
         collectionView.dataSource = self
         collectionView.delegate = self
         
-        // Register cells, headers, footers
         collectionView.register(BookCell.self, forCellWithReuseIdentifier: "BookCell")
         collectionView.register(CurrentBookCell.self, forCellWithReuseIdentifier: "CurrentBookCell")
         collectionView.register(EmptyCurrentCell.self, forCellWithReuseIdentifier: "EmptyCurrentCell")
@@ -261,7 +260,7 @@ extension HomeViewController: UICollectionViewDataSource {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "CurrentBookCell", for: indexPath) as! CurrentBookCell
             cell.contentView.layer.cornerRadius = 12
             cell.contentView.layer.masksToBounds = true
-            cell.contentView.backgroundColor = AppColors.secondaryBackground
+//            cell.contentView.backgroundColor = AppColors.secondaryBackground
             cell.configure(with: book)
             cell.moreButtonAction = { [weak self] in self?.currentBookMoreTapped() }
             return cell

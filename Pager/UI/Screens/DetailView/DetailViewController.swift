@@ -64,7 +64,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        loadSameData()
+//        loadSameData()
         loadData()
         setUpScrollView()
         setUpStackView()
@@ -89,7 +89,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         reviews = book.reviews?.allObjects as? [Review] ?? []
     }
     
-    func setUpScrollView() {
+    private func setUpScrollView() {
         view.backgroundColor = AppColors.background
         mainScrollView.translatesAutoresizingMaskIntoConstraints = false
         
