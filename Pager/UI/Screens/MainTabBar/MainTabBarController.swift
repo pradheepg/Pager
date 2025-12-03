@@ -15,6 +15,7 @@ class MainTabBarController: UITabBarController {
     }
 
     private func setupTabs() {
+//        tabBar.backgroundColor = UIColor(red: 0.0, green: 0.0, blue: 0.15, alpha: 0.3)
         let homeVC = HomeViewController()
         let homeNav = UINavigationController(rootViewController: homeVC)
         homeNav.tabBarItem = UITabBarItem(title: "Home", image: UIImage(systemName: "house"), tag: 0)
@@ -29,11 +30,13 @@ class MainTabBarController: UITabBarController {
         
         let searchVC = SearchViewController()
         let searchNav = UINavigationController(rootViewController: searchVC)
-        searchNav.tabBarItem = UITabBarItem(title: "Search", image: UIImage(systemName: "magnifyingglass"), tag: 3)
+        searchVC.searchController.searchBar.becomeFirstResponder()
+        searchNav.tabBarItem = UITabBarItem(tabBarSystemItem: .search, tag: 3)//UITabBarItem( title: "Search", image: UIImage(systemName: "magnifyingglass"), tag: 3)
         viewControllers = [homeNav, libraryNav, bookStoreNav, searchNav]
     }
 
 }
+//tabBarSystemItem: .search
 
 //
 //import UIKit

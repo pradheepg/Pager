@@ -12,11 +12,11 @@
         <attribute name="price" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <attribute name="publicationDate" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="title" attributeType="String"/>
-        <relationship name="collections" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Collection" inverseName="books" inverseEntity="Collection"/>
+        <relationship name="collections" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="BookCollection" inverseName="books" inverseEntity="BookCollection"/>
         <relationship name="reviews" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Review" inverseName="book" inverseEntity="Review"/>
         <relationship name="userRecords" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="UserBookRecord" inverseName="book" inverseEntity="UserBookRecord"/>
     </entity>
-    <entity name="Collection" representedClassName="Collection" syncable="YES">
+    <entity name="BookCollection" representedClassName="BookCollection" syncable="YES">
         <attribute name="collectionID" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="descriptionText" optional="YES" attributeType="String"/>
         <attribute name="isDefault" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
@@ -46,7 +46,7 @@
         <attribute name="profileName" attributeType="String"/>
         <attribute name="todayReadingMinutes" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="userId" attributeType="UUID" usesScalarValueType="NO"/>
-        <relationship name="collections" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Collection" inverseName="owner" inverseEntity="Collection"/>
+        <relationship name="collections" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="BookCollection" inverseName="owner" inverseEntity="BookCollection"/>
         <relationship name="owned" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="UserBookRecord" inverseName="ownedBy" inverseEntity="UserBookRecord"/>
         <relationship name="reviews" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Review" inverseName="postedBy" inverseEntity="Review"/>
     </entity>

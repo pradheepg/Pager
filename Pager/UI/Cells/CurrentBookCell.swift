@@ -91,7 +91,7 @@ class CurrentBookCell: UICollectionViewCell {
     required init?(coder: NSCoder) { fatalError() }
     func configure(with book: Book) {
         backgroundImageView.image = ViewHelper.getCoverImage(of: book)
-        imageView.image = ViewHelper.getCoverImage(of: book)
+        imageView.image = backgroundImageView.image//ViewHelper.getCoverImage(of: book)
         titleLabel.text = book.title
         authorLablel.text = book.author
         var progress = 0

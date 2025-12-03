@@ -6,18 +6,31 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		D17548552EDFF9970067D193 /* BookCollection+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = D175484E2EDFF9970067D193 /* BookCollection+CoreDataProperties.swift */; };
+		D17548562EDFF9970067D193 /* Book+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = D175484B2EDFF9970067D193 /* Book+CoreDataClass.swift */; };
+		D17548572EDFF9970067D193 /* UserBookRecord+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = D17548532EDFF9970067D193 /* UserBookRecord+CoreDataClass.swift */; };
+		D17548582EDFF9970067D193 /* Review+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = D175484F2EDFF9970067D193 /* Review+CoreDataClass.swift */; };
+		D17548592EDFF9970067D193 /* BookCollection+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = D175484D2EDFF9970067D193 /* BookCollection+CoreDataClass.swift */; };
+		D175485A2EDFF9970067D193 /* Review+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = D17548502EDFF9970067D193 /* Review+CoreDataProperties.swift */; };
+		D175485B2EDFF9970067D193 /* User+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = D17548512EDFF9970067D193 /* User+CoreDataClass.swift */; };
+		D175485C2EDFF9970067D193 /* Book+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = D175484C2EDFF9970067D193 /* Book+CoreDataProperties.swift */; };
+		D175485D2EDFF9970067D193 /* User+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = D17548522EDFF9970067D193 /* User+CoreDataProperties.swift */; };
+		D175485E2EDFF9970067D193 /* UserBookRecord+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = D17548542EDFF9970067D193 /* UserBookRecord+CoreDataProperties.swift */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		D10272312ED02792003FD803 /* Pager.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Pager.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		D17548172EDEB75A0067D193 /* Book+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Book+CoreDataClass.swift"; path = "Pager/CoreData/Entities/Book+CoreDataClass.swift"; sourceTree = "<group>"; };
-		D17548182EDEB75A0067D193 /* Book+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Book+CoreDataProperties.swift"; path = "Pager/CoreData/Entities/Book+CoreDataProperties.swift"; sourceTree = "<group>"; };
-		D17548192EDEB75A0067D193 /* Collection+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Collection+CoreDataClass.swift"; path = "Pager/CoreData/Entities/Collection+CoreDataClass.swift"; sourceTree = "<group>"; };
-		D175481A2EDEB75A0067D193 /* Collection+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Collection+CoreDataProperties.swift"; path = "Pager/CoreData/Entities/Collection+CoreDataProperties.swift"; sourceTree = "<group>"; };
-		D175481B2EDEB75A0067D193 /* Review+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Review+CoreDataClass.swift"; path = "Pager/CoreData/Entities/Review+CoreDataClass.swift"; sourceTree = "<group>"; };
-		D175481C2EDEB75A0067D193 /* Review+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Review+CoreDataProperties.swift"; path = "Pager/CoreData/Entities/Review+CoreDataProperties.swift"; sourceTree = "<group>"; };
-		D175481D2EDEB75A0067D193 /* User+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "User+CoreDataClass.swift"; path = "Pager/CoreData/Entities/User+CoreDataClass.swift"; sourceTree = "<group>"; };
-		D175481E2EDEB75A0067D193 /* User+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "User+CoreDataProperties.swift"; path = "Pager/CoreData/Entities/User+CoreDataProperties.swift"; sourceTree = "<group>"; };
-		D175481F2EDEB75A0067D193 /* UserBookRecord+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "UserBookRecord+CoreDataClass.swift"; path = "Pager/CoreData/Entities/UserBookRecord+CoreDataClass.swift"; sourceTree = "<group>"; };
-		D17548202EDEB75A0067D193 /* UserBookRecord+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "UserBookRecord+CoreDataProperties.swift"; path = "Pager/CoreData/Entities/UserBookRecord+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		D175484B2EDFF9970067D193 /* Book+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Book+CoreDataClass.swift"; path = "Pager/CoreData/Entities/Book+CoreDataClass.swift"; sourceTree = "<group>"; };
+		D175484C2EDFF9970067D193 /* Book+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Book+CoreDataProperties.swift"; path = "Pager/CoreData/Entities/Book+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		D175484D2EDFF9970067D193 /* BookCollection+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "BookCollection+CoreDataClass.swift"; path = "Pager/CoreData/Entities/BookCollection+CoreDataClass.swift"; sourceTree = "<group>"; };
+		D175484E2EDFF9970067D193 /* BookCollection+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "BookCollection+CoreDataProperties.swift"; path = "Pager/CoreData/Entities/BookCollection+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		D175484F2EDFF9970067D193 /* Review+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Review+CoreDataClass.swift"; path = "Pager/CoreData/Entities/Review+CoreDataClass.swift"; sourceTree = "<group>"; };
+		D17548502EDFF9970067D193 /* Review+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Review+CoreDataProperties.swift"; path = "Pager/CoreData/Entities/Review+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		D17548512EDFF9970067D193 /* User+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "User+CoreDataClass.swift"; path = "Pager/CoreData/Entities/User+CoreDataClass.swift"; sourceTree = "<group>"; };
+		D17548522EDFF9970067D193 /* User+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "User+CoreDataProperties.swift"; path = "Pager/CoreData/Entities/User+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		D17548532EDFF9970067D193 /* UserBookRecord+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "UserBookRecord+CoreDataClass.swift"; path = "Pager/CoreData/Entities/UserBookRecord+CoreDataClass.swift"; sourceTree = "<group>"; };
+		D17548542EDFF9970067D193 /* UserBookRecord+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "UserBookRecord+CoreDataProperties.swift"; path = "Pager/CoreData/Entities/UserBookRecord+CoreDataProperties.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -55,16 +68,16 @@
 		D10272282ED02792003FD803 = {
 			isa = PBXGroup;
 			children = (
-				D17548172EDEB75A0067D193 /* Book+CoreDataClass.swift */,
-				D17548182EDEB75A0067D193 /* Book+CoreDataProperties.swift */,
-				D17548192EDEB75A0067D193 /* Collection+CoreDataClass.swift */,
-				D175481A2EDEB75A0067D193 /* Collection+CoreDataProperties.swift */,
-				D175481B2EDEB75A0067D193 /* Review+CoreDataClass.swift */,
-				D175481C2EDEB75A0067D193 /* Review+CoreDataProperties.swift */,
-				D175481D2EDEB75A0067D193 /* User+CoreDataClass.swift */,
-				D175481E2EDEB75A0067D193 /* User+CoreDataProperties.swift */,
-				D175481F2EDEB75A0067D193 /* UserBookRecord+CoreDataClass.swift */,
-				D17548202EDEB75A0067D193 /* UserBookRecord+CoreDataProperties.swift */,
+				D175484B2EDFF9970067D193 /* Book+CoreDataClass.swift */,
+				D175484C2EDFF9970067D193 /* Book+CoreDataProperties.swift */,
+				D175484D2EDFF9970067D193 /* BookCollection+CoreDataClass.swift */,
+				D175484E2EDFF9970067D193 /* BookCollection+CoreDataProperties.swift */,
+				D175484F2EDFF9970067D193 /* Review+CoreDataClass.swift */,
+				D17548502EDFF9970067D193 /* Review+CoreDataProperties.swift */,
+				D17548512EDFF9970067D193 /* User+CoreDataClass.swift */,
+				D17548522EDFF9970067D193 /* User+CoreDataProperties.swift */,
+				D17548532EDFF9970067D193 /* UserBookRecord+CoreDataClass.swift */,
+				D17548542EDFF9970067D193 /* UserBookRecord+CoreDataProperties.swift */,
 				D10272332ED02792003FD803 /* Pager */,
 				D10272322ED02792003FD803 /* Products */,
 			);
@@ -152,6 +165,16 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D17548552EDFF9970067D193 /* BookCollection+CoreDataProperties.swift in Sources */,
+				D17548562EDFF9970067D193 /* Book+CoreDataClass.swift in Sources */,
+				D17548572EDFF9970067D193 /* UserBookRecord+CoreDataClass.swift in Sources */,
+				D17548582EDFF9970067D193 /* Review+CoreDataClass.swift in Sources */,
+				D17548592EDFF9970067D193 /* BookCollection+CoreDataClass.swift in Sources */,
+				D175485A2EDFF9970067D193 /* Review+CoreDataProperties.swift in Sources */,
+				D175485B2EDFF9970067D193 /* User+CoreDataClass.swift in Sources */,
+				D175485C2EDFF9970067D193 /* Book+CoreDataProperties.swift in Sources */,
+				D175485D2EDFF9970067D193 /* User+CoreDataProperties.swift in Sources */,
+				D175485E2EDFF9970067D193 /* UserBookRecord+CoreDataProperties.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

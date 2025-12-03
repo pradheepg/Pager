@@ -30,13 +30,13 @@ final class CollectionRepository {
     func createCollection(name: String,
                           description: String?,
                           isDefault: Bool = false,
-                          owner: User) -> Result<Collection, CollectionError> {
+                          owner: User) -> Result<BookCollection, CollectionError> {
 
         if collectionExists(name: name, owner: owner) {
             return .failure(.alreadyExists)
         }
 
-        let collection = Collection(context: context)
+        let collection = BookCollection(context: context)
         collection.collectionID = UUID()
         collection.name = name
         collection.descriptionText = description
@@ -56,8 +56,8 @@ final class CollectionRepository {
         }
     }
 
-    func fetchCollection(by id: UUID) -> Result<Collection, CollectionError> {
-        let request: NSFetchRequest<Collection> = Collection.fetchRequest()
+    func fetchCollection(by id: UUID) -> Result<BookCollection, CollectionError> {
+        let request: NSFetchRequest<BookCollection> = BookCollection.fetchRequest()
         request.predicate = NSPredicate(format: "collectionId == %@", id as CVarArg)
         request.fetchLimit = 1
 
@@ -71,8 +71,8 @@ final class CollectionRepository {
         }
     }
 
-    func fetchCollections(for user: User) -> Result<[Collection], CollectionError> {
-        let request: NSFetchRequest<Collection> = Collection.fetchRequest()
+    func fetchCollections(for user: User) -> Result<[BookCollection], CollectionError> {
+        let request: NSFetchRequest<BookCollection> = BookCollection.fetchRequest()
         request.predicate = NSPredicate(format: "owner == %@", user)
         request.sortDescriptors = [NSSortDescriptor(key: "name", ascending: true)]
 
@@ -84,8 +84,8 @@ final class CollectionRepository {
         }
     }
 
-    func fetchDefaultCollection(for user: User) -> Result<Collection?, CollectionError> {
-        let request: NSFetchRequest<Collection> = Collection.fetchRequest()
+    func fetchDefaultCollection(for user: User) -> Result<BookCollection?, CollectionError> {
+        let request: NSFetchRequest<BookCollection> = BookCollection.fetchRequest()
         request.predicate = NSPredicate(format: "owner == %@ AND isDefault == YES", user)
         request.fetchLimit = 1
 
@@ -97,7 +97,7 @@ final class CollectionRepository {
         }
     }
 
-    func updateCollection(_ collection: Collection,
+    func updateCollection(_ collection: BookCollection,
                           name: String?,
                           description: String?) -> Result<Void, CollectionError> {
 
@@ -145,7 +145,7 @@ final class CollectionRepository {
 //        }
 //    }
 
-    func deleteCollection(_ collection: Collection) -> Result<Void, CollectionError> {
+    func deleteCollection(_ collection: BookCollection) -> Result<Void, CollectionError> {
         if collection.isDefault == true {
             return .failure(.cannotDeleteDefaultCollection)
         }
@@ -160,7 +160,7 @@ final class CollectionRepository {
         }
     }
 
-    func addBook(_ book: Book, to collection: Collection) -> Result<Void, CollectionError> {
+    func addBook(_ book: Book, to collection: BookCollection) -> Result<Void, CollectionError> {
         if isBook(book, in: collection) {
             return .failure(.bookAlreadyInCollection)
         }
@@ -178,7 +178,7 @@ final class CollectionRepository {
         }
     }
 
-    func removeBook(_ book: Book, from collection: Collection) -> Result<Void, CollectionError> {
+    func removeBook(_ book: Book, from collection: BookCollection) -> Result<Void, CollectionError> {
         if !isBook(book, in: collection) {
             return .failure(.bookNotInCollection)
         }
@@ -195,12 +195,12 @@ final class CollectionRepository {
         }
     }
 
-    func isBook(_ book: Book, in collection: Collection) -> Bool {
+    func isBook(_ book: Book, in collection: BookCollection) -> Bool {
         guard let set = collection.books as? Set<Book> else { return false }
         return set.contains(book)
     }
 
-    func fetchBooks(in collection: Collection) -> Result<[Book], CollectionError> {
+    func fetchBooks(in collection: BookCollection) -> Result<[Book], CollectionError> {
         guard let set = collection.books as? Set<Book> else {
             return .success([])
         }
@@ -209,14 +209,14 @@ final class CollectionRepository {
     }
 
     func collectionExists(name: String, owner: User) -> Bool {
-        let request: NSFetchRequest<Collection> = Collection.fetchRequest()
+        let request: NSFetchRequest<BookCollection> = BookCollection.fetchRequest()
         request.predicate = NSPredicate(format: "name ==[c] %@ AND owner == %@", name, owner)
         request.fetchLimit = 1
 
         return (try? context.fetch(request).first) != nil
     }
 
-    func userOwnsCollection(_ collection: Collection, user: User) -> Bool {
+    func userOwnsCollection(_ collection: BookCollection, user: User) -> Bool {
         if collection.owner == user { return true }
 
         if let colOwner = collection.owner, let colOwnerId = colOwner.userId, let userId = user.userId {
@@ -227,7 +227,7 @@ final class CollectionRepository {
     }
 
     private func unsetDefaultCollections(for user: User) -> Result<Void, CollectionError> {
-        let request: NSFetchRequest<Collection> = Collection.fetchRequest()
+        let request: NSFetchRequest<BookCollection> = BookCollection.fetchRequest()
         request.predicate = NSPredicate(format: "owner == %@ AND isDefault == YES", user)
 
         do {

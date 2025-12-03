@@ -12,7 +12,7 @@ class LibraryViewController: UIViewController {
     private let containerView: UIView = UIView()
     private let collectionTableView = BookCollectionViewController()
     private var myBooks: [Book] = []
-    private let myCollections: [Collection] = []
+    private let myCollections: [BookCollection] = []
     private lazy var myBooksCollectionView: MyBooksViewController = {
             return MyBooksViewController(books: self.myBooks)
         }()
@@ -47,7 +47,7 @@ class LibraryViewController: UIViewController {
                 containerView.topAnchor.constraint(equalTo: segmentedControl.bottomAnchor, constant: 16),
                 containerView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 5),
                 containerView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -5),
-                containerView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
+                containerView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
             ])
         }
     
@@ -82,7 +82,7 @@ class LibraryViewController: UIViewController {
         }
         var childVC = childVC
         if childVC is MyBooksViewController && myBooks.isEmpty {
-            childVC = EmptyMyBooksViewController(message: "You haven’t purchased any books!")
+            childVC = EmptyMyBooksViewController(message: "You haven’t purchased any books!", isButtonNeeded: true)
         }
         
         

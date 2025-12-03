@@ -39,7 +39,7 @@ import UIKit
 class BookCollectionViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, ListViewControllerDelegate {
     
     let tableView = UITableView()
-    var items: [Collection] = []//["First Item", "Second Item", "Third Item"]
+    var items: [BookCollection] = []//["First Item", "Second Item", "Third Item"]
     let itemCellIdentifier = "ItemCell"
         
     lazy var collectionRepo: CollectionRepository = CollectionRepository()
@@ -55,7 +55,7 @@ class BookCollectionViewController: UIViewController, UITableViewDataSource, UIT
     }
     
     private func loadData() {
-        items = UserSession.shared.currentUser?.collections?.allObjects as? [Collection] ?? []
+        items = UserSession.shared.currentUser?.collections?.allObjects as? [BookCollection] ?? []
     }
         
     private func setupTableView() {
@@ -66,7 +66,7 @@ class BookCollectionViewController: UIViewController, UITableViewDataSource, UIT
             tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            tableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
         ])
         
         tableView.dataSource = self
@@ -210,35 +210,23 @@ class BookCollectionViewController: UIViewController, UITableViewDataSource, UIT
         tableView.endUpdates()
     }
     private func setupEditButton() {
-        // 1. Create the system's "Edit" button
         let editButton = self.editButtonItem
-        
-        // 2. Assign it to the right side of the navigation bar
         navigationItem.rightBarButtonItem = editButton
-        
-        // 3. Optional: Wire it up to the table/collection view
-        // (You would need to implement setEditing in the LibraryViewController
-        // and pass the edit state down to the visible child table/collection view)
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        // Deselect the row immediately for standard iOS behavior
         tableView.deselectRow(at: indexPath, animated: true)
         
-        // Ensure we are not tapping the Add button row
         if indexPath.row < items.count {
-            // 1. Retrieve the item data
             let collection = items[indexPath.row]
-            
-            // 2. Call the function that performs the action
             handleCollectionTap(for: collection)
         }
     }
 
-    private func handleCollectionTap(for collection: Collection) {        
+    private func handleCollectionTap(for collection: BookCollection) {        
         if let books = collection.books?.allObjects {
             if books.isEmpty {
-                let detailVC = EmptyMyBooksViewController(message: "Your collection is empty!")
+                let detailVC = EmptyMyBooksViewController(message: "Your collection is empty!", isButtonNeeded: true)
                 navigationController?.pushViewController(detailVC, animated: true)
             } else {
                 let detailVC = BookGridViewController(categoryTitle: collection.name ?? "", books: books as! [Book])

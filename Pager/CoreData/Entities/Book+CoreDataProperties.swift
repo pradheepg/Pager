@@ -2,7 +2,7 @@
 //  Book+CoreDataProperties.swift
 //  Pager
 //
-//  Created by Pradheep G on 02/12/25.
+//  Created by Pradheep G on 03/12/25.
 //
 //
 
@@ -39,10 +39,10 @@ extension Book {
 extension Book {
 
     @objc(addCollectionsObject:)
-    @NSManaged public func addToCollections(_ value: Collection)
+    @NSManaged public func addToCollections(_ value: BookCollection)
 
     @objc(removeCollectionsObject:)
-    @NSManaged public func removeFromCollections(_ value: Collection)
+    @NSManaged public func removeFromCollections(_ value: BookCollection)
 
     @objc(addCollections:)
     @NSManaged public func addToCollections(_ values: NSSet)

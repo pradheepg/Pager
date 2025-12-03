@@ -143,7 +143,7 @@ class DataLoader {
             
             // --- STEP C: Create Collections (Links to User and Books) ---
             for dto in seedData.collections {
-                let collection = Collection(context: context)
+                let collection = BookCollection(context: context)
                 collection.collectionID = UUID(uuidString: dto.collectionID)
                 collection.name = dto.name
                 collection.descriptionText = dto.descriptionText

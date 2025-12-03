@@ -95,7 +95,7 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
             collectionView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             collectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            collectionView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+            collectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
         ])
     }
     
@@ -126,40 +126,58 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
                 sectionLayout.boundarySupplementaryItems = [header]
                 return sectionLayout
             } else {
-                let itemSize = NSCollectionLayoutSize(
-                    widthDimension: .fractionalWidth(1),
-                    heightDimension: .fractionalHeight(1)
-                )
-
+//                let itemSize = NSCollectionLayoutSize(
+//                    widthDimension: .fractionalWidth(1),
+//                    heightDimension: .fractionalHeight(1)
+//                )
+//
+//                let item = NSCollectionLayoutItem(layoutSize: itemSize)
+//                item.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8)
+//
+//                let groupSize = NSCollectionLayoutSize(
+//                    widthDimension: .fractionalWidth(0.63),
+//                    heightDimension: .fractionalWidth(0.63 * 1.5)
+//                )
+//
+//                let group = NSCollectionLayoutGroup.horizontal(
+//                    layoutSize: groupSize,
+//                    subitems: [item]
+//                )
+//                let sectionLayout = NSCollectionLayoutSection(group: group)
+//                sectionLayout.orthogonalScrollingBehavior = .paging
+//                sectionLayout.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 30, trailing: 0)
+//                let headerSize = NSCollectionLayoutSize(
+//                    widthDimension: .fractionalWidth(1.0),
+//                    heightDimension: .absolute(40)
+//                )
+//
+//                let header = NSCollectionLayoutBoundarySupplementaryItem(
+//                    layoutSize: headerSize,
+//                    elementKind: UICollectionView.elementKindSectionHeader,
+//                    alignment: .top
+//                )
+//
+//                sectionLayout.boundarySupplementaryItems = [header]
+//
+//                return sectionLayout
+                let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1), heightDimension: .fractionalHeight(1))
                 let item = NSCollectionLayoutItem(layoutSize: itemSize)
-                item.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8)
-
-                let groupSize = NSCollectionLayoutSize(
-                    widthDimension: .fractionalWidth(0.63),
-                    heightDimension: .fractionalWidth(0.63 * 1.5)
-                )
-
-                let group = NSCollectionLayoutGroup.horizontal(
-                    layoutSize: groupSize,
-                    subitems: [item]
-                )
-                let sectionLayout = NSCollectionLayoutSection(group: group)
-                sectionLayout.orthogonalScrollingBehavior = .paging
-                sectionLayout.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 30, trailing: 0)
-                let headerSize = NSCollectionLayoutSize(
-                    widthDimension: .fractionalWidth(1.0),
-                    heightDimension: .absolute(40)
-                )
-
-                let header = NSCollectionLayoutBoundarySupplementaryItem(
-                    layoutSize: headerSize,
-                    elementKind: UICollectionView.elementKindSectionHeader,
-                    alignment: .top
-                )
-
-                sectionLayout.boundarySupplementaryItems = [header]
-
-                return sectionLayout
+                item.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 5, bottom: 0, trailing: 5)
+                
+                // Adjust width (0.45) to change book card size
+                let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(0.40), heightDimension: .absolute(250))
+                let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
+                
+                let section = NSCollectionLayoutSection(group: group)
+                section.orthogonalScrollingBehavior = .continuousGroupLeadingBoundary
+                section.contentInsets = NSDirectionalEdgeInsets(top: 10, leading: 10, bottom: 30, trailing: 10)
+                
+                // Add Section Header ("Sci-Fi", "History" etc)
+                let headerSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .absolute(40))
+                let header = NSCollectionLayoutBoundarySupplementaryItem(layoutSize: headerSize, elementKind: UICollectionView.elementKindSectionHeader, alignment: .top)
+                section.boundarySupplementaryItems = [header]
+                
+                return section
 
             }
         }
@@ -203,7 +221,13 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
     }
     
     func emptyStateButtonTapped() {
-        print("Go to Book Store tapped")
+        let bookStoreTabIndex = 2
+        
+        if let tabBarController = self.tabBarController {
+            tabBarController.selectedIndex = bookStoreTabIndex
+        } else {
+            print("Error: EmptyMyBooksViewController is not managed by a Tab Bar Controller.")
+        }
     }
     
     func bookCellTapped(book: Book) {
@@ -220,6 +244,7 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
         print("See All tapped for section \(section)")
         
     }
+    
 }
 
 extension HomeViewController: UICollectionViewDataSource {
@@ -402,35 +427,6 @@ class SectionHeaderView: UICollectionReusableView {
 }
 extension HomeViewController {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        
-//        if let cell = collectionView.cellForItem(at: indexPath) as? BookCell  {
-////            
-//            UIView.animate(withDuration: 0.4,
-//                           animations: {
-//                cell.contentView.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
-//                cell.contentView.transform = .identity
-//            }
-////            },
-////                           completion: { _ in
-////                UIView.animate(withDuration: 0.4) {
-////                    cell.contentView.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
-////                    
-////                }
-////        }
-//        )
-////
-////            UIView.animate(withDuration: 1, animations: {
-////                cell.contentView.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
-////            }) { _ in
-////                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-////                    UIView.animate(withDuration: 1) {
-////                        cell.contentView.transform = .identity
-////                    }
-////                }
-////            }
-//        }
-        
-        
         switch indexPath.section {
         case 0:
             if let book = currentBook {
@@ -447,18 +443,4 @@ extension HomeViewController {
             bookCellTapped(book: book)
         }
     }
-//    
-//    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-//        guard let cell = collectionView.cellForItem(at: indexPath) as? YourCellClass else { return }
-//
-//        UIView.animate(withDuration: 0.1,
-//                       animations: {
-//                           cell.contentView.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
-//                       },
-//                       completion: { _ in
-//                           UIView.animate(withDuration: 0.1) {
-//                               cell.contentView.transform = .identity
-//                           }
-//                       })
-//    }
 }

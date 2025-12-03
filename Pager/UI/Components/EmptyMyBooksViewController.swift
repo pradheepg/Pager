@@ -13,9 +13,11 @@ class EmptyMyBooksViewController: UIViewController {
     private let bookStoreButton: UIButton = UIButton()
     private let containerView: UIView = UIView()
     private let message: String
+    private let isButtonNeeded: Bool
     
-    init(message: String) {
+    init(message: String, isButtonNeeded: Bool) {
         self.message = message
+        self.isButtonNeeded = isButtonNeeded
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -54,6 +56,8 @@ class EmptyMyBooksViewController: UIViewController {
         bookStoreButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .semibold)
         bookStoreButton.semanticContentAttribute = .forceLeftToRight
         bookStoreButton.translatesAutoresizingMaskIntoConstraints = false
+        bookStoreButton.addTarget(self, action: #selector(goToBookStore), for: .touchUpInside)
+        bookStoreButton.isHidden = !isButtonNeeded
 
         
         NSLayoutConstraint.activate([
@@ -77,27 +81,15 @@ class EmptyMyBooksViewController: UIViewController {
             bookStoreButton.widthAnchor.constraint(equalTo: containerView.widthAnchor, multiplier: 0.6),
             bookStoreButton.heightAnchor.constraint(equalToConstant: 50),
         ])
-
+    }
+    
+    @objc private func goToBookStore() {
+        let bookStoreTabIndex = 2
         
-//        NSLayoutConstraint.activate([
-//            containerView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-//            containerView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-//            containerView.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.9),
-//            containerView.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.5),
-//
-//            imageView.topAnchor.constraint(equalTo: containerView.topAnchor),
-//            imageView.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
-//            imageView.widthAnchor.constraint(equalToConstant: 150),
-//            imageView.heightAnchor.constraint(equalTo: imageView.widthAnchor),
-//            
-//            messageLable.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
-//            messageLable.topAnchor.constraint(equalTo: imageView.bottomAnchor),
-//            
-//            bookStoreButton.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
-//            bookStoreButton.topAnchor.constraint(equalTo: messageLable.bottomAnchor, constant: 10 ),
-//            bookStoreButton.widthAnchor.constraint(equalTo: containerView.widthAnchor, multiplier: 0.6),
-//            bookStoreButton.heightAnchor.constraint(equalToConstant: 50),
-//            
-//        ])
+        if let tabBarController = self.tabBarController {
+            tabBarController.selectedIndex = bookStoreTabIndex
+        } else {
+            print("Error: EmptyMyBooksViewController is not managed by a Tab Bar Controller.")
+        }
     }
 }

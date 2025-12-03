@@ -1,8 +1,8 @@
 //
-//  Collection+CoreDataProperties.swift
+//  BookCollection+CoreDataProperties.swift
 //  Pager
 //
-//  Created by Pradheep G on 02/12/25.
+//  Created by Pradheep G on 03/12/25.
 //
 //
 
@@ -10,12 +10,12 @@ public import Foundation
 public import CoreData
 
 
-public typealias CollectionCoreDataPropertiesSet = NSSet
+public typealias BookCollectionCoreDataPropertiesSet = NSSet
 
-extension Collection {
+extension BookCollection {
 
-    @nonobjc public class func fetchRequest() -> NSFetchRequest<Collection> {
-        return NSFetchRequest<Collection>(entityName: "Collection")
+    @nonobjc public class func fetchRequest() -> NSFetchRequest<BookCollection> {
+        return NSFetchRequest<BookCollection>(entityName: "BookCollection")
     }
 
     @NSManaged public var collectionID: UUID?
@@ -28,7 +28,7 @@ extension Collection {
 }
 
 // MARK: Generated accessors for books
-extension Collection {
+extension BookCollection {
 
     @objc(addBooksObject:)
     @NSManaged public func addToBooks(_ value: Book)
@@ -44,6 +44,6 @@ extension Collection {
 
 }
 
-extension Collection : Identifiable {
+extension BookCollection : Identifiable {
 
 }
