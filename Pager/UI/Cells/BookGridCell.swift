@@ -17,7 +17,7 @@ class BookGridCell: UICollectionViewCell {
     override init(frame: CGRect) {
         super.init(frame: frame)
         
-        coverImageView.contentMode = .scaleAspectFill
+        coverImageView.contentMode = .scaleAspectFit
         
         titleLabel.font = .boldSystemFont(ofSize: 16)
         titleLabel.numberOfLines = 2
@@ -48,6 +48,7 @@ class BookGridCell: UICollectionViewCell {
             stack.topAnchor.constraint(equalTo: coverImageView.bottomAnchor, constant: 8),
             stack.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
             stack.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 0.9),
+            stack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8)
 //            stack.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
 //            stack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor)
         ])

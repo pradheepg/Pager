@@ -9,9 +9,7 @@ import UIKit
 class ViewHelper {
     
     static func getCoverImage(of book: Book) -> UIImage{
-
-//        idString = "image"
-        print(book.coverImageUrl,book.title)
+        
         return UIImage(named: book.coverImageUrl ?? "") ??
         generateBookCoverImage(
             title: book.title ?? "Book",

@@ -157,7 +157,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
 
         coverImageView.translatesAutoresizingMaskIntoConstraints = false
         coverImageView.backgroundColor = AppColors.background
-        coverImage.contentMode = .scaleAspectFill
+        coverImage.contentMode = .scaleToFill
         coverImage.layer.masksToBounds = true
         coverImage.image = ViewHelper.getCoverImage(of: book)
         coverImage.translatesAutoresizingMaskIntoConstraints = false
@@ -182,6 +182,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         getReadButton.translatesAutoresizingMaskIntoConstraints = false
         getReadButton.layer.cornerRadius = 24
         getReadButton.layer.masksToBounds = true
+        getReadButton.addTarget(self, action: #selector(getReadButtonTapped), for: .touchUpInside)
         
         descriptionView.translatesAutoresizingMaskIntoConstraints = false
         descriptionView.backgroundColor = AppColors.background
@@ -255,6 +256,19 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
             
         ])
     }
+
+    
+    @objc func getReadButtonTapped() {
+        let vc = MainBookReaderViewController(book: book)
+        if let nav = navigationController {
+            nav.pushViewController(vc, animated: true)
+        } else {
+            let nav = UINavigationController(rootViewController: vc)
+            nav.modalPresentationStyle = .fullScreen
+            present(nav, animated: true)
+        }
+    }
+    
     
     func setRatingStackView() {
         mainStackView.addArrangedSubview(ratingStackView)

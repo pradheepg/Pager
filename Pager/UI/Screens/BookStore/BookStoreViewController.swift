@@ -501,6 +501,8 @@ private    var featuredBook: Book?
     
     func seeAllTapped(section: Int,title: String, books: [Book]) {
         let vc = BookGridViewController(categoryTitle: title, books: books)
+        vc.hidesBottomBarWhenPushed = true
+
         self.navigationController?.pushViewController(vc, animated: true)
         print("See All tapped for section \(section)")
         

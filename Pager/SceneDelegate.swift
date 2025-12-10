@@ -111,7 +111,19 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             NSManagedObjectContext.mergeChanges(fromRemoteContextSave: changes, into: [context])
         }
     }
-
-    
 }
 
+extension SceneDelegate {
+    static func setRootViewController(_ vc: UIViewController, animated: Bool = true) {
+        guard let sceneDelegate = UIApplication.shared.connectedScenes.first?.delegate as? SceneDelegate,
+              let window = sceneDelegate.window else {
+            return
+        }
+        
+        window.rootViewController = vc
+        
+        if animated {
+            UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil)
+        }
+    }
+}

@@ -50,18 +50,18 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
 //        titleLabel.translatesAutoresizingMaskIntoConstraints = false
         
 //         Profile Button (circle image)
-        profileButton.setImage(UIImage(systemName: "person.crop.circle"), for: .normal)
+        profileButton.setImage(UIImage(systemName: "person"), for: .normal)
         profileButton.tintColor = .label
-        profileButton.layer.cornerRadius = 20
-        profileButton.layer.masksToBounds = true
-//        profileButton.translatesAutoresizingMaskIntoConstraints = false
+//        profileButton.layer.cornerRadius = 20
+//        profileButton.layer.masksToBounds = true
+        profileButton.translatesAutoresizingMaskIntoConstraints = false
         profileButton.addTarget(self, action: #selector(profileButtonTapped), for: .touchUpInside)
         navigationItem.title = "Home"
         navigationController?.navigationBar.prefersLargeTitles = true
         if #available(iOS 17.0, *) {
             navigationItem.largeTitleDisplayMode = .inline
         }
-//        navigationItem.rightBarButtonItem = UIBarButtonItem(customView: profileButton)
+        navigationItem.rightBarButtonItem = UIBarButtonItem(customView: profileButton)
 //        view.addSubview(titleLabel)
 //        view.addSubview(profileButton)
 //        
@@ -213,7 +213,15 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
     }
     
     @objc func profileButtonTapped() {
-        print("Profile tapped")
+        let vc = ProfileViewController()
+        vc.hidesBottomBarWhenPushed = true
+
+        if let nav = navigationController {
+            nav.pushViewController(vc, animated: true)
+        } else {
+            print("Profile tapped")
+
+        }
     }
     
     func currentBookMoreTapped() {
@@ -240,6 +248,8 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
     
     func seeAllTapped(section: Int,title: String, books: [Book]) {
         let vc = BookGridViewController(categoryTitle: title, books: books)
+        vc.hidesBottomBarWhenPushed = true
+
         self.navigationController?.pushViewController(vc, animated: true)
         print("See All tapped for section \(section)")
         

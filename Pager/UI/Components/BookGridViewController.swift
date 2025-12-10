@@ -7,7 +7,7 @@
 
 import UIKit
 
-class BookGridViewController: UIViewController {
+class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayout {
     private let collectionView: UICollectionView
     private let categoryTitle: String
     private var books: [Book] = []
@@ -17,15 +17,16 @@ class BookGridViewController: UIViewController {
         self.books = books
         
         let layout = UICollectionViewFlowLayout()
-        layout.itemSize = CGSize(width: 190, height: 310)
+        layout.itemSize = UICollectionViewFlowLayout.automaticSize
+//        layout.estimatedItemSize = CGSize(width: 190, height: 310)
         layout.sectionInset = UIEdgeInsets(top: 20, left: 10, bottom: 20, right: 10)
-        layout.minimumLineSpacing = 5
+        layout.minimumLineSpacing = 10
         layout.minimumInteritemSpacing = 0
-        
+
         self.collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         
         super.init(nibName: nil, bundle: nil)
-        
+
         self.collectionView.dataSource = self
         self.collectionView.delegate = self
         self.collectionView.register(BookGridCell.self, forCellWithReuseIdentifier: BookGridCell.reuseID)
@@ -38,6 +39,7 @@ class BookGridViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+        print("njkadhfajafdawadsvfdsf")
     }
     
     private func setupUI() {
@@ -67,6 +69,14 @@ class BookGridViewController: UIViewController {
         super.viewWillDisappear(animated)
         prefersLargeTitles(true)
     }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        let total = collectionView.bounds.width
+        let availableWidth = total - 30
+        let width = availableWidth / 2
+
+        return CGSize(width: width, height: 310)
+    }
 }
 
 extension BookGridViewController: UICollectionViewDataSource, UICollectionViewDelegate {
@@ -89,6 +99,8 @@ extension BookGridViewController: UICollectionViewDataSource, UICollectionViewDe
         present(vc, animated: true, completion: .none)
         print("Tapped book:", book.bookId)
     }
+    
+    
     
     @objc func getButtonTapped(_ sender: UIButton) {
         let index = sender.tag

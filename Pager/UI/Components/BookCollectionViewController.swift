@@ -226,11 +226,13 @@ class BookCollectionViewController: UIViewController, UITableViewDataSource, UIT
     private func handleCollectionTap(for collection: BookCollection) {        
         if let books = collection.books?.allObjects {
             if books.isEmpty {
-                let detailVC = EmptyMyBooksViewController(message: "Your collection is empty!", isButtonNeeded: true)
-                navigationController?.pushViewController(detailVC, animated: true)
+                let vc = EmptyMyBooksViewController(message: "Your collection is empty!", isButtonNeeded: true)
+                vc.hidesBottomBarWhenPushed = true
+                navigationController?.pushViewController(vc, animated: true)
             } else {
-                let detailVC = BookGridViewController(categoryTitle: collection.name ?? "", books: books as! [Book])
-                navigationController?.pushViewController(detailVC, animated: true)
+                let vc = BookGridViewController(categoryTitle: collection.name ?? "", books: books as! [Book])
+                vc.hidesBottomBarWhenPushed = true
+                navigationController?.pushViewController(vc, animated: true)
             }
         } else {
             
