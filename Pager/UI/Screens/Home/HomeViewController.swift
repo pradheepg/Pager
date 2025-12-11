@@ -213,7 +213,7 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
     }
     
     @objc func profileButtonTapped() {
-        let vc = ProfileViewController()
+        let vc = EditprofileViewController()
         vc.hidesBottomBarWhenPushed = true
 
         if let nav = navigationController {

@@ -6,7 +6,7 @@
 //
 import UIKit
 
-class EditableProfileCell: UITableViewCell {
+class EditableProfileCell: UITableViewCell, UITextViewDelegate {
     
     var onTextChange: ((String) -> Void)?
     var onResize: (() -> Void)?
@@ -18,20 +18,26 @@ class EditableProfileCell: UITableViewCell {
         return label
     }()
     
-    lazy var inputTextField: UITextField = {
-        let tf = UITextField()
-        tf.font = .systemFont(ofSize: 16)
-        tf.textColor = .systemBlue
-        tf.textAlignment = .right
-        tf.addTarget(self, action: #selector(textDidChange), for: .editingChanged)
-        return tf
-    }()
+    lazy var inputTextView: UITextView = {
+            let tv = UITextView()
+            tv.font = .systemFont(ofSize: 16)
+            tv.textColor = .systemBlue
+            tv.textAlignment = .right
+            tv.isScrollEnabled = false
+            tv.backgroundColor = .clear
+            
+            tv.textContainerInset = .zero
+            tv.textContainer.lineFragmentPadding = 0
+            
+            tv.delegate = self
+            return tv
+        }()
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         
         contentView.addSubview(titleLabel)
-        contentView.addSubview(inputTextField)
+        contentView.addSubview(inputTextView)
         
         selectionStyle = .none
         
@@ -42,20 +48,35 @@ class EditableProfileCell: UITableViewCell {
     
     func setupConstraints() {
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        inputTextField.translatesAutoresizingMaskIntoConstraints = false
-        
+        inputTextView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             titleLabel.leadingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.leadingAnchor),
-            titleLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
             titleLabel.widthAnchor.constraint(equalToConstant: 100),
             
-            inputTextField.leadingAnchor.constraint(equalTo: titleLabel.trailingAnchor, constant: 10),
-            inputTextField.trailingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.trailingAnchor),
-            inputTextField.centerYAnchor.constraint(equalTo: contentView.centerYAnchor)
+            inputTextView.leadingAnchor.constraint(equalTo: titleLabel.trailingAnchor, constant: 10),
+            inputTextView.trailingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.trailingAnchor),
+            inputTextView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
+            
+            inputTextView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -12),
+            
+            inputTextView.heightAnchor.constraint(greaterThanOrEqualToConstant: 20)
         ])
     }
+
     
-    @objc private func textDidChange() {
-        onTextChange?(inputTextField.text ?? "")
+    func textViewDidChange(_ textView: UITextView) {
+        onTextChange?(textView.text)
+        onResize?()
     }
+    func setEditingMode(_ isEditing: Bool) {
+            inputTextView.isEditable = isEditing
+            inputTextView.isUserInteractionEnabled = isEditing
+            
+            if isEditing {
+                inputTextView.textColor = .systemBlue
+            } else {
+                inputTextView.textColor = .label
+            }
+        }
 }

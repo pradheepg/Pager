@@ -14,17 +14,25 @@ struct ProfileOption {
 
 class EditprofileViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, PHPickerViewControllerDelegate, UIImagePickerControllerDelegate & UINavigationControllerDelegate {
     
-    
+    let badgeView = UIView()
+
+    var isEditingMode: Bool = false{
+        didSet {
+            badgeView.isHidden = !isEditingMode
+            setUpNavBarItem()
+            tableView.reloadData()
+        }
+    }
     let profileImageView = UIImageView()
     var isProfileImageNil: Bool = true
     var personalData = [
-            ProfileOption(title: "Name", value: UserSession.shared.currentUser?.profileName ?? "Guest"),
-            ProfileOption(title: "Email", value: UserSession.shared.currentUser?.email ?? "No Email")
-        ]
-        
-        var preferenceData = [
-            ProfileOption(title: "Fav Genre", value: UserSession.shared.currentUser?.favoriteGenres ?? "Fiction")
-        ]
+        ProfileOption(title: "Name", value: UserSession.shared.currentUser?.profileName ?? "Guest"),
+        ProfileOption(title: "Email", value: UserSession.shared.currentUser?.email ?? "No Email")
+    ]
+    
+    var preferenceData = [
+        ProfileOption(title: "Fav Genre", value: UserSession.shared.currentUser?.favoriteGenres ?? "Fiction")
+    ]
     
     private let tableView: UITableView = {
         let table = UITableView(frame: .zero, style: .insetGrouped)
@@ -36,29 +44,46 @@ class EditprofileViewController: UIViewController, UITableViewDelegate, UITableV
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = AppColors.background
-        title = "Edit Profile"
+        title = "My Profile"
         tableView.keyboardDismissMode = .interactive
-
         
+        setUpNavBarItem()
         setUpTableView()
         setupTableHeader()
     }
     
+    func setUpNavBarItem() {
+            let rightSystemItem: UIBarButtonItem.SystemItem = isEditingMode ? .done : .edit
+            let rightButton = UIBarButtonItem(barButtonSystemItem: rightSystemItem, target: self, action: #selector(didTapToggleEdit))
+            navigationItem.rightBarButtonItem = rightButton
+            
+            if isEditingMode {
+                let xImage = UIImage(systemName: "xmark")
+                let leftButton = UIBarButtonItem(image: xImage, style: .plain, target: self, action: #selector(didTapCancel))
+                leftButton.tintColor = .label
+                navigationItem.leftBarButtonItem = leftButton
+                
+                navigationItem.hidesBackButton = true
+            } else {
+                navigationItem.leftBarButtonItem = nil
+                navigationItem.hidesBackButton = false
+            }
+        }
+    
     func setUpTableView() {
-        navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .cancel, target: self, action: #selector(didTapCancel))
-        let doneButton = UIBarButtonItem(barButtonSystemItem: .done, target: self, action: #selector(didTapDone))
-        doneButton.tintColor = AppColors.background
-        navigationItem.rightBarButtonItem = doneButton
+        
         
         view.addSubview(tableView)
         tableView.translatesAutoresizingMaskIntoConstraints = false
-        tableView.frame = view.bounds
-        
+//        tableView.frame = view.bounds
+        tableView.rowHeight = UITableView.automaticDimension
+        tableView.estimatedRowHeight = 50
         tableView.dataSource = self
         tableView.delegate = self
         
         tableView.register(EditableProfileCell.self, forCellReuseIdentifier: "EditableCell")
-        
+        tableView.register(AppearanceSettingCell.self, forCellReuseIdentifier: AppearanceSettingCell.reuseKey)
+        tableView.register(ChangePasswordLogoutCell.self, forCellReuseIdentifier: ChangePasswordLogoutCell.reuseKey)
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
@@ -74,19 +99,19 @@ class EditprofileViewController: UIViewController, UITableViewDelegate, UITableV
         profileImageView.contentMode = .scaleAspectFill
         profileImageView.clipsToBounds = true
         profileImageView.layer.cornerRadius = 60
-//        profileImageView.layer.borderWidth = 2
-//        profileImageView.layer.borderColor = UIColor.systemGroupedBackground.cgColor
+        //        profileImageView.layer.borderWidth = 2
+        //        profileImageView.layer.borderColor = UIColor.systemGroupedBackground.cgColor
         profileImageView.isUserInteractionEnabled = true
         profileImageView.translatesAutoresizingMaskIntoConstraints = false
         
         headerView.addSubview(profileImageView)
         
-        let badgeView = UIView()
         badgeView.backgroundColor = .systemBlue
         badgeView.layer.cornerRadius = 16
         badgeView.layer.borderColor = UIColor.white.cgColor
         badgeView.layer.borderWidth = 2
         badgeView.translatesAutoresizingMaskIntoConstraints = false
+        badgeView.isHidden = true
         
         // 3. CREATE THE PENCIL ICON
         let pencilIcon = UIImageView()
@@ -96,15 +121,11 @@ class EditprofileViewController: UIViewController, UITableViewDelegate, UITableV
         pencilIcon.translatesAutoresizingMaskIntoConstraints = false
         
         // 4. ASSEMBLE HIERARCHY
-        badgeView.addSubview(pencilIcon)      // Put pencil inside the small circle
-        headerView.addSubview(badgeView)      // Put small circle on the header
+        badgeView.addSubview(pencilIcon)
+        headerView.addSubview(badgeView)
         
-        // 5. ADD GESTURE (So tapping the pencil also opens the gallery)
-        // We add the gesture to the profileImageView usually, but you can add it to headerView or both.
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(didTapProfileImage))
-        profileImageView.addGestureRecognizer(tapGesture)
-        let tapGesture2 = UITapGestureRecognizer(target: self, action: #selector(didTapProfileImage))
-        badgeView.addGestureRecognizer(tapGesture2)
+        badgeView.addGestureRecognizer(tapGesture)
         
         // 6. LAYOUT CONSTRAINTS
         NSLayoutConstraint.activate([
@@ -159,143 +180,175 @@ class EditprofileViewController: UIViewController, UITableViewDelegate, UITableV
         tableView.tableHeaderView = headerView
     }
     
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return section == 0 ? personalData.count : preferenceData.count
+    private func showDiscardChangesAlert() {
+        let alert = UIAlertController(
+            title: "Unsaved Changes",
+            message: "You have unsaved changes. Are you sure you want to discard them?",
+            preferredStyle: .actionSheet // or .alert
+        )
+        
+        // Action: Keep Editing (Do nothing)
+        let keepEditingAction = UIAlertAction(title: "Keep Editing", style: .cancel, handler: nil)
+        
+        let discardAction = UIAlertAction(title: "Discard Changes", style: .destructive) { [weak self] _ in
+            self?.isEditingMode = false
+            
+            // 2. Reload table to revert visual fields to labels
+            
+            // Note: To truly revert the *data* (text), you would need to
+            // save a copy of 'personalData' before editing starts and restore it here.
+        }
+        
+        alert.addAction(discardAction)
+        alert.addAction(keepEditingAction)
+        
+        // iPad Crash Fix
+        if let popover = alert.popoverPresentationController {
+            popover.barButtonItem = navigationItem.leftBarButtonItem
+        }
+        
+        present(alert, animated: true)
     }
     
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        switch section {
+        case 0:
+            return personalData.count
+        case 1:
+            return preferenceData.count
+        case 2,3:
+            return 1
+        default:
+            return 0
+        }
+    }
+
+    
     func numberOfSections(in tableView: UITableView) -> Int {
-        return 2
+        return 4
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        
-        guard let cell = tableView.dequeueReusableCell(withIdentifier: "EditableCell", for: indexPath) as? EditableProfileCell else {
-            return UITableViewCell()
-        }
-        
-        let isSectionZero = indexPath.section == 0
-        let data = isSectionZero ? personalData[indexPath.row] : preferenceData[indexPath.row]
-        
-        cell.titleLabel.text = data.title
-        cell.inputTextField.text = data.value
-        
-        cell.onTextChange = { [weak self] newText in
-            if isSectionZero {
-                self?.personalData[indexPath.row].value = newText
-            } else {
-                self?.preferenceData[indexPath.row].value = newText
+        if indexPath.section == 2 {
+            guard let cell = tableView.dequeueReusableCell(withIdentifier: AppearanceSettingCell.reuseKey, for: indexPath) as? AppearanceSettingCell else {
+                return UITableViewCell()
             }
+            return cell
+            
+        } else if indexPath.section == 3 {
+            guard let cell = tableView.dequeueReusableCell(withIdentifier: ChangePasswordLogoutCell.reuseKey, for: indexPath) as? ChangePasswordLogoutCell else {
+                return UITableViewCell()
+            }
+            
+            cell.onChangePasswordTapped = { [weak self] in
+                // NAVIGATE HERE
+                let vc = ChangePasswordViewController()
+                self?.navigationController?.pushViewController(vc, animated: true)
+            }
+            
+            cell.onLogoutTapped = { [weak self] in
+                // SHOW ALERT HERE
+                self?.showLogoutAlert()
+            }
+            
+            return cell
+        } else {
+            guard let cell = tableView.dequeueReusableCell(withIdentifier: "EditableCell", for: indexPath) as? EditableProfileCell else {
+                return UITableViewCell()
+            }
+            
+            let isSectionZero = indexPath.section == 0
+            let data = isSectionZero ? personalData[indexPath.row] : preferenceData[indexPath.row]
+            
+            cell.titleLabel.text = data.title
+            cell.inputTextView.text = data.value
+            
+            cell.onTextChange = { [weak self] newText in
+                if isSectionZero {
+                    self?.personalData[indexPath.row].value = newText
+                } else {
+                    self?.preferenceData[indexPath.row].value = newText
+                }
+            }
+            cell.onResize = { [weak self] in
+                self?.tableView.beginUpdates()
+                self?.tableView.endUpdates()
+            }
+            
+            cell.setEditingMode(isEditingMode)
+            
+            return cell
         }
-        
-        return cell
     }
     
     func tableView(_ tableView: UITableView, didDeselectRowAt indexPath: IndexPath) {
         print(indexPath.section,indexPath.row)
     }
+
+        @objc func didTapCancel() {
+            if isEditingMode {
+                showDiscardChangesAlert()
+            } else {
+                navigationController?.popViewController(animated: true)
+            }
+        }
     
-    @objc func didTapCancel() {
-        //        let alert = UIAlertController(
-        //            title: "Discard ",
-        ////            message: "Are you sure you want to logout?",
-        //            preferredStyle: .alert
-        //        )
-        //
-        //        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
-        //
-        //        let logoutAction = UIAlertAction(title: "Logout", style: .destructive) { _ in
-        //            UserSession.shared.logout()
-        //            let welcomeVC = WelcomeViewController()
-        //            let nav = UINavigationController(rootViewController: welcomeVC)
-        //            SceneDelegate.setRootViewController(nav)
-        //        }
-        //
-        //        alert.addAction(cancelAction)
-        //        alert.addAction(logoutAction)
-        //
-        //        present(alert, animated: true, completion: nil)
-        navigationController?.popViewController(animated: true)
-    }
     
-    @objc func didTapDone() {
-        let newName = personalData[0].value.trimmingCharacters(in: .whitespacesAndNewlines)
-        let newEmail = personalData[1].value.trimmingCharacters(in: .whitespacesAndNewlines)
-        let newGenre = preferenceData[0].value
+    @objc func didTapToggleEdit() {
+        if isEditingMode {
+            let newName = personalData[0].value.trimmingCharacters(in: .whitespacesAndNewlines)
+            let newEmail = personalData[1].value.trimmingCharacters(in: .whitespacesAndNewlines)
+            let newGenre = preferenceData[0].value
+            
+            if newName.isEmpty {
+                showAlert(message: "Name cannot be empty.")
+                return
+            }
+            
+            if newEmail.isEmpty {
+                showAlert(message: "Email cannot be empty.")
+                return
+            }
+            guard isValidEmail(newEmail) else {
+                showAlert(message: "Please enter a valid email address.")
+                return
+            }
+            print("Saving: \(newName), \(newEmail), \(newGenre)")
+        }
+        isEditingMode.toggle()
         
-        if newName.isEmpty {
-            showAlert(message: "Name cannot be empty.")
-            return
-        }
-        
-        if newEmail.isEmpty {
-            showAlert(message: "Email cannot be empty.")
-            return
-        }
-        guard isValidEmail(newEmail) else {
-            showAlert(message: "Please enter a valid email address.")
-            return
-        }
-        print("Saving: \(newName), \(newEmail), \(newGenre)")
+        setUpNavBarItem()
+//        tableView.reloadData()
         
         // TODO: Call your UserSession.shared.updateUser(...) here
-        navigationController?.popViewController(animated: true)
+        //        navigationController?.popViewController(animated: true)
     }
-    
 
-    // Inside your Class
-//    @objc private func didTapProfileImage() {
-//        // 1. Configure the picker
-//        var config = PHPickerConfiguration()
-//        config.filter = .images // Only show images (no videos)
-//        config.selectionLimit = 1 // User can only pick 1 image
-//        
-//        // 2. Create the picker
-//        let picker = PHPickerViewController(configuration: config)
-//        picker.delegate = self // We will fix the error for this in Step 3
-//        
-//        // 3. Present it
-//        present(picker, animated: true)
-//    }
-    
     @objc private func didTapProfileImage() {
-        // 1. Create the Alert Controller
-        // standard UIKit Action Sheet (slides from bottom)
         let actionSheet = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         
-        // 2. Add "Take Photo" Action
         actionSheet.addAction(UIAlertAction(title: "Take Photo", style: .default) { [weak self] _ in
             self?.openCamera()
         })
         
-        // 3. Add "Choose Photo" Action
         actionSheet.addAction(UIAlertAction(title: "Choose Photo", style: .default) { [weak self] _ in
             self?.openGallery()
         })
         
-        // 4. Add "Browse..." Action (Files App)
         if !isProfileImageNil {
             actionSheet.addAction(UIAlertAction(title: "Remove Photo", style: .destructive) { [weak self] _ in
                 self?.removeImage()
             })
         }
         
-        // 5. Add "Cancel" Action
-        // The style .cancel automatically puts it at the bottom, separated from the others
         actionSheet.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
         
-        // 6. CRITICAL FOR IPAD: Prevent Crash
-        // Action sheets on iPad must know where to "pop" from, or the app will crash.
         if let popover = actionSheet.popoverPresentationController {
-            // Option A: Point to the profile image view
-            // popover.sourceView = profileImageView
-            
-            // Option B: Point to the center of the screen (Generic fallback)
             popover.sourceView = self.view
             popover.sourceRect = CGRect(x: self.view.bounds.midX, y: self.view.bounds.midY, width: 0, height: 0)
             popover.permittedArrowDirections = []
         }
         
-        // 7. Show it
         present(actionSheet, animated: true)
     }
     
@@ -308,7 +361,30 @@ class EditprofileViewController: UIViewController, UITableViewDelegate, UITableV
         picker.delegate = self
         present(picker, animated: true)
     }
-
+    
+    private func showLogoutAlert() {
+        let alert = UIAlertController(
+            title: "Logout",
+            message: "Are you sure you want to logout?",
+            preferredStyle: .alert
+        )
+        
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+        
+        let logoutAction = UIAlertAction(title: "Logout", style: .destructive) { _ in
+            UserSession.shared.logout()
+            let welcomeVC = WelcomeViewController()
+            let nav = UINavigationController(rootViewController: welcomeVC)
+            SceneDelegate.setRootViewController(nav)
+        }
+        
+        alert.addAction(cancelAction)
+        alert.addAction(logoutAction)
+        
+        present(alert, animated: true, completion: nil)
+    }
+    
+    
     func openCamera() {
         if UIImagePickerController.isSourceTypeAvailable(.camera) {
             let picker = UIImagePickerController()
@@ -320,7 +396,7 @@ class EditprofileViewController: UIViewController, UITableViewDelegate, UITableV
             print("Camera not available on Simulator")
         }
     }
-
+    
     func removeImage() {
         // Requires UIDocumentPickerViewController
         isProfileImageNil = true
@@ -360,7 +436,7 @@ class EditprofileViewController: UIViewController, UITableViewDelegate, UITableV
         super.viewWillAppear(animated)
         prefersLargeTitles(false)
     }
-
+    
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         prefersLargeTitles(true)

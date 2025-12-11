@@ -28,6 +28,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             let navController = UINavigationController(rootViewController: WelcomeViewController())
             window?.rootViewController = navController
         }
+        SceneDelegate.applySavedTheme()
         window?.makeKeyAndVisible()
     }
 
@@ -50,6 +51,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func setTabBarAsRoot() {
         let tabBarVC = MainTabBarController()
         window?.rootViewController = tabBarVC
+        SceneDelegate.applySavedTheme()
         window?.makeKeyAndVisible()
     }
     
@@ -126,4 +128,33 @@ extension SceneDelegate {
             UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil)
         }
     }
+    
+    static func applySavedTheme() {
+            // 1. Read the saved index (0=System, 1=Light, 2=Dark)
+            let savedIndex = UserDefaults.standard.integer(forKey: "selectedThemeIndex")
+            
+            // 2. Determine the Style
+            let style: UIUserInterfaceStyle
+            switch savedIndex {
+            case 1:
+                style = .light
+            case 2:
+                style = .dark
+            default:
+                style = .unspecified // Follow System
+            }
+            
+            // 3. Apply to all active windows
+            // We iterate through connected scenes to find the window
+            UIApplication.shared.connectedScenes.forEach { scene in
+                if let windowScene = scene as? UIWindowScene {
+                    windowScene.windows.forEach { window in
+                        // This forces the change with an animation
+                        UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: {
+                            window.overrideUserInterfaceStyle = style
+                        }, completion: nil)
+                    }
+                }
+            }
+        }
 }

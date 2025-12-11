@@ -56,7 +56,7 @@ class ChangePasswordViewController: UIViewController, UITableViewDataSource, UIT
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        guard let cell = tableView.dequeueReusableCell(withIdentifier: "EditableCell", for: indexPath) as? EditableProfileCell else {
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: "EditableCell", for: indexPath) as? ChangePasswordCell else {
             return UITableViewCell()
         }
         let isSectionZero = indexPath.section == 0
@@ -93,7 +93,7 @@ class ChangePasswordViewController: UIViewController, UITableViewDataSource, UIT
         tableView.dataSource = self
         tableView.delegate = self
         
-        tableView.register(EditableProfileCell.self, forCellReuseIdentifier: "EditableCell")
+        tableView.register(ChangePasswordCell.self, forCellReuseIdentifier: "EditableCell")
         
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
