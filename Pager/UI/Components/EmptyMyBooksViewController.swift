@@ -85,11 +85,15 @@ class EmptyMyBooksViewController: UIViewController {
     
     @objc private func goToBookStore() {
         let bookStoreTabIndex = 2
-        
-        if let tabBarController = self.tabBarController {
-            tabBarController.selectedIndex = bookStoreTabIndex
-        } else {
+        guard let tabBarController = self.tabBarController else {
             print("Error: EmptyMyBooksViewController is not managed by a Tab Bar Controller.")
+            return
         }
+        if let navController = self.navigationController {
+            navController.popToRootViewController(animated: false)
+        }
+        tabBarController.selectedIndex = bookStoreTabIndex
     }
+    
+    
 }

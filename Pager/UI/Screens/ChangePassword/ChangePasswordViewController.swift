@@ -14,14 +14,15 @@ struct PasswordOption {
 
 class ChangePasswordViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
     
-    
+    let viewModel = ChangePasswordViewModel()
+
     var currentPassword = [
         PasswordOption(title: "Current", placeholder: "Required", value: ""),
     ]
     
     var newPassword = [
-        PasswordOption(title: "New", placeholder: "Enter password", value: ""),
-        PasswordOption(title: "Verify", placeholder: "Re-enter password", value: "")
+        PasswordOption(title: "New", placeholder: "Enter new password", value: ""),
+        PasswordOption(title: "Verify", placeholder: "Re-enter new password", value: ""),
     ]
     
     var currentPasswordString: String = ""
@@ -39,7 +40,6 @@ class ChangePasswordViewController: UIViewController, UITableViewDataSource, UIT
         
         title = "Change password"
         view.backgroundColor = AppColors.background
-        
         setUpTableView()
     }
     
@@ -52,6 +52,19 @@ class ChangePasswordViewController: UIViewController, UITableViewDataSource, UIT
             return currentPassword.count
         } else {
             return newPassword.count
+        }
+    }
+    func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
+        if section == 1 {
+            return "Password must be at least 6 characters long"
+        }
+        return nil
+    }
+
+    func tableView(_ tableView: UITableView, willDisplayFooterView view: UIView, forSection section: Int) {
+        if let footer = view as? UITableViewHeaderFooterView {
+            footer.textLabel?.textColor = .systemRed
+            footer.textLabel?.font = UIFont.systemFont(ofSize: 14)
         }
     }
     
@@ -94,7 +107,8 @@ class ChangePasswordViewController: UIViewController, UITableViewDataSource, UIT
         tableView.delegate = self
         
         tableView.register(ChangePasswordCell.self, forCellReuseIdentifier: "EditableCell")
-        
+        tableView.separatorStyle = .none
+
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
@@ -105,13 +119,55 @@ class ChangePasswordViewController: UIViewController, UITableViewDataSource, UIT
     
     @objc func didTapCancel() {
         navigationController?.popViewController(animated: true)
-
+        
     }
     
     @objc func didTapDone() {
+        
+        guard PasswordHashing.hashFuntion(password: currentPassword[0].value) == UserSession.shared.currentUser?.password else {
+            
+            let alert = UIAlertController(
+                title: "Incorrect Password",
+                message: "The current password you entered is incorrect.",
+                preferredStyle: .alert
+            )
+            let okAction = UIAlertAction(title: "OK", style: .default)
+            alert.addAction(okAction)
+            self.present(alert, animated: true, completion: nil)
+            return
+        }
+        
+        guard newPassword[0].value == newPassword[1].value, !newPassword[0].value.isEmpty else
+        {
+            let alert = UIAlertController(
+                title: "Password Mismatch",
+                message: "The new password and confirm password do not match. Please try again.",
+                preferredStyle: .alert
+            )
+            let okAction = UIAlertAction(title: "OK", style: .default)
+            alert.addAction(okAction)
+            self.present(alert, animated: true, completion: nil)
+            return
+        }
+        
+        guard !newPassword[0].value.isEmpty else //|| newPassword[0].value.count < 6 else
+        {
+            let alert = UIAlertController(
+                title: "Missing Input",
+                message: "The password fields cannot be empty. Please fill in both.",
+                preferredStyle: .alert
+            )
+            let okAction = UIAlertAction(title: "OK", style: .default)
+            alert.addAction(okAction)
+            self.present(alert, animated: true, completion: nil)
+            return
+        }
+        
+        viewModel.changePassword(currentPassword[0].value, newPassword[0].value)
+        
         print(currentPassword[0].value,newPassword[0].value,newPassword[1].value)
         navigationController?.popViewController(animated: true)
-
+        
     }
     
     func prefersLargeTitles(_ bool: Bool){

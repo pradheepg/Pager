@@ -7,7 +7,9 @@
 
 import UIKit
 
-class ReviewEditViewController: UIViewController, UITextViewDelegate {
+
+//delete this file after few text
+class EditReeviewViewController: UIViewController, UITextViewDelegate {
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
@@ -148,7 +150,6 @@ class ReviewEditViewController: UIViewController, UITextViewDelegate {
     
     @objc func starTapped(_ sender: UIButton) {
         let selectedRating = sender.tag
-        print("Star tapped: \(selectedRating)")
                 for view in starButtonStack.arrangedSubviews {
             if let button = view as? UIButton {
                 button.isSelected = button.tag <= selectedRating

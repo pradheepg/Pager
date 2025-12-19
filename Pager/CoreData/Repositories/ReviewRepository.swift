@@ -24,7 +24,7 @@ final class ReviewRepository {
         rating: Int,
         title: String?,
         text: String?
-    ) -> Result<Review, ReviewError> {
+    ) -> Result<Void, ReviewError> {
 
         let existingReviewResult = userReview(for: book, user: user)
         switch existingReviewResult {
@@ -44,11 +44,11 @@ final class ReviewRepository {
         review.dateEdited = nil
         review.book = book
         review.postedBy = user
-
+        book.updateAverageRating()
         do {
             try CoreDataManager.shared.saveContext()
             print("Sceuss full")
-            return .success(review)
+            return .success(())
         } catch {
             print("Failed")
             return .failure(.saveFailed)
@@ -67,7 +67,7 @@ final class ReviewRepository {
         if let text = text { review.reviewText = text }
 
         review.dateEdited = Date()
-
+        review.book?.updateAverageRating()
         do {
             try CoreDataManager.shared.saveContext()
             return .success(())

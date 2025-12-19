@@ -45,8 +45,8 @@ class EmptyCurrentCell: UICollectionViewCell {
         actionButton.layer.masksToBounds = true
         actionButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .semibold)
         actionButton.semanticContentAttribute = .forceLeftToRight
-        actionButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -8, bottom: 0, right: 8)
-        actionButton.contentEdgeInsets = UIEdgeInsets(top: 12, left: 20, bottom: 12, right: 20)
+//        actionButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -8, bottom: 0, right: 8)
+//        actionButton.contentEdgeInsets = UIEdgeInsets(top: 12, left: 20, bottom: 12, right: 20)
         contentView.addSubview(messageLabel)
         contentView.addSubview(actionButton)
         

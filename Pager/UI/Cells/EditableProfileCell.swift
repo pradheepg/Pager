@@ -37,6 +37,7 @@ class EditableProfileCell: UITableViewCell, UITextViewDelegate {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         
         contentView.addSubview(titleLabel)
+
         contentView.addSubview(inputTextView)
         
         selectionStyle = .none
@@ -69,14 +70,32 @@ class EditableProfileCell: UITableViewCell, UITextViewDelegate {
         onTextChange?(textView.text)
         onResize?()
     }
-    func setEditingMode(_ isEditing: Bool) {
-            inputTextView.isEditable = isEditing
-            inputTextView.isUserInteractionEnabled = isEditing
-            
+    func setEditingMode(_ isEditing: Bool, onlyChangeColor: Bool = false) {
+        if onlyChangeColor {
             if isEditing {
                 inputTextView.textColor = .systemBlue
             } else {
                 inputTextView.textColor = .label
             }
+            return
         }
+        inputTextView.isEditable = isEditing
+        inputTextView.isUserInteractionEnabled = isEditing
+        
+        if isEditing {
+            inputTextView.textColor = .systemBlue
+        } else {
+            inputTextView.textColor = .label
+        }
+    }
+    
+    func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
+        print(text)
+        if text == "\n" {
+            print(text)
+            textView.resignFirstResponder()
+            return false
+        }
+        return true
+    }
 }

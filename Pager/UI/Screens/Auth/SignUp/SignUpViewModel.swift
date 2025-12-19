@@ -28,13 +28,13 @@ class SignUpViewModel {
             onSignUpFailure?("Passwords do not match.")
             return
         }
-        guard let genre = genre, !genre.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            onSignUpFailure?("Please enter your favorite genre.")
-            return
-        }
+//        guard let genre = genre, !genre.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+//            onSignUpFailure?("Please enter your favorite genre.")
+//            return
+//        }
 
         // 2. Create user model (replace with repo/network call in real app)
-        let result = AuthService.shared.signUp(name: name, email: email, password: password, genre: genre)
+        let result = AuthService.shared.signUp(name: name, email: email, password: password, genre: "")
 
         switch result {
         case .success(let user):

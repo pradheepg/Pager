@@ -10,7 +10,8 @@ import UIKit
 enum AppColors {
     static let background: UIColor = {
         return UIColor { trait in
-            trait.userInterfaceStyle == .dark ? UIColor.black : UIColor.white
+//            print("color \(trait.userInterfaceStyle == .dark) ",UITraitCollection.current.userInterfaceStyle == .dark)
+            return trait.userInterfaceStyle == .dark ? UIColor.black : UIColor.white
         }
     }()
     
@@ -106,25 +107,23 @@ enum KeychainKeys {
 }
 
 enum CategoryEnum: String, CaseIterable {
-    case fiction       = "Fiction"
-    case nonFiction    = "Non‑Fiction"
-    case mystery       = "Mystery & Thriller"
-    case romance       = "Romance"
-    case sciFiFantasy  = "Sci‑Fi & Fantasy"
-    case biography     = "Biography & Memoir"
-    case kids          = "Children & Young Adult"
-    case business      = "Business & Finance"
+    case novels    = "Novels"       // Covers: Fiction, Romance, Drama
+    case thriller  = "Thriller"   // Covers: Mystery, Crime, Suspense
+    case fantasy   = "Fantasy"    // Covers: Sci-Fi, Magic, Dystopian
+    case business  = "Business"   // Covers: Finance, Career, Money
+    case biography = "Biography"  // Covers: Memoirs, History, People
+    case kids      = "Kids"
+    
     
     var systemImageName: String {
         switch self {
-        case .fiction:      return "book.fill"
-        case .nonFiction:   return "text.book.closed"
-        case .mystery:      return "magnifyingglass"
-        case .romance:      return "heart.fill"
-        case .sciFiFantasy: return "sparkles"
-        case .biography:    return "person.fill"
-        case .kids:         return "face.smiling"
-        case .business:     return "chart.bar.fill"
+        case .novels:    return "book.closed.fill"   // Represents a standard storybook
+        case .thriller:  return "eye.fill"           // Represents mystery, watching, suspense
+        case .fantasy:   return "sparkles"           // Represents magic, sci-fi, and wonder
+        case .business:  return "briefcase.fill"     // Represents work, finance, career
+        case .biography: return "person.fill"        // Represents an individual's life
+        case .kids:      return "teddybear.fill"     // Represents toys and children
         }
     }
+    
 }

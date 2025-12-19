@@ -14,6 +14,8 @@ enum UserError: Error {
     case invalidCredentials
     case deleteFailed
     case userNotFound
+    case noLastOpenedBook
+    case loginRequired
     case unKnownError(Error)
 
 }
@@ -54,11 +56,16 @@ final class UserRepository {
         if let goal = dailyReadingGoalMinutes {
             user.dailyReadingGoal = Int16(goal)
         }
-
+        let defaultCollection = BookCollection(context: context)
+        defaultCollection.collectionID = UUID()
+        defaultCollection.name = "Want to Read"
+        defaultCollection.isDefault = true
+        defaultCollection.owner = user
+        
         do {
             try CoreDataManager.shared.saveContext()
             return .success(user)
-
+            
         } catch {
             print(error.localizedDescription)
             return .failure(.saveFailed)
@@ -84,7 +91,6 @@ final class UserRepository {
         }
         
         let hashed = PasswordHashing.hashFuntion(password: password)
-
         if user.password == hashed {
             return .success(user)
         } else {
@@ -96,19 +102,40 @@ final class UserRepository {
         _ user: User,
         email: String? = nil,
         profileName: String? = nil,
-    ) -> Result<Void, UserError> {
+        genre: String? = nil
+    ) async -> Result<Void, UserError> {
 
-        if let email = email {
-            user.email = email
+        guard let context = user.managedObjectContext else {
+            return .failure(.saveFailed)
         }
 
-        if let profileName = profileName {
-            user.profileName = profileName
-        }
+        let userID = user.objectID
 
         do {
-            try CoreDataManager.shared.saveContext()
+            try await context.perform {
+                guard let safeUser = context.object(with: userID) as? User else {
+                    throw UserError.userNotFound
+                }
+
+                if let email = email {
+                    safeUser.email = email
+                }
+
+                if let profileName = profileName {
+                    safeUser.profileName = profileName
+                }
+
+                if let genre = genre {
+                    safeUser.favoriteGenres = genre
+                }
+
+                if context.hasChanges {
+                    try context.save()
+                }
+            }
+
             return .success(())
+
         } catch {
             return .failure(.saveFailed)
         }
@@ -118,7 +145,7 @@ final class UserRepository {
         for user: User,
         currentPassword: String,
         newPassword: String
-    ) -> Result<Void, UserError> {
+    ) async -> Result<Void, UserError> {
 
         let currentHash = PasswordHashing.hashFuntion(password: currentPassword)
 
@@ -127,6 +154,7 @@ final class UserRepository {
         }
 
         let newHash = PasswordHashing.hashFuntion(password: newPassword)
+        
         user.password = newHash
 
         do {
@@ -175,14 +203,34 @@ final class UserRepository {
         }
     }
 
-    func updateProfileImage(for user: User, imageData: Data) -> Result<Void, UserError> {
-        user.profileImage = imageData
-
+    func updateProfileImage(for user: User, imageData: Data) async -> Result<Void, UserError> {
+        guard let context = user.managedObjectContext else {
+            return .failure(.saveFailed)
+        }
+        let userID = user.objectID
+        
         do {
-            try CoreDataManager.shared.saveContext()
+            try await context.perform {
+                guard let safeUser = context.object(with: userID) as? User else {
+                    throw UserError.userNotFound
+                }
+
+                safeUser.profileImage = imageData
+                try context.save()
+            }
+
             return .success(())
         } catch {
             return .failure(.saveFailed)
         }
+    }
+
+    
+    func getCurrentBookUUID(_ user: User) -> Result<UUID, UserError> {
+        guard let bookId = user.lastOpenedBookId else {
+            return .failure(.noLastOpenedBook)
+        }
+        
+        return .success(bookId)
     }
 }

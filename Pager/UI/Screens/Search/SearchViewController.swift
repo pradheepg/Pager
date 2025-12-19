@@ -14,19 +14,15 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
     var collapsedSections = Set<Int>()
     let tagsTitleLabel = UILabel()
 
-    private var myBooks: [Book] = []
-    private var books: [Book] = []
-    
-    private let bookRepository = BookRepository()
+    let viewModel: SearchViewModel
     
     let searchController = UISearchController(searchResultsController: nil)
     
-    // Empty State
     private let emptyStateView: EmptyMyBooksViewController = EmptyMyBooksViewController(message: "No Result Found!", isButtonNeeded: false)
     
-    // MARK: - Lifecycle
     
     init() {
+        self.viewModel = SearchViewModel()
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -37,12 +33,11 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
         view.backgroundColor = .systemBackground
         
         setUpEmptyState()
-        setUpTagsCollectionView()    // Setup View 1
-        setUpResultsCollectionView() // Setup View 2
+        setUpTagsCollectionView()
+        setUpResultsCollectionView()
         setUpSearchController()
     }
     
-    // MARK: - UI Setup
     
     private func setUpEmptyState() {
         addChild(emptyStateView)
@@ -50,7 +45,7 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
         emptyStateView.didMove(toParent: self)
         
         emptyStateView.view.translatesAutoresizingMaskIntoConstraints = false
-        emptyStateView.view.isHidden = true // Hidden by default
+        emptyStateView.view.isHidden = true
         
         NSLayoutConstraint.activate([
             emptyStateView.view.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
@@ -60,9 +55,7 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
         ])
     }
     
-    // Setup 1: The Tags (Recent/Categories) View
     private func setUpTagsCollectionView() {
-        // Use your Custom LeftAligned Layout
         let layout = LeftAlignedFlowLayout()
         layout.scrollDirection = .vertical
         layout.minimumLineSpacing = 10
@@ -74,7 +67,6 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
         tagsCollectionView.translatesAutoresizingMaskIntoConstraints = false
         tagsCollectionView.backgroundColor = .systemBackground
         
-        // Register Tag Cells
         tagsCollectionView.register(CategoryPillCell.self, forCellWithReuseIdentifier: CategoryPillCell.reuseID)
         
         tagsCollectionView.dataSource = self
@@ -106,7 +98,7 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
         resultsCollectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         resultsCollectionView.translatesAutoresizingMaskIntoConstraints = false
         resultsCollectionView.backgroundColor = .systemBackground
-        resultsCollectionView.isHidden = true // Start HIDDEN
+        resultsCollectionView.isHidden = true
         
         resultsCollectionView.register(CurrentBookCell.self, forCellWithReuseIdentifier: "CurrentBookCell")
         resultsCollectionView.register(
@@ -134,7 +126,8 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
         searchController.delegate = self
         navigationItem.hidesSearchBarWhenScrolling = false
         definesPresentationContext = true
-        searchController.searchBar.placeholder = "Search books, authors..."
+        searchController.searchBar.placeholder = "Search books"
+        searchController.obscuresBackgroundDuringPresentation = false
     }
     
     private func createCompositionalLayout() -> UICollectionViewLayout {
@@ -166,30 +159,20 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
             alignment: .top
         )
         
-        // C. (Optional) Sticky Header
-         header.pinToVisibleBounds = true
+         header.pinToVisibleBounds = false //driver
         
-        // D. Attach to Section
         section.boundarySupplementaryItems = [header]
         return UICollectionViewCompositionalLayout(section: section)
     }
     
     func addToken(for category: CategoryEnum) {
-        let icon = UIImage(systemName: category.systemImageName) // Use your enum's image
+        let icon = UIImage(systemName: category.systemImageName)
         let token = UISearchToken(icon: icon, text: category.rawValue)
+        token.representedObject = category
         
-        // 2. Assign it to the Search Bar
-        // We use direct assignment to replace any existing tokens (Single selection)
-        // If you wanted multiple tags, you would use .insertToken(token, at: ...)
         searchController.searchBar.searchTextField.tokens = [token]
-        
-        // 3. Clear any typed text (so it's just the token)
         searchController.searchBar.text = nil
-        
-        // 4. Force the search state to active
         searchController.isActive = true
-        
-        // 5. Manually trigger the update (Changing tokens programmatically doesn't always trigger it)
         updateSearchResults(for: searchController)
     }
     func updateSearchResults(for searchController: UISearchController) {
@@ -197,29 +180,26 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
         let tokens = searchController.searchBar.searchTextField.tokens
         
         if searchText.isEmpty && tokens.isEmpty{
-            // STATE 1: No Text -> Show Tags
             tagsCollectionView.isHidden = false
             tagsTitleLabel.isHidden = tagsCollectionView.isHidden
             resultsCollectionView.isHidden = true
             emptyStateView.view.isHidden = true
         } else {
-            // STATE 2: Typing -> Perform Search
-            tagsCollectionView.isHidden = true // Hide tags immediately
+            tagsCollectionView.isHidden = true
             tagsTitleLabel.isHidden = tagsCollectionView.isHidden
-            let result = bookRepository.searchBooks(searchText)
-            
+            let result = viewModel.searchBooks(searchText: searchText, token: tokens)
+            //driver
             switch result {
-            case .success(let foundBooks):
-                let midpoint = (foundBooks.count + 1) / 2
-                self.books = Array(foundBooks[..<midpoint])
-                self.myBooks = Array(foundBooks[midpoint...])
+            case .success(let isEmpty):
+//                let midpoint = (foundBooks.count + 1) / 2
+//                self.viewModel.books = Array(foundBooks[..<midpoint])
+//                self.viewModel.myBooks = Array(foundBooks[midpoint...])
 
-                if foundBooks.isEmpty {
-                    // STATE 2a: No Results -> Show Empty State
+                if isEmpty {
+                    print(isEmpty)
                     resultsCollectionView.isHidden = true
                     emptyStateView.view.isHidden = false
                 } else {
-                    // STATE 2b: Has Results -> Show Results View
                     resultsCollectionView.isHidden = false
                     emptyStateView.view.isHidden = true
                 }
@@ -232,8 +212,6 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
         }
     }
     
-    // MARK: - UICollectionViewDataSource
-    
     func numberOfSections(in collectionView: UICollectionView) -> Int {
         if collectionView  == resultsCollectionView {
             return 2
@@ -242,7 +220,6 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        // Check WHICH collection view is asking
         if collectionView == tagsCollectionView {
             return CategoryEnum.allCases.count
         } else {
@@ -250,9 +227,9 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
                 return 0
             }
             if section == 0 {
-                return myBooks.count
+                return viewModel.myBooks.count
             } else {
-                return books.count
+                return viewModel.books.count
             }
         }
     }
@@ -260,7 +237,6 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         
         if collectionView == tagsCollectionView {
-            // Configure Tag Cell
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: CategoryPillCell.reuseID, for: indexPath) as! CategoryPillCell
             let item = CategoryEnum.allCases[indexPath.item]
             cell.configure(title: item.rawValue, systemImageName: item.systemImageName)
@@ -268,34 +244,37 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
             
         } else {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "CurrentBookCell", for: indexPath) as! CurrentBookCell
-            cell.contentView.layer.cornerRadius = 12
-            cell.contentView.layer.masksToBounds = true
+
+
             if indexPath.section == 0 {
-                cell.configure(with: myBooks[indexPath.item])
+                cell.configure(with: viewModel.myBooks[indexPath.item])
                 
             } else {
-                cell.configure(with: books[indexPath.item])
+                cell.configure(with: viewModel.books[indexPath.item], isProgressHide: true)
                 
             }
             return cell
         }
     }
     
-    // MARK: - UICollectionViewDelegate
+    
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         
         if collectionView == tagsCollectionView {
-            // User tapped a Tag -> Fill Search Bar
             let category = CategoryEnum.allCases[indexPath.item]
             addToken(for: category)
-            // This automatically triggers updateSearchResults
             
         } else {
-            // User tapped a Result -> Go to Details
-            let book = books[indexPath.item]
+            let book: Book
+            if indexPath.section == 0 {
+                book = viewModel.myBooks[indexPath.item]
+            } else {
+                book = viewModel.books[indexPath.item]
+            }
             let vc = DetailViewController(book: book)
-            navigationController?.pushViewController(vc, animated: true)
+            present(vc, animated: true)
+//            navigationController?.pushViewController(vc, animated: true)
         }
     }
     
@@ -304,6 +283,11 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
             if collectionView == tagsCollectionView {
                 return UICollectionReusableView()
             }
+//            if indexPath.section == 0 && viewModel.myBooks.isEmpty {
+//                return UICollectionReusableView()
+//            } else if indexPath.section == 1 && viewModel.books.isEmpty {
+//                return UICollectionReusableView()
+//            }//driver
             guard let header = collectionView.dequeueReusableSupplementaryView(
                 ofKind: kind,
                 withReuseIdentifier: CollapsibleCollectionHeader.reuseID,
@@ -315,12 +299,9 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
             let isCollapsed = collapsedSections.contains(indexPath.section)
             let title = indexPath.section == 0 ? "My Books" : "Book Store"
             header.configure(title: title, isCollapsed: isCollapsed)
-            
-            // 2. Handle the Tap
             header.onToggle = { [weak self] in
                 guard let self = self else { return }
                 
-                // Toggle state
                 if self.collapsedSections.contains(indexPath.section) {
                     self.collapsedSections.remove(indexPath.section) // Expand
                 } else {
@@ -382,7 +363,6 @@ class LeftAlignedFlowLayout: UICollectionViewFlowLayout {
 class CollapsibleCollectionHeader: UICollectionReusableView {
     static let reuseID = "CollapsibleCollectionHeader"
     
-    // Callback to tell the VC to toggle
     var onToggle: (() -> Void)?
     
     private let titleLabel: UILabel = {
@@ -394,8 +374,8 @@ class CollapsibleCollectionHeader: UICollectionReusableView {
     
     private let arrowImageView: UIImageView = {
         let iv = UIImageView()
-        iv.image = UIImage(systemName: "chevron.up") // Default arrow
-        iv.tintColor = .secondaryLabel
+        iv.image = UIImage(systemName: "chevron.up")
+        iv.tintColor = AppColors.title
         iv.contentMode = .scaleAspectFit
         return iv
     }()
@@ -408,20 +388,19 @@ class CollapsibleCollectionHeader: UICollectionReusableView {
         
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         arrowImageView.translatesAutoresizingMaskIntoConstraints = false
-        
+        backgroundColor = AppColors.background
+        titleLabel.textColor = AppColors.title
+        titleLabel.backgroundColor = AppColors.background
         NSLayoutConstraint.activate([
-            // Label on Left
             titleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
             titleLabel.centerYAnchor.constraint(equalTo: centerYAnchor),
             
-            // Arrow on Right
             arrowImageView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
             arrowImageView.centerYAnchor.constraint(equalTo: centerYAnchor),
             arrowImageView.widthAnchor.constraint(equalToConstant: 20),
             arrowImageView.heightAnchor.constraint(equalToConstant: 20)
         ])
         
-        // Add Tap Gesture to the WHOLE header
         let tap = UITapGestureRecognizer(target: self, action: #selector(didTapHeader))
         addGestureRecognizer(tap)
     }
@@ -432,12 +411,10 @@ class CollapsibleCollectionHeader: UICollectionReusableView {
         onToggle?()
     }
     
-    // Helper to update UI state
     func configure(title: String, isCollapsed: Bool) {
         titleLabel.text = title
         
-        // Rotate the arrow: Down if collapsed, Up if open
-        let angle: CGFloat = isCollapsed ? .pi : 0 // .pi is 180 degrees
+        let angle: CGFloat = isCollapsed ? .pi : 0
         
         UIView.animate(withDuration: 0.3) {
             self.arrowImageView.transform = CGAffineTransform(rotationAngle: angle)

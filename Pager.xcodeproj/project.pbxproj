@@ -7,30 +7,30 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		D17548552EDFF9970067D193 /* BookCollection+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = D175484E2EDFF9970067D193 /* BookCollection+CoreDataProperties.swift */; };
-		D17548562EDFF9970067D193 /* Book+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = D175484B2EDFF9970067D193 /* Book+CoreDataClass.swift */; };
-		D17548572EDFF9970067D193 /* UserBookRecord+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = D17548532EDFF9970067D193 /* UserBookRecord+CoreDataClass.swift */; };
-		D17548582EDFF9970067D193 /* Review+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = D175484F2EDFF9970067D193 /* Review+CoreDataClass.swift */; };
-		D17548592EDFF9970067D193 /* BookCollection+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = D175484D2EDFF9970067D193 /* BookCollection+CoreDataClass.swift */; };
-		D175485A2EDFF9970067D193 /* Review+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = D17548502EDFF9970067D193 /* Review+CoreDataProperties.swift */; };
-		D175485B2EDFF9970067D193 /* User+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = D17548512EDFF9970067D193 /* User+CoreDataClass.swift */; };
-		D175485C2EDFF9970067D193 /* Book+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = D175484C2EDFF9970067D193 /* Book+CoreDataProperties.swift */; };
-		D175485D2EDFF9970067D193 /* User+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = D17548522EDFF9970067D193 /* User+CoreDataProperties.swift */; };
-		D175485E2EDFF9970067D193 /* UserBookRecord+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = D17548542EDFF9970067D193 /* UserBookRecord+CoreDataProperties.swift */; };
+		D10894F22EF28FB40076BA31 /* Book+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10894E92EF28FB40076BA31 /* Book+CoreDataProperties.swift */; };
+		D10894F32EF28FB40076BA31 /* BookCollection+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10894EA2EF28FB40076BA31 /* BookCollection+CoreDataClass.swift */; };
+		D10894F42EF28FB40076BA31 /* Book+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10894E82EF28FB40076BA31 /* Book+CoreDataClass.swift */; };
+		D10894F52EF28FB40076BA31 /* BookCollection+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10894EB2EF28FB40076BA31 /* BookCollection+CoreDataProperties.swift */; };
+		D10894F62EF28FB40076BA31 /* User+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10894EE2EF28FB40076BA31 /* User+CoreDataClass.swift */; };
+		D10894F72EF28FB40076BA31 /* UserBookRecord+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10894F02EF28FB40076BA31 /* UserBookRecord+CoreDataClass.swift */; };
+		D10894F82EF28FB40076BA31 /* Review+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10894ED2EF28FB40076BA31 /* Review+CoreDataProperties.swift */; };
+		D10894F92EF28FB40076BA31 /* User+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10894EF2EF28FB40076BA31 /* User+CoreDataProperties.swift */; };
+		D10894FA2EF28FB40076BA31 /* UserBookRecord+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10894F12EF28FB40076BA31 /* UserBookRecord+CoreDataProperties.swift */; };
+		D10894FB2EF28FB40076BA31 /* Review+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10894EC2EF28FB40076BA31 /* Review+CoreDataClass.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		D10272312ED02792003FD803 /* Pager.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Pager.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		D175484B2EDFF9970067D193 /* Book+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Book+CoreDataClass.swift"; path = "Pager/CoreData/Entities/Book+CoreDataClass.swift"; sourceTree = "<group>"; };
-		D175484C2EDFF9970067D193 /* Book+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Book+CoreDataProperties.swift"; path = "Pager/CoreData/Entities/Book+CoreDataProperties.swift"; sourceTree = "<group>"; };
-		D175484D2EDFF9970067D193 /* BookCollection+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "BookCollection+CoreDataClass.swift"; path = "Pager/CoreData/Entities/BookCollection+CoreDataClass.swift"; sourceTree = "<group>"; };
-		D175484E2EDFF9970067D193 /* BookCollection+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "BookCollection+CoreDataProperties.swift"; path = "Pager/CoreData/Entities/BookCollection+CoreDataProperties.swift"; sourceTree = "<group>"; };
-		D175484F2EDFF9970067D193 /* Review+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Review+CoreDataClass.swift"; path = "Pager/CoreData/Entities/Review+CoreDataClass.swift"; sourceTree = "<group>"; };
-		D17548502EDFF9970067D193 /* Review+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Review+CoreDataProperties.swift"; path = "Pager/CoreData/Entities/Review+CoreDataProperties.swift"; sourceTree = "<group>"; };
-		D17548512EDFF9970067D193 /* User+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "User+CoreDataClass.swift"; path = "Pager/CoreData/Entities/User+CoreDataClass.swift"; sourceTree = "<group>"; };
-		D17548522EDFF9970067D193 /* User+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "User+CoreDataProperties.swift"; path = "Pager/CoreData/Entities/User+CoreDataProperties.swift"; sourceTree = "<group>"; };
-		D17548532EDFF9970067D193 /* UserBookRecord+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "UserBookRecord+CoreDataClass.swift"; path = "Pager/CoreData/Entities/UserBookRecord+CoreDataClass.swift"; sourceTree = "<group>"; };
-		D17548542EDFF9970067D193 /* UserBookRecord+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "UserBookRecord+CoreDataProperties.swift"; path = "Pager/CoreData/Entities/UserBookRecord+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		D10894E82EF28FB40076BA31 /* Book+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Book+CoreDataClass.swift"; path = "Pager/CoreData/Entities/Book+CoreDataClass.swift"; sourceTree = "<group>"; };
+		D10894E92EF28FB40076BA31 /* Book+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Book+CoreDataProperties.swift"; path = "Pager/CoreData/Entities/Book+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		D10894EA2EF28FB40076BA31 /* BookCollection+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "BookCollection+CoreDataClass.swift"; path = "Pager/CoreData/Entities/BookCollection+CoreDataClass.swift"; sourceTree = "<group>"; };
+		D10894EB2EF28FB40076BA31 /* BookCollection+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "BookCollection+CoreDataProperties.swift"; path = "Pager/CoreData/Entities/BookCollection+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		D10894EC2EF28FB40076BA31 /* Review+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Review+CoreDataClass.swift"; path = "Pager/CoreData/Entities/Review+CoreDataClass.swift"; sourceTree = "<group>"; };
+		D10894ED2EF28FB40076BA31 /* Review+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Review+CoreDataProperties.swift"; path = "Pager/CoreData/Entities/Review+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		D10894EE2EF28FB40076BA31 /* User+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "User+CoreDataClass.swift"; path = "Pager/CoreData/Entities/User+CoreDataClass.swift"; sourceTree = "<group>"; };
+		D10894EF2EF28FB40076BA31 /* User+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "User+CoreDataProperties.swift"; path = "Pager/CoreData/Entities/User+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		D10894F02EF28FB40076BA31 /* UserBookRecord+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "UserBookRecord+CoreDataClass.swift"; path = "Pager/CoreData/Entities/UserBookRecord+CoreDataClass.swift"; sourceTree = "<group>"; };
+		D10894F12EF28FB40076BA31 /* UserBookRecord+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "UserBookRecord+CoreDataProperties.swift"; path = "Pager/CoreData/Entities/UserBookRecord+CoreDataProperties.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -68,16 +68,16 @@
 		D10272282ED02792003FD803 = {
 			isa = PBXGroup;
 			children = (
-				D175484B2EDFF9970067D193 /* Book+CoreDataClass.swift */,
-				D175484C2EDFF9970067D193 /* Book+CoreDataProperties.swift */,
-				D175484D2EDFF9970067D193 /* BookCollection+CoreDataClass.swift */,
-				D175484E2EDFF9970067D193 /* BookCollection+CoreDataProperties.swift */,
-				D175484F2EDFF9970067D193 /* Review+CoreDataClass.swift */,
-				D17548502EDFF9970067D193 /* Review+CoreDataProperties.swift */,
-				D17548512EDFF9970067D193 /* User+CoreDataClass.swift */,
-				D17548522EDFF9970067D193 /* User+CoreDataProperties.swift */,
-				D17548532EDFF9970067D193 /* UserBookRecord+CoreDataClass.swift */,
-				D17548542EDFF9970067D193 /* UserBookRecord+CoreDataProperties.swift */,
+				D10894E82EF28FB40076BA31 /* Book+CoreDataClass.swift */,
+				D10894E92EF28FB40076BA31 /* Book+CoreDataProperties.swift */,
+				D10894EA2EF28FB40076BA31 /* BookCollection+CoreDataClass.swift */,
+				D10894EB2EF28FB40076BA31 /* BookCollection+CoreDataProperties.swift */,
+				D10894EC2EF28FB40076BA31 /* Review+CoreDataClass.swift */,
+				D10894ED2EF28FB40076BA31 /* Review+CoreDataProperties.swift */,
+				D10894EE2EF28FB40076BA31 /* User+CoreDataClass.swift */,
+				D10894EF2EF28FB40076BA31 /* User+CoreDataProperties.swift */,
+				D10894F02EF28FB40076BA31 /* UserBookRecord+CoreDataClass.swift */,
+				D10894F12EF28FB40076BA31 /* UserBookRecord+CoreDataProperties.swift */,
 				D10272332ED02792003FD803 /* Pager */,
 				D10272322ED02792003FD803 /* Products */,
 			);
@@ -165,16 +165,16 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D17548552EDFF9970067D193 /* BookCollection+CoreDataProperties.swift in Sources */,
-				D17548562EDFF9970067D193 /* Book+CoreDataClass.swift in Sources */,
-				D17548572EDFF9970067D193 /* UserBookRecord+CoreDataClass.swift in Sources */,
-				D17548582EDFF9970067D193 /* Review+CoreDataClass.swift in Sources */,
-				D17548592EDFF9970067D193 /* BookCollection+CoreDataClass.swift in Sources */,
-				D175485A2EDFF9970067D193 /* Review+CoreDataProperties.swift in Sources */,
-				D175485B2EDFF9970067D193 /* User+CoreDataClass.swift in Sources */,
-				D175485C2EDFF9970067D193 /* Book+CoreDataProperties.swift in Sources */,
-				D175485D2EDFF9970067D193 /* User+CoreDataProperties.swift in Sources */,
-				D175485E2EDFF9970067D193 /* UserBookRecord+CoreDataProperties.swift in Sources */,
+				D10894F22EF28FB40076BA31 /* Book+CoreDataProperties.swift in Sources */,
+				D10894F32EF28FB40076BA31 /* BookCollection+CoreDataClass.swift in Sources */,
+				D10894F42EF28FB40076BA31 /* Book+CoreDataClass.swift in Sources */,
+				D10894F52EF28FB40076BA31 /* BookCollection+CoreDataProperties.swift in Sources */,
+				D10894F62EF28FB40076BA31 /* User+CoreDataClass.swift in Sources */,
+				D10894F72EF28FB40076BA31 /* UserBookRecord+CoreDataClass.swift in Sources */,
+				D10894F82EF28FB40076BA31 /* Review+CoreDataProperties.swift in Sources */,
+				D10894F92EF28FB40076BA31 /* User+CoreDataProperties.swift in Sources */,
+				D10894FA2EF28FB40076BA31 /* UserBookRecord+CoreDataProperties.swift in Sources */,
+				D10894FB2EF28FB40076BA31 /* Review+CoreDataClass.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -195,7 +195,7 @@
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -227,7 +227,7 @@
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

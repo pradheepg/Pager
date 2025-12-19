@@ -2,7 +2,7 @@
 //  Book+CoreDataProperties.swift
 //  Pager
 //
-//  Created by Pradheep G on 03/12/25.
+//  Created by Pradheep G on 17/12/25.
 //
 //
 
@@ -87,5 +87,18 @@ extension Book {
 }
 
 extension Book : Identifiable {
-
+    func updateAverageRating() {
+        guard let reviews = self.reviews?.allObjects as? [Review], !reviews.isEmpty else {
+            self.averageRating = 0.0
+            return
+        }
+        
+        let totalRating = reviews.reduce(0) { $0 + Int($1.rating) }
+        
+        let rawAverage = Float(totalRating) / Float(reviews.count)
+        
+        let roundedAverage = (rawAverage * 10).rounded() / 10
+        
+        self.averageRating = roundedAverage
+    }
 }

@@ -10,15 +10,15 @@ import UIKit
 class DetailViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate {
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return reviews.count
+        return viewModel.reviews.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ReviewCell", for: indexPath) as! ReviewCell
-        cell.configure(with: reviews[indexPath.item])
+        cell.configure(with: viewModel.reviews[indexPath.item])
         return cell
     }
-
+    
     private let mainScrollView = UIScrollView()
     private let contentView = UIView()
     private let mainStackView = UIStackView()
@@ -35,26 +35,38 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
     private let reviewCollectionView: UICollectionView
     private let ratingStackView: UIStackView = UIStackView()
     private let rootStackView: UIStackView = UIStackView()
-
+    private let moreButton: UIButton = UIButton(type: .system)
+    private let averageRatingLabel: UILabel = UILabel()
+    private let starStack: UIStackView = UIStackView()
+    private let totalRatingLabel: UILabel = UILabel()
+    
+    
+    
+    var onDismiss: (() -> Void)?
+    private var isOwned: Bool = false {
+        didSet {
+            updateButtonUI()
+        }
+    }
     
     private let starButtonStack: UIStackView = UIStackView()
-
+    private let viewModel: DetailViewModel
     
-
-    private var reviews: [Review] = []
-
-    private let book: Book
     
     init(book: Book) {
-        self.book = book
+        self.viewModel = DetailViewModel(book: book)
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .horizontal
         layout.minimumLineSpacing = 16
         layout.sectionInset = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
         layout.itemSize = CGSize(width: 350, height: 200)
-
-//        layout.estimatedItemSize = UICollectionViewFlowLayout.automaticSize
         reviewCollectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        
+        if let records = UserSession.shared.currentUser?.owned?.allObjects as? [UserBookRecord] {
+            if records.contains(where: { $0.book == book }) {
+                isOwned = true
+            }
+        }
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -64,29 +76,52 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
     
     override func viewDidLoad() {
         super.viewDidLoad()
-//        loadSameData()
-        loadData()
+        //        loadSameData()
+        viewModel.loadData()
         setUpScrollView()
         setUpStackView()
         setUpContent()
-
-    }
-    func loadSameData() {
-        let repoDemo = ReviewRepository()
-        let temptemp = repoDemo.fetchReviews(for: book)
-        switch temptemp {
-        case .success(let resu):
-            if let ejdladla = resu.first{
-                repoDemo.deleteReview(ejdladla)
-            }
-            
-        default:
-            print("Nother")
+        setupMoreMenu()
+        updateButtonUI()
+        if let existingReview = viewModel.getCurrentUserReview() {
+            let savedRating = Int(existingReview.rating)
+            updateStarUI(rating: savedRating)
         }
-        repoDemo.createReview(for: book, by: UserSession.shared.currentUser!, rating: 4, title: "Best bookhat is what i tell ", text: "Omg that is what i tell ,you know what i telling know ,right omg and that little showing off what he is telling you ok so behat is what i tell ,you know what i telling know ,right omg and that little showing off but i will be there for you and that what he is telling you ok so be happy")
+        
     }
-    func loadData() {
-        reviews = book.reviews?.allObjects as? [Review] ?? []
+    //    func loadSameData() {
+    //        let repoDemo = ReviewRepository()
+    //        let temptemp = repoDemo.fetchReviews(for: viewModel.book)
+    //        switch temptemp {
+    //        case .success(let resu):
+    //            if let ejdladla = resu.first{
+    //                repoDemo.deleteReview(ejdladla)
+    //            }
+    //
+    //        default:
+    //            print("Nother")
+    //        }
+    //        repoDemo.createReview(for: viewModel.book, by: UserSession.shared.currentUser!, rating: 4, title: "Best bookhat is what i tell ", text: "Omg that is what i tell ,you know what i telling know ,right omg and that little showing off what he is telling you ok so behat is what i tell ,you know what i telling know ,right omg and that little showing off but i will be there for you and that what he is telling you ok so be happy")
+    //    }
+    //    func loadData() {
+    //        reviews = viewModel.book.reviews?.allObjects as? [Review] ?? []
+    //    }
+    
+    func updateButtonUI() {
+        if isOwned {
+            getReadButton.setTitle("READ", for: .normal)
+            
+            ratingStackView.alpha = 1.0
+            ratingStackView.isUserInteractionEnabled = true
+            setupMoreMenu()
+            
+            
+        } else {
+            getReadButton.setTitle("GET", for: .normal)
+            ratingStackView.alpha = 0.5
+            ratingStackView.isUserInteractionEnabled = false
+            setupMoreMenu()
+        }
     }
     
     private func setUpScrollView() {
@@ -99,7 +134,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
             mainScrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             mainScrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             mainScrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            mainScrollView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+            mainScrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
         ])
         contentView.translatesAutoresizingMaskIntoConstraints = false
         mainScrollView.addSubview(contentView)
@@ -119,11 +154,11 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         mainStackView.spacing = 16
         mainStackView.alignment = .center
         mainStackView.distribution = .fill
-
+        
         NSLayoutConstraint.activate([
             mainStackView.topAnchor.constraint(equalTo: contentView.safeAreaLayoutGuide.topAnchor,constant: 30),
-            mainStackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            mainStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            mainStackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 5),
+            mainStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -5),
             mainStackView.bottomAnchor.constraint(equalTo: contentView.safeAreaLayoutGuide.bottomAnchor)
         ])
     }
@@ -136,44 +171,54 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         reviewCollectionView.dataSource = self
         reviewCollectionView.delegate = self
         reviewCollectionView.register(ReviewCell.self, forCellWithReuseIdentifier: "ReviewCell")
-//        reviewCollectionView.register(DemoCell.self, forCellWithReuseIdentifier: "DemoCell")
-
-
-
+        //        reviewCollectionView.register(DemoCell.self, forCellWithReuseIdentifier: "DemoCell")
+        
+        
+        
     }
     
     func setUpContent() {
         mainStackView.addArrangedSubview(coverImageView)
         mainStackView.addArrangedSubview(bookNameLable)
         mainStackView.addArrangedSubview(authorNameLable)
-        mainStackView.addArrangedSubview(getReadButton)
+        //        mainStackView.addArrangedSubview(getReadButton)
         let verticalSeparator1 = makeVerticalSeparator()
         mainStackView.addArrangedSubview(verticalSeparator1)
         mainStackView.addArrangedSubview(descriptionView)
         let verticalSeparator2 = makeVerticalSeparator()
         mainStackView.addArrangedSubview(verticalSeparator2)
-
-
-
+        
+        
+        
         coverImageView.translatesAutoresizingMaskIntoConstraints = false
         coverImageView.backgroundColor = AppColors.background
         coverImage.contentMode = .scaleToFill
         coverImage.layer.masksToBounds = true
-        coverImage.image = ViewHelper.getCoverImage(of: book)
+        coverImage.image = ViewHelper.getCoverImage(of: viewModel.book)
         coverImage.translatesAutoresizingMaskIntoConstraints = false
         coverImageView.addSubview(coverImage)
         
-        bookNameLable.text = book.title
+        bookNameLable.text = viewModel.book.title
         bookNameLable.textAlignment = .center
         bookNameLable.font = UIFont.boldSystemFont(ofSize: 25)
         bookNameLable.numberOfLines = 0
         bookNameLable.translatesAutoresizingMaskIntoConstraints = false
         
-        authorNameLable.text = book.author
+        authorNameLable.text = viewModel.book.author
         authorNameLable.textAlignment = .center
         authorNameLable.font = UIFont.systemFont(ofSize: 15)
         authorNameLable.numberOfLines = 0
         authorNameLable.translatesAutoresizingMaskIntoConstraints = false
+        
+        let buttonStack = UIStackView()
+        mainStackView.addArrangedSubview(buttonStack)
+        
+        buttonStack.axis = .horizontal
+        buttonStack.spacing = 12
+        buttonStack.distribution = .fill
+        buttonStack.alignment = .fill
+        buttonStack.translatesAutoresizingMaskIntoConstraints = false
+        
         
         getReadButton.setTitle("GET", for: .normal)
         getReadButton.setTitleColor(AppColors.background, for: .normal)
@@ -183,6 +228,18 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         getReadButton.layer.cornerRadius = 24
         getReadButton.layer.masksToBounds = true
         getReadButton.addTarget(self, action: #selector(getReadButtonTapped), for: .touchUpInside)
+        
+        let config = UIImage.SymbolConfiguration(pointSize: 20, weight: .medium)
+        moreButton.setImage(UIImage(systemName: "ellipsis", withConfiguration: config), for: .normal)
+        moreButton.tintColor = AppColors.title
+        moreButton.backgroundColor = .systemGray6
+        moreButton.layer.cornerRadius = 25
+        moreButton.layer.masksToBounds = true
+        moreButton.translatesAutoresizingMaskIntoConstraints = false
+        
+        buttonStack.addArrangedSubview(getReadButton)
+        buttonStack.addArrangedSubview(moreButton)
+        
         
         descriptionView.translatesAutoresizingMaskIntoConstraints = false
         descriptionView.backgroundColor = AppColors.background
@@ -194,7 +251,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         descriptionTitleLable.translatesAutoresizingMaskIntoConstraints = false
         descriptionView.addSubview(descriptionTitleLable)
         
-        descriptionContentLable.text = book.descriptionText
+        descriptionContentLable.text = viewModel.book.descriptionText
         descriptionContentLable.textAlignment = .left
         descriptionContentLable.font = UIFont.systemFont(ofSize: 12)
         descriptionContentLable.numberOfLines = 0
@@ -209,7 +266,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
             setRatingStackView()
         }
         setUpReviewCollectionView()
-
+        
         
         NSLayoutConstraint.activate([
             coverImageView.heightAnchor.constraint(equalToConstant: 440),
@@ -220,9 +277,9 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
             coverImage.widthAnchor.constraint(equalTo: coverImageView.widthAnchor, multiplier: 0.9),
             coverImage.heightAnchor.constraint(equalTo: coverImage.widthAnchor, multiplier: 3/2),
             
-            getReadButton.widthAnchor.constraint(equalTo: mainStackView.widthAnchor, multiplier: 0.9),
+            getReadButton.widthAnchor.constraint(equalTo: mainStackView.widthAnchor, multiplier: 0.7),
             getReadButton.heightAnchor.constraint(equalToConstant: 50),
-            
+            moreButton.widthAnchor.constraint(equalTo: buttonStack.heightAnchor),
             
             verticalSeparator1.widthAnchor.constraint(equalTo: mainStackView.widthAnchor, multiplier: 0.9),
             verticalSeparator1.heightAnchor.constraint(lessThanOrEqualToConstant: 50),
@@ -256,19 +313,211 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
             
         ])
     }
-
+    
     
     @objc func getReadButtonTapped() {
-        let vc = MainBookReaderViewController(book: book)
-        if let nav = navigationController {
-            nav.pushViewController(vc, animated: true)
+        if isOwned {
+            let vc = MainBookReaderViewController(book: viewModel.book)
+            if let nav = navigationController {
+                nav.pushViewController(vc, animated: true)
+            } else {
+                let nav = UINavigationController(rootViewController: vc)
+                nav.modalPresentationStyle = .fullScreen
+                present(nav, animated: true)
+            }
         } else {
-            let nav = UINavigationController(rootViewController: vc)
-            nav.modalPresentationStyle = .fullScreen
-            present(nav, animated: true)
+            switch viewModel.purchaseBook(viewModel.book) {
+            case .success(let success):
+                self.isOwned = true
+                
+                let alert = UIAlertController(
+                    title: "Book Added Successfully!",
+                    message: "Would you like to open this book now?",
+                    preferredStyle: .alert
+                )
+                
+                let cancelAction = UIAlertAction(title: "Not Now", style: .cancel, handler: nil)
+                
+                let openAction = UIAlertAction(title: "Read Now", style: .default) { [weak self] _ in
+                    
+                    self?.getReadButtonTapped()
+                }
+                
+                alert.addAction(cancelAction)
+                alert.addAction(openAction)
+                
+                present(alert, animated: true)
+            case .failure(let failure):
+                // Create the alert
+                let alert = UIAlertController(
+                    title: "Purchase Failed",
+                    message: "We couldn't add this book to your library.\nError: \(failure.localizedDescription)",
+                    preferredStyle: .alert
+                )
+                
+                // Add an "OK" button
+                let okAction = UIAlertAction(title: "OK", style: .default, handler: nil)
+                alert.addAction(okAction)
+                
+                // Present it
+                self.present(alert, animated: true)
+            }
+            
         }
     }
     
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        
+        if isBeingDismissed {
+            onDismiss?()
+        }
+    }
+    
+    //    private func setupMoreMenu() {
+    //        let collectionsMenu = UIDeferredMenuElement.uncached { [weak self] completion in
+    //            guard let self = self else { return }
+    //
+    //            let allCollections = UserSession.shared.currentUser?.collections?.allObjects as? [BookCollection] ?? []
+    //
+    //            let collectionItems = allCollections.map { collection in
+    //                UIAction(title: collection.name ?? "Untitled", image: UIImage(systemName: "folder")) { action in
+    //                    switch self.viewModel.addBook(self.viewModel.book, to: collection) {
+    //                    case .success():
+    //                        print("Adding to \(collection.name ?? "")")
+    //                    case .failure(let error):
+    //                        print(error.localizedDescription)
+    //                    }
+    //                }
+    //            }
+    //
+    //            let createNewAction = UIAction(title: "New Collection...", image: UIImage(systemName: "plus")) { action in
+    //                print("Create new collection tapped")
+    //                // self.showCreateCollectionAlert()
+    //            }
+    //
+    //            let menu = UIMenu(title: "Add to Collection", image: UIImage(systemName: "folder.badge.plus"), children: collectionItems )//+ [createNewAction])
+    //
+    //            // Pass back to the system
+    //            completion([menu])
+    //        }
+    //
+    //        let reviewAction = UIAction(title: "View Reviews", image: UIImage(systemName: "bubble.and.pencil")) { [weak self] _ in
+    //            self?.reviewsSeeallButtonTapped()
+    //        }
+    //
+    //        let wantToReadAction = UIAction(title: "Want to Read", image: UIImage(systemName: "bookmark")) { _ in
+    //            print("Want to read tapped")
+    //        }
+    //
+    //        let removeAction = UIAction(title: "Remove book", image: UIImage(systemName: "minus.circle.fill"), attributes: .destructive) { _ in
+    //            print("Report tapped")
+    //        }
+    //
+    //
+    //        let menu = UIMenu(title: "Options", children: [
+    //            UIMenu(options: .displayInline, children: [wantToReadAction, reviewAction]),
+    //            collectionsMenu, // This is our dynamic list
+    //            UIMenu(options: .displayInline, children: [removeAction])
+    //        ])
+    //
+    //        moreButton.menu = menu
+    //        moreButton.showsMenuAsPrimaryAction = true
+    //    }
+    
+    private func setupMoreMenu() {
+        
+        let collectionsMenu = UIDeferredMenuElement.uncached { [weak self] completion in
+            guard let self = self else { return }
+            
+            let allCollections = UserSession.shared.currentUser?.collections?.allObjects as? [BookCollection] ?? []
+            
+            let collectionItems = allCollections.map { collection in
+                UIAction(title: collection.name ?? "Untitled", image: UIImage(systemName: "folder")) { action in
+                    switch self.viewModel.addBook(self.viewModel.book, to: collection) {
+                    case .success():
+                        print("Adding to \(collection.name ?? "")")
+                    case .failure(let error):
+                        if error == .bookAlreadyInCollection {
+                            let alert = UIAlertController(
+                                title: "Already Added",
+                                message: "This book is already in the selected collection.",
+                                preferredStyle: .alert
+                            )
+                            alert.addAction(UIAlertAction(title: "OK", style: .default))
+                            self.present(alert, animated: true)
+                        }
+                        print("Error: \(error)")
+                    }
+                }
+            }
+            
+            let menu = UIMenu(title: "Add to Collection", image: UIImage(systemName: "folder.badge.plus"), children: collectionItems)
+            completion([menu])
+        }
+        
+        let reviewAction = UIAction(title: "View Reviews", image: UIImage(systemName: "text.bubble")) { [weak self] _ in
+            self?.reviewsSeeallButtonTapped()
+        }
+        
+        let wantToReadAction = UIAction(title: "Want to Read", image: UIImage(systemName: "bookmark")) { [weak self] _ in
+            guard let self = self else { return }
+            
+            switch self.viewModel.addBookToDefault(book: self.viewModel.book) {
+            case .success():
+                print("Adding")
+            case .failure(let error):
+                if error == .bookAlreadyInCollection {
+                    let alert = UIAlertController(
+                        title: "Already Added",
+                        message: "This book is already in the selected collection.",
+                        preferredStyle: .alert
+                    )
+                    alert.addAction(UIAlertAction(title: "OK", style: .default))
+                    self.present(alert, animated: true)
+                }
+                print("Error: \(error)")
+            }
+            print("Want to read tapped")
+        }
+        
+        var menuItems: [UIMenuElement] = [
+            UIMenu(options: .displayInline, children: [wantToReadAction, reviewAction]),
+            collectionsMenu
+        ]
+        
+        if isOwned {
+            let removeAction = UIAction(title: "Remove book", image: UIImage(systemName: "minus.circle.fill"), attributes: .destructive) { [weak self] _ in
+                guard let self = self else { return }
+                let result = self.viewModel.unpurchaseBook(self.viewModel.book)
+                switch result {
+                case .success:
+                    self.isOwned = false
+                    
+                    let alert = UIAlertController(
+                        title: "Removed",
+                        message: "This book has been removed from your library.",
+                        preferredStyle: .alert
+                    )
+                    alert.addAction(UIAlertAction(title: "OK", style: .default))
+                    self.present(alert, animated: true)
+                    
+                case .failure(let error):
+                    let alert = UIAlertController(
+                        title: "Remove Failed",
+                        message: "Could not remove book: \(error.localizedDescription)",
+                        preferredStyle: .alert
+                    )
+                    alert.addAction(UIAlertAction(title: "OK", style: .default))
+                    self.present(alert, animated: true)
+                }
+            }
+            menuItems.append(UIMenu(options: .displayInline, children: [removeAction]))
+        }
+        let menu = UIMenu(title: "Options", children: menuItems)
+        moreButton.menu = menu
+        moreButton.showsMenuAsPrimaryAction = true
+    }
     
     func setRatingStackView() {
         mainStackView.addArrangedSubview(ratingStackView)
@@ -344,7 +593,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         seeAllButton.addTarget(self, action: #selector(reviewsSeeallButtonTapped), for: .touchUpInside)
         seeAllButton.setTitleColor(AppColors.title, for: .normal)
         seeAllButton.translatesAutoresizingMaskIntoConstraints = false
-
+        
         let summaryRowStackView: UIStackView = UIStackView()
         rootStackView.addArrangedSubview(summaryRowStackView)
         summaryRowStackView.axis = .horizontal
@@ -352,12 +601,11 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         summaryRowStackView.alignment = .fill
         summaryRowStackView.spacing = 0
         summaryRowStackView.translatesAutoresizingMaskIntoConstraints = false
-        let averageRatingLable: UILabel = UILabel()
-        summaryRowStackView.addArrangedSubview(averageRatingLable)
-        averageRatingLable.text = String(book.averageRating)
-        averageRatingLable.textColor = AppColors.title
-        averageRatingLable.font = .systemFont(ofSize: 55, weight: .bold)
-
+        summaryRowStackView.addArrangedSubview(averageRatingLabel)
+        averageRatingLabel.text = String(viewModel.book.averageRating)
+        averageRatingLabel.textColor = AppColors.title
+        averageRatingLabel.font = .systemFont(ofSize: 55, weight: .bold)
+        
         
         let starProgressStack: UIStackView = UIStackView()
         summaryRowStackView.addArrangedSubview(starProgressStack)
@@ -367,7 +615,6 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         starProgressStack.spacing = 2
         starProgressStack.translatesAutoresizingMaskIntoConstraints = false
         
-        let starStack: UIStackView = UIStackView()
         starProgressStack.addArrangedSubview(starStack)
         starStack.axis = .vertical
         starStack.distribution = .equalCentering
@@ -375,8 +622,8 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         starStack.spacing = 2
         starStack.translatesAutoresizingMaskIntoConstraints = false
         setUpStarTriangle(starStack)
-    
-
+        
+        
         let footerStackView: UIStackView = UIStackView()
         rootStackView.addArrangedSubview(footerStackView)
         footerStackView.axis = .horizontal
@@ -389,79 +636,73 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         outOfLable.text = " out of 5 "
         outOfLable.textColor = AppColors.title
         outOfLable.font = .systemFont(ofSize: 20, weight: .semibold)
-        let totalRatingLable: UILabel = UILabel()
-        footerStackView.addArrangedSubview(totalRatingLable)
-        totalRatingLable.text = String(book.reviews?.count ?? 0) + " Rating"
-        totalRatingLable.textColor = AppColors.title
-        totalRatingLable.font = .systemFont(ofSize: 20, weight: .regular)
+        footerStackView.addArrangedSubview(totalRatingLabel)
+        totalRatingLabel.text = String(viewModel.book.reviews?.count ?? 0) + " Rating"
+        totalRatingLabel.textColor = AppColors.title
+        totalRatingLabel.font = .systemFont(ofSize: 20, weight: .regular)
         
     }
     
-//    func setUpStarTriangle(_ starProgressStack: UIStackView) {
-//        for i in stride(from: 5, to: 0, by: -1) {
-//            let verticalStarStack: UIStackView = UIStackView()
-//            starProgressStack.addArrangedSubview(verticalStarStack)
-//            verticalStarStack.axis = .horizontal
-//            verticalStarStack.distribution = .fill
-//            verticalStarStack.alignment = .center
-//            verticalStarStack.spacing = 0
-//            verticalStarStack.translatesAutoresizingMaskIntoConstraints = false
-//            for _ in stride(from: 0, to: 5-i, by: 1){
-//                let guide = UIView()
-//                guide.backgroundColor = .clear
-//                verticalStarStack.addArrangedSubview(guide)
-//            }
-//            for _ in stride(from: 0, to: i, by: 1) {
-//                let starIcon =  UIImageView(image: UIImage(systemName: "star.fill"))
-//                starIcon.tintColor = .lightGray
-//                starIcon.translatesAutoresizingMaskIntoConstraints = false
-//                verticalStarStack.addArrangedSubview(starIcon)
-//                NSLayoutConstraint.activate([
-//                    starIcon.widthAnchor.constraint(equalToConstant: 12),
-//                    starIcon.heightAnchor.constraint(equalToConstant: 12)
-//                ])
-//            }
-//            let progressBar = UIProgressView(progressViewStyle: .bar)
-//            verticalStarStack.addArrangedSubview(progressBar)
-//            progressBar.translatesAutoresizingMaskIntoConstraints = false
-//            progressBar.trackTintColor = .darkGray
-//            progressBar.progressTintColor = .lightGray
-//            progressBar.progress = 0.7
-//            NSLayoutConstraint.activate([
-//                progressBar.widthAnchor.constraint(equalToConstant: 200),
-//                progressBar.heightAnchor.constraint(equalToConstant: 3)
-//            ])
-//        }
-//    }
+    //    func setUpStarTriangle(_ starProgressStack: UIStackView) {
+    //        for i in stride(from: 5, to: 0, by: -1) {
+    //            let verticalStarStack: UIStackView = UIStackView()
+    //            starProgressStack.addArrangedSubview(verticalStarStack)
+    //            verticalStarStack.axis = .horizontal
+    //            verticalStarStack.distribution = .fill
+    //            verticalStarStack.alignment = .center
+    //            verticalStarStack.spacing = 0
+    //            verticalStarStack.translatesAutoresizingMaskIntoConstraints = false
+    //            for _ in stride(from: 0, to: 5-i, by: 1){
+    //                let guide = UIView()
+    //                guide.backgroundColor = .clear
+    //                verticalStarStack.addArrangedSubview(guide)
+    //            }
+    //            for _ in stride(from: 0, to: i, by: 1) {
+    //                let starIcon =  UIImageView(image: UIImage(systemName: "star.fill"))
+    //                starIcon.tintColor = .lightGray
+    //                starIcon.translatesAutoresizingMaskIntoConstraints = false
+    //                verticalStarStack.addArrangedSubview(starIcon)
+    //                NSLayoutConstraint.activate([
+    //                    starIcon.widthAnchor.constraint(equalToConstant: 12),
+    //                    starIcon.heightAnchor.constraint(equalToConstant: 12)
+    //                ])
+    //            }
+    //            let progressBar = UIProgressView(progressViewStyle: .bar)
+    //            verticalStarStack.addArrangedSubview(progressBar)
+    //            progressBar.translatesAutoresizingMaskIntoConstraints = false
+    //            progressBar.trackTintColor = .darkGray
+    //            progressBar.progressTintColor = .lightGray
+    //            progressBar.progress = 0.7
+    //            NSLayoutConstraint.activate([
+    //                progressBar.widthAnchor.constraint(equalToConstant: 200),
+    //                progressBar.heightAnchor.constraint(equalToConstant: 3)
+    //            ])
+    //        }
+    //    }
     func setUpStarTriangle(_ starStack: UIStackView) {
-        // Loop for 5 rows (5 stars down to 1 star)
         for i in stride(from: 5, to: 0, by: -1) {
             
             let rowStack: UIStackView = UIStackView()
             rowStack.axis = .horizontal
-            rowStack.distribution = .fill // Keep items at their natural size
+            rowStack.distribution = .fill
             rowStack.alignment = .center
             rowStack.spacing = 2
             rowStack.translatesAutoresizingMaskIntoConstraints = false
             
-            // 1. Add Spacers (The "Guides")
-            // We add invisible spacers so the stars align to the right side
             for _ in stride(from: 0, to: 5-i, by: 1) {
                 let guide = UIView()
                 guide.translatesAutoresizingMaskIntoConstraints = false
                 rowStack.addArrangedSubview(guide)
                 
-                // CRITICAL FIX: Give the spacer a fixed width (same as a star)
                 NSLayoutConstraint.activate([
                     guide.widthAnchor.constraint(equalToConstant: 12),
                     guide.heightAnchor.constraint(equalToConstant: 12)
                 ])
             }
             
-            // 2. Add Stars
             for _ in stride(from: 0, to: i, by: 1) {
                 let starIcon = UIImageView(image: UIImage(systemName: "star.fill"))
-                starIcon.tintColor = .lightGray // Changed to yellow for visibility
+                starIcon.tintColor = .lightGray
                 starIcon.contentMode = .scaleAspectFit
                 starIcon.translatesAutoresizingMaskIntoConstraints = false
                 rowStack.addArrangedSubview(starIcon)
@@ -472,22 +713,19 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
                 ])
             }
             
-            // 3. Add Progress Bar
             let progressBar = UIProgressView(progressViewStyle: .bar)
             progressBar.translatesAutoresizingMaskIntoConstraints = false
             progressBar.trackTintColor = .systemGray5
             progressBar.progressTintColor = .darkGray
-            progressBar.progress = 0.7 // Demo value
+            progressBar.progress = viewModel.getProgress(for: i)
             progressBar.layer.cornerRadius = 2
             progressBar.clipsToBounds = true
             
             rowStack.addArrangedSubview(progressBar)
             
-            // CRITICAL FIX: Add padding between stars and bar
             rowStack.setCustomSpacing(8, after: rowStack.arrangedSubviews[rowStack.arrangedSubviews.count - 2])
-
-            // CRITICAL FIX: Set Width Priority to 999 to prevent crashes on small screens
-            let widthConstraint = progressBar.widthAnchor.constraint(equalToConstant: 150) // Reduced slightly to be safe
+            
+            let widthConstraint = progressBar.widthAnchor.constraint(equalToConstant: 150)
             widthConstraint.priority = UILayoutPriority(999)
             
             NSLayoutConstraint.activate([
@@ -507,41 +745,41 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         otherInfoStack.spacing = 0
         otherInfoStack.translatesAutoresizingMaskIntoConstraints = false
         
-        let genreView    = makeInfoColumn(title: "Genre",    main: "", subtitle: book.genre, icon: true)
+        let genreView    = makeInfoColumn(title: "Genre",    main: "", subtitle: viewModel.book.genre, icon: true)
         let releasedView = makeInfoColumn(title: "Released", main: "2014", subtitle: "31 December")
         let languageView = makeInfoColumn(title: "Language", main: "EN",   subtitle: "English")
         let lengthView   = makeInfoColumn(title: "Length", main: "218",  subtitle: "Pages", divider: false)
-
+        
         otherInfoStack.addArrangedSubview(genreView)
         otherInfoStack.addArrangedSubview(releasedView)
         otherInfoStack.addArrangedSubview(languageView)
         otherInfoStack.addArrangedSubview(lengthView)
     }
-
+    
     func makeInfoColumn(title: String, main: String, subtitle: String?,divider: Bool = true,icon: Bool = false) -> UIView {
         let container = UIView()
         container.translatesAutoresizingMaskIntoConstraints = false
-
+        
         let v = UIStackView()
         v.axis = .vertical
         v.alignment = .center
         v.spacing = 2
         v.translatesAutoresizingMaskIntoConstraints = false
         container.addSubview(v)
-
+        
         NSLayoutConstraint.activate([
             v.topAnchor.constraint(equalTo: container.topAnchor, constant: 16),
             v.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -16),
             v.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
             v.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
         ])
-
+        
         let titleLabel = UILabel()
         titleLabel.text = title.uppercased()
         titleLabel.font = .systemFont(ofSize: 10, weight: .semibold)
         titleLabel.textColor = AppColors.subtitle
         v.addArrangedSubview(titleLabel)
-
+        
         
         if !icon {
             let mainLabel = UILabel()
@@ -561,9 +799,9 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
             ])
             v.addArrangedSubview(imageView)
         }
-
-
-
+        
+        
+        
         if let subtitle = subtitle {
             let sub = UILabel()
             sub.text = subtitle
@@ -571,7 +809,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
             sub.textColor = .label
             v.addArrangedSubview(sub)
         }
-
+        
         if divider {
             let divider = UIView()
             divider.backgroundColor = .systemGray3
@@ -583,10 +821,10 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
                 divider.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -14),
                 divider.trailingAnchor.constraint(equalTo: container.trailingAnchor)
             ])}
-
+        
         return container
     }
-
+    
     func makeVerticalSeparator(color: UIColor = .white,
                                inset: CGFloat = 0) -> UIView {
         let lineView = UIView()
@@ -600,7 +838,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
     }
     
     @objc func reviewsSeeallButtonTapped() {
-        let reviewsVC = ReviewViewController(book: book)
+        let reviewsVC = ReviewViewController(book: viewModel.book)
         if let nav = navigationController {
             nav.pushViewController(reviewsVC, animated: true)
         } else {
@@ -611,18 +849,56 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
     }
     
     @objc func starTapped(_ sender: UIButton) {
+        updateTotalRatingText()
         let selectedRating = sender.tag
-        print("Star tapped: \(selectedRating)")
-                for view in starButtonStack.arrangedSubviews {
+        let result = viewModel.submitReview(rating: selectedRating)
+        switch result {
+        case .success:
+            updateStarUI(rating: selectedRating)
+            refreshHeaderUI()
+            reviewCollectionView.reloadData()
+            
+        case .failure(let error):
+            print("Error: \(error)")
+        }
+    }
+    
+    func updateStarUI(rating: Int) {
+        for view in starButtonStack.arrangedSubviews {
             if let button = view as? UIButton {
-                button.isSelected = button.tag <= selectedRating
+                button.isSelected = button.tag <= rating
             }
         }
     }
-
-//    override func viewDidLayoutSubviews() {
-//        super.viewDidLayoutSubviews()
-//        getReadButton.layer.cornerRadius = getReadButton.bounds.height / 2
-//        getReadButton.layer.masksToBounds = true
-//    }
+    func refreshHeaderUI() {
+        averageRatingLabel.text = String(format: "%.1f", viewModel.book.averageRating)
+        updateTotalRatingText()
+        
+        starStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        
+        setUpStarTriangle(starStack)
+    }
+    
+    private func updateTotalRatingText() {
+        totalRatingLabel.text = "\(viewModel.totalReviews) Ratings"
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        viewModel.loadData()
+        reviewCollectionView.reloadData()
+        refreshHeaderUI()
+        if let existingReview = viewModel.getCurrentUserReview() {
+            let savedRating = Int(existingReview.rating)
+            updateStarUI(rating: savedRating)
+        } else {
+            updateStarUI(rating: 0)
+        }
+    }
+    
+    //    override func viewDidLayoutSubviews() {
+    //        super.viewDidLayoutSubviews()
+    //        getReadButton.layer.cornerRadius = getReadButton.bounds.height / 2
+    //        getReadButton.layer.masksToBounds = true
+    //    }
 }

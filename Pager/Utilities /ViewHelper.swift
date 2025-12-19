@@ -45,3 +45,32 @@ class ViewHelper {
         }
     }
 }
+extension UIImage {
+    static func createImageWithLabel(text: String) -> UIImage? {
+        let size = CGSize(width: 100, height: 100)
+        let renderer = UIGraphicsImageRenderer(size: size)
+        
+        return renderer.image { context in
+            let colors: [UIColor] = [.systemBlue, .systemRed, .systemGreen, .systemOrange, .systemPurple, .systemTeal, .systemIndigo]
+            let randomColor = colors.randomElement() ?? .systemGray
+            
+            randomColor.setFill()
+            context.fill(CGRect(origin: .zero, size: size))
+            
+            let attributes: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 50, weight: .bold),
+                .foregroundColor: UIColor.white
+            ]
+            
+            let textSize = text.size(withAttributes: attributes)
+            let rect = CGRect(
+                x: (size.width - textSize.width) / 2,
+                y: (size.height - textSize.height) / 2,
+                width: textSize.width,
+                height: textSize.height
+            )
+            
+            text.draw(in: rect, withAttributes: attributes)
+        }
+    }
+}

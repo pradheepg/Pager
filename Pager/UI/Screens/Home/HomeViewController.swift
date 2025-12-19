@@ -17,43 +17,74 @@ enum HomeSection {
 class HomeViewController: UIViewController, UICollectionViewDelegate {
     private let profileButton = UIButton(type: .custom)
     private var collectionView: UICollectionView!
-    
-    private var currentBook: Book?
-    private var recentBooks: [Book] = []
-    private var wantToReadBooks: [Book] = []
-    private var categories: [(name: String, books: [Book])] = []
-    var displayedSections: [HomeSection] {
-        var sections: [HomeSection] = [.currently]
-        if !recentBooks.isEmpty { sections.append(.recent) }
-        if !wantToReadBooks.isEmpty { sections.append(.wantToRead) }
-        for category in categories {
-            if !category.books.isEmpty {
-                sections.append(.category(category.name, category.books))
-            }
-        }
-        return sections
-    }
+    private let activityIndicator = UIActivityIndicatorView(style: .large)
+    //    private var currentBook: Book?
+    //    private var recentBooks: [Book] = []
+    //    private var wantToReadBooks: [Book] = []
+    //    private var categories: [(name: String, books: [Book])] = []
+    //    var displayedSections: [HomeSection] {
+    //        var sections: [HomeSection] = [.currently]
+    //        if !recentBooks.isEmpty { sections.append(.recent) }
+    //        if !wantToReadBooks.isEmpty { sections.append(.wantToRead) }
+    //        for category in categories {
+    //            if !category.books.isEmpty {
+    //                sections.append(.category(category.name, category.books))
+    //            }
+    //        }
+    //        return sections
+    //    }
+    private let viewModel = HomeViewModel()
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
         setupTitleAndProfile()
         setupCollectionView()
-        loadDemoData()
+        setupLoadingIndicator()
+        setupBindings()
+        viewModel.loadData()
+        //        loadDemoData()
     }
     
-    // MARK: - Title & Profile UI
-    private func setupTitleAndProfile() {
-        // Large Title Label
-//        titleLabel.text = "Home"
-//        titleLabel.font = UIFont.systemFont(ofSize: 40, weight: .bold)
-//        titleLabel.textAlignment = .left
-//        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+    private func setupLoadingIndicator() {
+        // Add indicator to the view, set constraints, and hide initially
+        activityIndicator.hidesWhenStopped = true
+        activityIndicator.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(activityIndicator)
         
-//         Profile Button (circle image)
+        NSLayoutConstraint.activate([
+            activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+        ])
+    }
+    
+    private func setupBindings() {
+        viewModel.onLoadingStateChanged = { [weak self] isLoading in
+            DispatchQueue.main.async {
+                if isLoading {
+                    self?.activityIndicator.startAnimating()
+                    self?.collectionView.isHidden = true
+                } else {
+                    self?.activityIndicator.stopAnimating()
+                    self?.collectionView.isHidden = false
+                }
+            }
+        }
+        viewModel.onDataUpdated = { [weak self] in
+            DispatchQueue.main.async {
+                self?.collectionView.reloadData()
+            }
+        }
+        
+        viewModel.onError = { [weak self] errorMessage in
+            DispatchQueue.main.async {
+                print("Error loading home data: \(errorMessage)")
+            }
+        }
+    }
+    
+    private func setupTitleAndProfile() {
         profileButton.setImage(UIImage(systemName: "person"), for: .normal)
         profileButton.tintColor = .label
-//        profileButton.layer.cornerRadius = 20
-//        profileButton.layer.masksToBounds = true
         profileButton.translatesAutoresizingMaskIntoConstraints = false
         profileButton.addTarget(self, action: #selector(profileButtonTapped), for: .touchUpInside)
         navigationItem.title = "Home"
@@ -62,18 +93,7 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
             navigationItem.largeTitleDisplayMode = .inline
         }
         navigationItem.rightBarButtonItem = UIBarButtonItem(customView: profileButton)
-//        view.addSubview(titleLabel)
-//        view.addSubview(profileButton)
-//        
-//        NSLayoutConstraint.activate([
-//            titleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-//            titleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
-//            
-//            profileButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-//            profileButton.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
-//            profileButton.widthAnchor.constraint(equalToConstant: 40),
-//            profileButton.heightAnchor.constraint(equalToConstant: 40),
-//        ])
+        
     }
     
     private func setupCollectionView() {
@@ -88,7 +108,7 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
         collectionView.register(EmptyCurrentCell.self, forCellWithReuseIdentifier: "EmptyCurrentCell")
         collectionView.register(SectionHeaderView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: "SectionHeaderView")
         collectionView.register(UICollectionReusableView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: "EmptyHeader")
-
+        
         
         view.addSubview(collectionView)
         NSLayoutConstraint.activate([
@@ -106,11 +126,11 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
                 let item = NSCollectionLayoutItem(layoutSize: itemSize)
                 item.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8)
                 let groupSize : NSCollectionLayoutSize
-                if self.currentBook == nil {
+                if self.viewModel.currentBook == nil {
                     groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1), heightDimension: .fractionalHeight(0.20))
                 } else {
                     groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1), heightDimension: .fractionalHeight(0.35))
-
+                    
                 }
                 let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
                 
@@ -126,45 +146,9 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
                 sectionLayout.boundarySupplementaryItems = [header]
                 return sectionLayout
             } else {
-//                let itemSize = NSCollectionLayoutSize(
-//                    widthDimension: .fractionalWidth(1),
-//                    heightDimension: .fractionalHeight(1)
-//                )
-//
-//                let item = NSCollectionLayoutItem(layoutSize: itemSize)
-//                item.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8)
-//
-//                let groupSize = NSCollectionLayoutSize(
-//                    widthDimension: .fractionalWidth(0.63),
-//                    heightDimension: .fractionalWidth(0.63 * 1.5)
-//                )
-//
-//                let group = NSCollectionLayoutGroup.horizontal(
-//                    layoutSize: groupSize,
-//                    subitems: [item]
-//                )
-//                let sectionLayout = NSCollectionLayoutSection(group: group)
-//                sectionLayout.orthogonalScrollingBehavior = .paging
-//                sectionLayout.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 30, trailing: 0)
-//                let headerSize = NSCollectionLayoutSize(
-//                    widthDimension: .fractionalWidth(1.0),
-//                    heightDimension: .absolute(40)
-//                )
-//
-//                let header = NSCollectionLayoutBoundarySupplementaryItem(
-//                    layoutSize: headerSize,
-//                    elementKind: UICollectionView.elementKindSectionHeader,
-//                    alignment: .top
-//                )
-//
-//                sectionLayout.boundarySupplementaryItems = [header]
-//
-//                return sectionLayout
                 let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1), heightDimension: .fractionalHeight(1))
                 let item = NSCollectionLayoutItem(layoutSize: itemSize)
                 item.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 5, bottom: 0, trailing: 5)
-                
-                // Adjust width (0.45) to change book card size
                 let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(0.40), heightDimension: .absolute(250))
                 let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
                 
@@ -172,13 +156,12 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
                 section.orthogonalScrollingBehavior = .continuousGroupLeadingBoundary
                 section.contentInsets = NSDirectionalEdgeInsets(top: 10, leading: 10, bottom: 30, trailing: 10)
                 
-                // Add Section Header ("Sci-Fi", "History" etc)
                 let headerSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .absolute(40))
                 let header = NSCollectionLayoutBoundarySupplementaryItem(layoutSize: headerSize, elementKind: UICollectionView.elementKindSectionHeader, alignment: .top)
                 section.boundarySupplementaryItems = [header]
                 
                 return section
-
+                
             }
         }
     }
@@ -188,39 +171,27 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
         let sampleBooks: Result<[Book], BookError> = demotemp.fetchAllBooks()
         switch sampleBooks {
         case .success(let books):
-            currentBook = books.first
-            wantToReadBooks = books
-            recentBooks = books
+            print("Helo")
+            viewModel.currentBook = books.first
+            viewModel.wantToReadBooks = books
+            viewModel.recentBooks = books
         case .failure(let error):
             print(error.localizedDescription)
             print(error)
         }
-        
-        
-//
-//        var defaultCategoryName = "cat 1"
-//
-//        categories.append((name: defaultCategoryName, books: wantToReadBooks))
-//        defaultCategoryName = "cat 2"
-//        categories.append((name: defaultCategoryName, books: wantToReadBooks))
-//        defaultCategoryName = "cat 3"
-//        categories.append((name: defaultCategoryName, books: wantToReadBooks))
-//        defaultCategoryName = "cat 4"
-//        categories.append((name: defaultCategoryName, books: wantToReadBooks))
-
         collectionView.reloadData()
-  
+        
     }
     
     @objc func profileButtonTapped() {
-        let vc = EditprofileViewController()
+        let vc = ProfileViewController()
         vc.hidesBottomBarWhenPushed = true
-
+        
         if let nav = navigationController {
             nav.pushViewController(vc, animated: true)
         } else {
             print("Profile tapped")
-
+            
         }
     }
     
@@ -240,44 +211,54 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
     
     func bookCellTapped(book: Book) {
         let vc = DetailViewController(book: book)
-//        self.navigationController?.pushViewController(vc, animated: true)
-//        let vc = DetailViewController(book: book)
+        vc.onDismiss = { [weak self] in
+            self?.handleDismissal()
+        }
         present(vc, animated: true, completion: nil)
-        print("Book '\(book.title)' tapped")
     }
     
     func seeAllTapped(section: Int,title: String, books: [Book]) {
         let vc = BookGridViewController(categoryTitle: title, books: books)
         vc.hidesBottomBarWhenPushed = true
-
+        
         self.navigationController?.pushViewController(vc, animated: true)
         print("See All tapped for section \(section)")
         
     }
     
+    func handleDismissal() {
+        if let _ = viewModel.onDataUpdated {
+            viewModel.loadData()
+        }
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        viewModel.loadData()
+    }
 }
 
 extension HomeViewController: UICollectionViewDataSource {
     func numberOfSections(in collectionView: UICollectionView) -> Int {
-        return displayedSections.count
+        return viewModel.displayedSections.count
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        let sec = displayedSections[section]
+        let sec = viewModel.displayedSections[section]
         switch sec {
         case .currently:
             return 1
         case .recent:
-            return recentBooks.count
+            return viewModel.recentBooks.count
         case .wantToRead:
-            return wantToReadBooks.count
+            return viewModel.wantToReadBooks.count
         case .category(_, let books):
             return books.count
         }
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let section = displayedSections[indexPath.section]
+        let section = viewModel.displayedSections[indexPath.section]
         switch section {
         case .currently:
             return configureCurrentCell(collectionView, indexPath: indexPath)
@@ -285,17 +266,16 @@ extension HomeViewController: UICollectionViewDataSource {
             return configureRecentCell(collectionView, indexPath: indexPath)
         case .wantToRead:
             return configureWantToReadCell(collectionView, indexPath: indexPath)
-        case .category(_, let books):
+        case .category(_, _):
             return configureCategoryCell(collectionView, indexPath: indexPath)
         }
     }
     
     func configureCurrentCell(_ collectionView: UICollectionView, indexPath: IndexPath) -> UICollectionViewCell {
-        if let book = currentBook {
+        if let book = viewModel.currentBook {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "CurrentBookCell", for: indexPath) as! CurrentBookCell
             cell.contentView.layer.cornerRadius = 12
             cell.contentView.layer.masksToBounds = true
-//            cell.contentView.backgroundColor = AppColors.secondaryBackground
             cell.configure(with: book)
             cell.moreButtonAction = { [weak self] in self?.currentBookMoreTapped() }
             return cell
@@ -309,14 +289,14 @@ extension HomeViewController: UICollectionViewDataSource {
     
     func configureRecentCell(_ collectionView: UICollectionView, indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "BookCell", for: indexPath) as! BookCell
-        let book = recentBooks[indexPath.item]
+        let book = viewModel.recentBooks[indexPath.item]
         cell.configure(with: book)
         return cell
     }
     
     func configureWantToReadCell(_ collectionView: UICollectionView, indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "BookCell", for: indexPath) as! BookCell
-        let book = wantToReadBooks[indexPath.item]
+        let book = viewModel.wantToReadBooks[indexPath.item]
         cell.configure(with: book)
         return cell
     }
@@ -324,7 +304,7 @@ extension HomeViewController: UICollectionViewDataSource {
     func configureCategoryCell(_ collectionView: UICollectionView, indexPath: IndexPath) -> UICollectionViewCell {
         let catIdx = indexPath.section - 3
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "BookCell", for: indexPath) as! BookCell
-        let book = categories[catIdx].books[indexPath.item]
+        let book = viewModel.categories[catIdx].books[indexPath.item]
         cell.configure(with: book)
         return cell
     }
@@ -335,8 +315,8 @@ extension HomeViewController: UICollectionViewDataSource {
     }
     
     func collectionView(_ collectionView: UICollectionView,
-                       viewForSupplementaryElementOfKind kind: String,
-                       at indexPath: IndexPath) -> UICollectionReusableView {
+                        viewForSupplementaryElementOfKind kind: String,
+                        at indexPath: IndexPath) -> UICollectionReusableView {
         if kind == UICollectionView.elementKindSectionHeader {
             let header = collectionView.dequeueReusableSupplementaryView(
                 ofKind: kind,
@@ -345,10 +325,10 @@ extension HomeViewController: UICollectionViewDataSource {
             
             var title = ""
             var books: [Book] = []
-            switch displayedSections[indexPath.section] {
+            switch viewModel.displayedSections[indexPath.section] {
             case .currently:
                 header.seeAllButton.isHidden = true
-                if currentBook == nil {
+                if viewModel.currentBook == nil {
                     title = ""
                 }
                 else {
@@ -357,15 +337,15 @@ extension HomeViewController: UICollectionViewDataSource {
             case .recent:
                 header.seeAllButton.isHidden = false
                 title = "Recent"
-                books = recentBooks
+                books = viewModel.recentBooks
             case .wantToRead:
                 header.seeAllButton.isHidden = false
-
+                
                 title = "Want to Read"
-                books = wantToReadBooks
+                books = viewModel.wantToReadBooks
             case .category(let name, let bookList):
                 header.seeAllButton.isHidden = false
-
+                
                 title = name
                 books = bookList
             }
@@ -373,17 +353,110 @@ extension HomeViewController: UICollectionViewDataSource {
             header.sectionIndex = indexPath.section
             header.title = title
             header.books = books
-
+            
             header.seeAllAction = { [weak self] in
                 self?.seeAllTapped(section: indexPath.section, title: title, books: books)
             }
-
+            
             return header
         } else {
             return UICollectionReusableView()
         }
     }
-
+    
+    func collectionView(_ collectionView: UICollectionView, contextMenuConfigurationForItemAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
+        
+        return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
+            guard let self = self else { return nil }
+            
+            // 1. Identify the correct book based on the section
+            let section = self.viewModel.displayedSections[indexPath.section]
+            var selectedBook: Book?
+            
+            switch section {
+            case .currently:
+                // If it's the empty placeholder, don't show a menu
+                guard let book = self.viewModel.currentBook else { return nil }
+                selectedBook = book
+                
+            case .recent:
+                selectedBook = self.viewModel.recentBooks[indexPath.item]
+                
+            case .wantToRead:
+                selectedBook = self.viewModel.wantToReadBooks[indexPath.item]
+                
+            case .category(_, let books):
+                selectedBook = books[indexPath.item]
+            }
+            
+            // Ensure we actually found a book before creating the menu
+            guard let book = selectedBook else { return nil }
+            
+            // 2. Define Actions
+            let detailsAction = UIAction(title: "View Details", image: UIImage(systemName: "info.circle")) { _ in
+                let vc = DetailViewController(book: book)
+                self.present(vc, animated: true, completion: nil)
+            }
+            
+            let wantToReadAction = UIAction(title: "Add to Want to Read", image: UIImage(systemName: "bookmark")) { _ in
+                print("adlhja")
+                switch self.viewModel.addBookToDefault(book: book)  {
+                case .success():
+                    print("Adding")
+                case .failure(let error):
+                    if error == .bookAlreadyInCollection {
+                        let alert = UIAlertController(
+                            title: "Already Added",
+                            message: "This book is already in the selected collection.",
+                            preferredStyle: .alert
+                        )
+                        alert.addAction(UIAlertAction(title: "OK", style: .default))
+                        self.present(alert, animated: true)
+                    }
+                    print("Error: \(error)")
+                }
+                
+            }
+            
+            // 3. Collection Menu (Cleaned up)
+            let allCollections = UserSession.shared.currentUser?.collections?.allObjects as? [BookCollection] ?? []
+            
+            let collectionItems = allCollections.map { collection in
+                UIAction(title: collection.name ?? "Untitled", image: UIImage(systemName: "folder")) { _ in
+                    // Add your logic here
+                    print("Adding \(book.title ?? "") to collection: \(collection.name ?? "")")
+                    switch self.viewModel.addBook(book, to: collection) {
+                    case .success():
+                        print("Adding")
+                    case .failure(let error):
+                        if error == .bookAlreadyInCollection {
+                            let alert = UIAlertController(
+                                title: "Already Added",
+                                message: "This book is already in the selected collection.",
+                                preferredStyle: .alert
+                            )
+                            alert.addAction(UIAlertAction(title: "OK", style: .default))
+                            self.present(alert, animated: true)
+                        }
+                        print("Error: \(error)")
+                    }
+                }
+            }
+            
+            let addToCollectionMenu = UIMenu(
+                title: "Add to Collection",
+                image: UIImage(systemName: "folder.badge.plus"),
+                children: collectionItems
+            )
+            
+            // 4. Final Menu Construction
+            return UIMenu(title: "", children: [
+                UIMenu(options: .displayInline, children: [detailsAction]),
+                UIMenu(options: .displayInline, children: [wantToReadAction, addToCollectionMenu])
+            ])
+        }
+    }
+    
 }
 class SectionHeaderView: UICollectionReusableView {
     let titleLabel = UILabel()
@@ -393,10 +466,10 @@ class SectionHeaderView: UICollectionReusableView {
     var title: String = ""
     var books: [Book] = []
     var seeAllAction: (() -> Void)?
-
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
-
+        
         separatorView.backgroundColor = .systemGray4
         addSubview(separatorView)
         separatorView.translatesAutoresizingMaskIntoConstraints = false
@@ -406,31 +479,31 @@ class SectionHeaderView: UICollectionReusableView {
             separatorView.topAnchor.constraint(equalTo: topAnchor),
             separatorView.heightAnchor.constraint(equalToConstant: 1)
         ])
-
+        
         titleLabel.font = .boldSystemFont(ofSize: 20)
         titleLabel.textAlignment = .left
         addSubview(titleLabel)
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
-
+        
         seeAllButton.setTitle("See All", for: .normal)
         seeAllButton.setTitleColor(.systemBlue, for: .normal)
         seeAllButton.titleLabel?.font = .systemFont(ofSize: 15, weight: .regular)
         addSubview(seeAllButton)
         seeAllButton.translatesAutoresizingMaskIntoConstraints = false
         seeAllButton.addTarget(self, action: #selector(didTapSeeAll), for: .touchUpInside)
-
+        
         // Layout: horizontal, padded
         NSLayoutConstraint.activate([
             titleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
             titleLabel.centerYAnchor.constraint(equalTo: centerYAnchor),
             titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: seeAllButton.leadingAnchor, constant: -8),
-
+            
             seeAllButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
             seeAllButton.centerYAnchor.constraint(equalTo: centerYAnchor)
         ])
     }
     required init?(coder: NSCoder) { fatalError() }
-
+    
     @objc private func didTapSeeAll() {
         seeAllAction?()
     }
@@ -439,17 +512,17 @@ extension HomeViewController {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         switch indexPath.section {
         case 0:
-            if let book = currentBook {
+            if let book = viewModel.currentBook {
                 bookCellTapped(book: book)
             }
         case 1:
-            let book = recentBooks[indexPath.item]
+            let book = viewModel.recentBooks[indexPath.item]
             bookCellTapped(book: book)
         case 2:
-            let book = wantToReadBooks[indexPath.item]
+            let book = viewModel.wantToReadBooks[indexPath.item]
             bookCellTapped(book: book)
         default:
-            let book = categories[indexPath.section - 3].books[indexPath.item]
+            let book = viewModel.categories[indexPath.section - 3].books[indexPath.item]
             bookCellTapped(book: book)
         }
     }

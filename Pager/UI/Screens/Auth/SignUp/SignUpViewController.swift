@@ -17,8 +17,8 @@ class SignUpViewController: UIViewController, UITextFieldDelegate, UITextViewDel
     private let emailField = UITextField()
     private let passwordField = UITextField()
     private let confirmPasswordField = UITextField()
-    private let genreLabel = UILabel()
-    private let genreTextView = UITextView()
+    private let warningLabel = UILabel()
+//    private let genreTextView = UITextView()
     private let signUpButton = UIButton(type: .system)
     private let loginPromptLabel = UILabel()
     private let loginLabel = UILabel()
@@ -70,38 +70,38 @@ class SignUpViewController: UIViewController, UITextFieldDelegate, UITextViewDel
         subtitleLabel.textColor = AppColors.subtitle
         subtitleLabel.textAlignment = .center
 
-        nameField.placeholder = "Full Name"
+        nameField.placeholder = "Name\u{002A}"
         nameField.autocapitalizationType = .words
         styleTextField(nameField)
         
-        emailField.placeholder = "Email Address"
+        emailField.placeholder = "Email\u{002A}"
         emailField.keyboardType = .emailAddress
         emailField.autocapitalizationType = .none
         styleTextField(emailField)
         
-        passwordField.placeholder = "Password"
+        passwordField.placeholder = "Password\u{002A}"
         passwordField.isSecureTextEntry = true
         styleTextField(passwordField)
         
-        confirmPasswordField.placeholder = "Confirm Password"
+        confirmPasswordField.placeholder = "Confirm Password\u{002A}"
         confirmPasswordField.isSecureTextEntry = true
         styleTextField(confirmPasswordField)
         
-        genreLabel.text = "Favorite Genre"
-        genreLabel.font = UIFont.systemFont(ofSize: 16)
-        genreLabel.textColor = AppColors.subtitle
+        warningLabel.text = "Password must be at least 6 characters long"
+        warningLabel.font = UIFont.systemFont(ofSize: 12)
+        warningLabel.textColor = .systemRed
         
-        genreTextView.backgroundColor = AppColors.textFieldBackground
-        genreTextView.textColor = AppColors.title
-        genreTextView.font = UIFont.systemFont(ofSize: 17)
-        genreTextView.layer.cornerRadius = 8
-        genreTextView.layer.masksToBounds = true
-        genreTextView.textContainerInset = UIEdgeInsets(top: 10, left: 8, bottom: 10, right: 8)
-        genreTextView.isScrollEnabled = false
-        genreTextView.text = ""
-        genreTextView.delegate = self
-        genreTextView.layer.borderWidth = 1
-        genreTextView.layer.borderColor = AppColors.buttonBorder.cgColor
+//        genreTextView.backgroundColor = AppColors.textFieldBackground
+//        genreTextView.textColor = AppColors.title
+//        genreTextView.font = UIFont.systemFont(ofSize: 17)
+//        genreTextView.layer.cornerRadius = 8
+//        genreTextView.layer.masksToBounds = true
+//        genreTextView.textContainerInset = UIEdgeInsets(top: 10, left: 8, bottom: 10, right: 8)
+//        genreTextView.isScrollEnabled = false
+//        genreTextView.text = ""
+//        genreTextView.delegate = self
+//        genreTextView.layer.borderWidth = 1
+//        genreTextView.layer.borderColor = AppColors.buttonBorder.cgColor
 
         signUpButton.setTitle("Sign Up", for: .normal)
         signUpButton.backgroundColor = AppColors.disableButton
@@ -127,7 +127,7 @@ class SignUpViewController: UIViewController, UITextFieldDelegate, UITextViewDel
         let tap = UITapGestureRecognizer(target: self, action: #selector(loginTapped))
         loginLabel.addGestureRecognizer(tap)
                 
-        [titleLabel, subtitleLabel, nameField, emailField, passwordField, confirmPasswordField, genreLabel, genreTextView, signUpButton].forEach {
+        [titleLabel, subtitleLabel, nameField, emailField, passwordField, confirmPasswordField, warningLabel, signUpButton].forEach {
             stackView.addArrangedSubview($0)
             $0.translatesAutoresizingMaskIntoConstraints = false
             if $0 is UITextField || $0 is UIButton {
@@ -139,9 +139,10 @@ class SignUpViewController: UIViewController, UITextFieldDelegate, UITextViewDel
                 $0.heightAnchor.constraint(equalToConstant: 48).isActive = true
             }
         }
-        
+        stackView.setCustomSpacing(4,  after: confirmPasswordField)
         contentView.addSubview(stackView)
         stackView.translatesAutoresizingMaskIntoConstraints = false
+//        genreLabel.translatesAutoresizingMaskIntoConstraints = false
         setupTabGesture()
     }
     
@@ -150,7 +151,11 @@ class SignUpViewController: UIViewController, UITextFieldDelegate, UITextViewDel
             stackView.topAnchor.constraint(equalTo: contentView.safeAreaLayoutGuide.topAnchor, constant: 48),
             stackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 24),
             stackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
-            stackView.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor)
+            stackView.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor),
+            
+            
+            
+//            genreLabel.leadingAnchor.constraint(equalTo: stackView.leadingAnchor, constant: 50),
         ])
     }
     
@@ -226,19 +231,19 @@ class SignUpViewController: UIViewController, UITextFieldDelegate, UITextViewDel
         guard let confirmPassword = confirmPasswordField.text, confirmPassword == password else {
             showAlert("Passwords do not match"); return
         }
-        guard let genre = genreTextView.text, !genre.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            showAlert("Please enter your favorite genre"); return
-        }
-        print("Sign up details:", name, email, password, genre)
-        viewModel.signUp(name: name, email: email, password: password, confirmPassword: confirmPassword, genre: genre)
+//        guard let genre = genreTextView.text, !genre.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+//            showAlert("Please enter your favorite genre"); return
+//        }
+        print("Sign up details:", name, email, password)
+        viewModel.signUp(name: name, email: email, password: password, confirmPassword: confirmPassword, genre: nil)
     }
     
     @objc private func validateTextField() {
         let isValid = !(emailField.text?.isEmpty ?? true) &&
         !(nameField.text?.isEmpty ?? true) &&
         !(passwordField.text?.isEmpty ?? true) &&
-        !(confirmPasswordField.text?.isEmpty ?? true) &&
-        !(genreTextView.text?.isEmpty ?? true)
+        !(confirmPasswordField.text?.isEmpty ?? true) //&&
+//        !(genreTextView.text?.isEmpty ?? true)
         
         signUpButton.isEnabled = isValid
         if isValid {
@@ -306,14 +311,23 @@ class SignUpViewController: UIViewController, UITextFieldDelegate, UITextViewDel
         }
     }
     
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        
+        if textField == nameField {
+            emailField.becomeFirstResponder()
+        } else if textField == emailField {
+            passwordField.becomeFirstResponder()
+        } else if textField == passwordField {
+            confirmPasswordField.becomeFirstResponder()
+        } else if textField == confirmPasswordField {
+            textField.resignFirstResponder()
+        }
+        
+        return true
+    }
+    
     deinit {
         NotificationCenter.default.removeObserver(self)
     }
 }
-//Optional
-//
-//extension SignUpViewController: UITextViewDelegate {
-//    func textViewDidChange(_ textView: UITextView) {
-//        // Optional live validation or updates
-//    }
-//}
+

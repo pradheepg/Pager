@@ -11,7 +11,6 @@ enum BookSortOption: String, CaseIterable {
     case title = "Title"
     case author = "Author"
     case dateAdded = "Date Added"
-    case manual = "Manually"
     
     var displayTitle: String {
         return self.rawValue
@@ -29,15 +28,15 @@ enum SortOrder: String, CaseIterable {
     var iconName: String {
         switch self {
         case .ascending: return "chart.bar.xaxis.ascending"
-        case .descending: return "arrow.up"
+        case .descending: return "chart.bar.xaxis.descending"
         }
     }
 }
 
 class MyBooksViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate {
 
+    let viewModel: MyBooksViewModel
     private let collectionView: UICollectionView
-    private let books: [Book]
     private let sortLable: UILabel = {
         let label = UILabel()
         label.text = "Sort"
@@ -46,7 +45,7 @@ class MyBooksViewController: UIViewController, UICollectionViewDataSource, UICol
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
-
+    var didFinishTask: (() -> Void)?
     private let sortStack: UIStackView = {
         let stack = UIStackView()
         stack.axis = .horizontal
@@ -58,7 +57,7 @@ class MyBooksViewController: UIViewController, UICollectionViewDataSource, UICol
     }()
     private lazy var sortButton: UIButton = {
         var config = UIButton.Configuration.plain()
-        config.title = currentSortTitle.displayTitle
+        config.title = viewModel.currentSortOption.displayTitle
         config.image = UIImage(systemName: "chevron.down")
         config.imagePlacement = .trailing
         config.imagePadding = 4
@@ -79,11 +78,12 @@ class MyBooksViewController: UIViewController, UICollectionViewDataSource, UICol
         
         return button
     }()
-    private var currentSortTitle: BookSortOption = .lastOpened
-    private var isAscending: SortOrder = .ascending
+    
+//    private var currentSortTitle: BookSortOption = .lastOpened
+//    private var isAscending: SortOrder = .ascending
     
     init(books: [Book]) {
-        self.books = books
+        self.viewModel = MyBooksViewModel(books: books)
         let layout = MyBooksViewController.createCompositionalLayout()
         collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         
@@ -95,23 +95,36 @@ class MyBooksViewController: UIViewController, UICollectionViewDataSource, UICol
         view.backgroundColor = AppColors.background
         setupSortStack()
         setUpCollectionView()
-    }
+        
+        viewModel.onDataUpdated = { [weak self] in
+            self?.collectionView.reloadData()
 
+        }
+    }
+    
+    func update(books: [Book]) {
+        viewModel.books = books
+        collectionView.reloadData()
+        viewModel.applySort()
+    }
+    
     func setupSortStack() {
-        let lastOpened = UIAction(title: BookSortOption.lastOpened.displayTitle, state: currentSortTitle == .lastOpened ? .on : .off) { [weak self] _ in
+        let sortOption = viewModel.currentSortOption
+        let lastOpened = UIAction(title: BookSortOption.lastOpened.displayTitle, state: sortOption == .lastOpened ? .on : .off) { [weak self] _ in
             self?.handleSortChange(sortOption: .lastOpened) }
-        let title = UIAction(title: BookSortOption.title.displayTitle, state: currentSortTitle == .title ? .on : .off) { [weak self] _ in
+        let title = UIAction(title: BookSortOption.title.displayTitle, state: sortOption == .title ? .on : .off) { [weak self] _ in
             self?.handleSortChange(sortOption: .title) }
-        let author = UIAction(title: BookSortOption.author.displayTitle, state: currentSortTitle == .author ? .on : .off) { [weak self] _ in
+        let author = UIAction(title: BookSortOption.author.displayTitle, state: sortOption == .author ? .on : .off) { [weak self] _ in
             self?.handleSortChange(sortOption: .author) }
-        let dateAdded = UIAction(title: BookSortOption.dateAdded.displayTitle, state: currentSortTitle == .dateAdded ? .on : .off) { [weak self] _ in
+        let dateAdded = UIAction(title: BookSortOption.dateAdded.displayTitle, state: sortOption == .dateAdded ? .on : .off) { [weak self] _ in
             self?.handleSortChange(sortOption: .dateAdded) }
         
         let sortSection = UIMenu(title: "Sort By", options: .displayInline, children: [lastOpened, title, author, dateAdded])
         
+        let sortOrder = viewModel.currentSortOrder
         
-        let ascending = UIAction(title: SortOrder.ascending.displayTitle, image: UIImage(systemName: SortOrder.ascending.iconName), state: isAscending == SortOrder.ascending ? .on : .off) { [weak self]  _ in self?.handleOrderChange(sortOrder: .ascending) }
-        let descending = UIAction(title: SortOrder.descending.displayTitle, image: UIImage(systemName: SortOrder.descending.iconName), state: isAscending == SortOrder.descending ? .on : .off) { [weak self]  _ in self?.handleOrderChange(sortOrder: .descending) }
+        let ascending = UIAction(title: SortOrder.ascending.displayTitle, image: UIImage(systemName: SortOrder.ascending.iconName), state: sortOrder == SortOrder.ascending ? .on : .off) { [weak self]  _ in self?.handleOrderChange(sortOrder: .ascending) }
+        let descending = UIAction(title: SortOrder.descending.displayTitle, image: UIImage(systemName: SortOrder.descending.iconName), state: sortOrder == SortOrder.descending ? .on : .off) { [weak self]  _ in self?.handleOrderChange(sortOrder: .descending) }
         
         let viewSection = UIMenu(title: "Order", options: .displayInline, children: [ascending, descending])
         
@@ -129,7 +142,8 @@ class MyBooksViewController: UIViewController, UICollectionViewDataSource, UICol
         ])
     }
     func handleSortChange(sortOption: BookSortOption) {
-        currentSortTitle = sortOption
+        viewModel.didSelectSortOption(sortOption)
+//        currentSortTitle = sortOption
         print(sortButton.titleLabel)
         var config = sortButton.configuration
         
@@ -143,7 +157,8 @@ class MyBooksViewController: UIViewController, UICollectionViewDataSource, UICol
     }
     
     func handleOrderChange(sortOrder: SortOrder) {
-        isAscending = sortOrder
+//        isAscending = sortOrder
+        viewModel.didSelectSortOrder(sortOrder)
         setupSortStack()
         
         // TODO: Call your reordering logic here
@@ -191,7 +206,7 @@ class MyBooksViewController: UIViewController, UICollectionViewDataSource, UICol
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return books.count
+        return viewModel.books.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
@@ -199,13 +214,16 @@ class MyBooksViewController: UIViewController, UICollectionViewDataSource, UICol
         cell.contentView.layer.cornerRadius = 12
         cell.contentView.layer.masksToBounds = true
         //        cell.contentView.backgroundColor = AppColors.secondaryBackground
-        cell.configure(with: books[indexPath.item])
+        cell.configure(with: viewModel.books[indexPath.item])
         return cell
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        let book = books[indexPath.item]
+        let book = viewModel.books[indexPath.item]
         let vc = DetailViewController(book: book)
+        vc.onDismiss = { [weak self] in
+                    self?.didFinishTask?()
+                }
         present(vc, animated: true, completion: .none)
         print("Tapped book:", book.bookId)
     }

@@ -29,7 +29,7 @@ class CurrentBookCell: UICollectionViewCell {
         contentView.addSubview(titleLabel)
         contentView.addSubview(authorLablel)
         contentView.addSubview(progressLabel)
-        contentView.addSubview(moreButton)
+//        contentView.addSubview(moreButton)
         backgroundImageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.translatesAutoresizingMaskIntoConstraints = false
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -37,8 +37,8 @@ class CurrentBookCell: UICollectionViewCell {
         progressLabel.translatesAutoresizingMaskIntoConstraints = false
         moreButton.translatesAutoresizingMaskIntoConstraints = false
         titleLabel.font = .systemFont(ofSize: 20)
-        titleLabel.numberOfLines = 0
-        titleLabel.lineBreakMode = .byWordWrapping
+        titleLabel.numberOfLines = 1
+        titleLabel.lineBreakMode = .byClipping
         titleLabel.textColor = .white
         authorLablel.font = .systemFont(ofSize: 14)
         authorLablel.numberOfLines = 0
@@ -46,9 +46,20 @@ class CurrentBookCell: UICollectionViewCell {
         authorLablel.textColor = .white
         progressLabel.font = .systemFont(ofSize: 14)
         progressLabel.textColor = .white
-        moreButton.setTitle("...", for: .normal)
-        moreButton.contentHorizontalAlignment = .left
-        moreButton.addTarget(self, action: #selector(moreTapped), for: .touchUpInside)
+//        moreButton.setTitle("...", for: .normal)
+//        moreButton.contentHorizontalAlignment = .left
+//        moreButton.addTarget(self, action: #selector(moreTapped), for: .touchUpInside)
+        let config = UIImage.SymbolConfiguration(pointSize: 20, weight: .bold) // Bigger size
+                moreButton.setImage(UIImage(systemName: "ellipsis", withConfiguration: config), for: .normal)
+                moreButton.tintColor = .white
+                
+                // 2. Remove text alignment, images center by default which is good
+                 moreButton.contentHorizontalAlignment = .left
+                
+                moreButton.addTarget(self, action: #selector(moreTapped), for: .touchUpInside)
+        setupMoreMenu()
+        contentView.layer.cornerRadius = 12
+        contentView.layer.masksToBounds = true
         NSLayoutConstraint.activate([
             
             backgroundImageView.topAnchor.constraint(equalTo: contentView.topAnchor),
@@ -57,52 +68,110 @@ class CurrentBookCell: UICollectionViewCell {
             backgroundImageView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
             
             
-            // Book cover: fixed aspect ratio (2:3, width:height)
             imageView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 10),
             imageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 10),
             imageView.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -10),
             
-            // Aspect ratio constraint (width : height = 2 : 3)
             imageView.widthAnchor.constraint(equalTo: imageView.heightAnchor, multiplier: 2.0/3.0),
             
-            // Title next to book cover
             titleLabel.topAnchor.constraint(equalTo: imageView.topAnchor,constant: 20),
             titleLabel.leadingAnchor.constraint(equalTo: imageView.trailingAnchor, constant: 12),
             titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -10),
             
-            //Author
             authorLablel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 6),
             authorLablel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
             authorLablel.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor),
             
-            // Progress below title
             progressLabel.topAnchor.constraint(equalTo: authorLablel.bottomAnchor, constant: 6),
             progressLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
             progressLabel.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor),
             
             // More button below progress
-            moreButton.topAnchor.constraint(equalTo: progressLabel.bottomAnchor, constant: 10),
-            moreButton.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
-            moreButton.trailingAnchor.constraint(lessThanOrEqualTo: titleLabel.trailingAnchor),
-            moreButton.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -10)
+//            moreButton.topAnchor.constraint(equalTo: progressLabel.bottomAnchor),
+//            moreButton.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
+//             moreButton.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -10), // Optional if button is last element
+//            
+//            // 3. Force a larger touch area (44x44 minimum)
+//            moreButton.heightAnchor.constraint(equalToConstant: 44),
+//            moreButton.widthAnchor.constraint(equalToConstant: 44)
         ])
-
+        
     }
     required init?(coder: NSCoder) { fatalError() }
-    func configure(with book: Book) {
+    private func setupMoreMenu() {
+
+        let collectionsMenu = UIDeferredMenuElement.uncached { [weak self] completion in
+            guard let self = self else { return }
+            
+            // Fetch Collections from your UserSession
+            let allCollections = UserSession.shared.currentUser?.collections?.allObjects as? [BookCollection] ?? []
+            
+            // Create an Action for each collection
+            let collectionItems = allCollections.map { collection in
+                UIAction(title: collection.name ?? "Untitled", image: UIImage(systemName: "folder")) { action in
+                    // Logic to add book to this collection
+                    print("Adding to \(collection.name ?? "")")
+                    // self.viewModel.addBook(self.book, to: collection)
+                }
+            }
+            
+            // Add a "Create New" option at the end
+            let createNewAction = UIAction(title: "New Collection...", image: UIImage(systemName: "plus")) { action in
+                print("Create new collection tapped")
+                // self.showCreateCollectionAlert()
+            }
+            
+            // Combine them into a menu
+            let menu = UIMenu(title: "Add to Collection", image: UIImage(systemName: "folder.badge.plus"), children: collectionItems + [createNewAction])
+            
+            // Pass back to the system
+            completion([menu])
+        }
+        
+        // 2. Create Standard Actions
+        let reviewAction = UIAction(title: "View Reviews", image: UIImage(systemName: "square.and.arrow.up")) { [weak self] _ in
+            //            self?.shareBook()
+        }
+        
+        let wantToReadAction = UIAction(title: "Want to Read", image: UIImage(systemName: "bookmark")) { _ in
+            print("Want to read tapped")
+        }
+        
+        let removeAction = UIAction(title: "Remove book", image: UIImage(systemName: "minus.circle.fill"), attributes: .destructive) { _ in
+            print("Report tapped")
+        }
+        
+        // 3. Assemble the Final Menu
+        // We group them: Main actions first, then the dynamic collection list, then feedback/report
+        let menu = UIMenu(title: "Options", children: [
+            UIMenu(options: .displayInline, children: [wantToReadAction, reviewAction]),
+            collectionsMenu, // This is our dynamic list
+            UIMenu(options: .displayInline, children: [removeAction])
+        ])
+        
+        // 4. Attach to the button
+        moreButton.menu = menu
+        moreButton.showsMenuAsPrimaryAction = true
+    }
+    func configure(with book: Book, isProgressHide: Bool = false) {
         backgroundImageView.image = ViewHelper.getCoverImage(of: book)
         imageView.image = backgroundImageView.image//ViewHelper.getCoverImage(of: book)
         titleLabel.text = book.title
         authorLablel.text = book.author
-        var progress = 0
+        var progress:Float = 0
         if let userBookRecords = UserSession.shared.currentUser?.owned as? Set<UserBookRecord> {
             for record in userBookRecords {
                 if record.book == book {
-                    progress = Int(record.progressValue)
+                    print(record.progressValue, record.totalPages)
+                    if record.progressValue > 0 && record.totalPages > 0 {
+                        progress = Float(record.progressValue) / Float(record.totalPages) * 100
+                        print(progress)
+                    }
                 }
             }
         }
-        progressLabel.text = "\(progress)%"
+        progressLabel.text = "\(String(format: "%.1f", progress))%"
+        progressLabel.isHidden = isProgressHide
     }
 
     @objc private func moreTapped() { moreButtonAction?() }

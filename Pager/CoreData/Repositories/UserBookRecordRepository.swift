@@ -24,25 +24,19 @@ final class UserBookRecordRepository {
         self.context = context
     }
 
-    func createRecord(for bookId: UUID, user: User) -> Result<UserBookRecord, UserBookRecordError> {
-        let bookRequest: NSFetchRequest<Book> = Book.fetchRequest()
-        bookRequest.predicate = NSPredicate(format: "bookId == %@", bookId as CVarArg)
+    func createRecord(for book: Book, user: User) -> Result<Void, UserBookRecordError> {
 
         do {
-            guard let book = try context.fetch(bookRequest).first else {
-                return .failure(.notFound)
-            }
-
             let record = UserBookRecord(context: context)
             record.userBookRecordId = UUID()
             record.book = book
             record.ownedBy = user
-//            record.pruchaseData = Date()
+            record.pruchaseDate = Date()
             record.progressValue = 0
             record.lastOpened = Date()
 
             try context.save()
-            return .success(record)
+            return .success(())
 
         } catch {
             return .failure(.creationFailed)
@@ -54,6 +48,25 @@ final class UserBookRecordRepository {
         request.predicate = NSPredicate(
             format: "book.bookId == %@ AND ownedBy == %@",
             bookId as CVarArg,
+            user
+        )
+
+        do {
+            guard let record = try context.fetch(request).first else {
+                return .failure(.notFound)
+            }
+            return .success(record)
+        } catch {
+            return .failure(.coreDataError(error))
+        }
+    }
+    
+    func getRecord(for book: Book, user: User) -> Result<UserBookRecord, UserBookRecordError> {
+        let request: NSFetchRequest<UserBookRecord> = UserBookRecord.fetchRequest()
+        
+        request.predicate = NSPredicate(
+            format: "book == %@ AND ownedBy == %@",
+            book,
             user
         )
 
@@ -96,7 +109,7 @@ final class UserBookRecordRepository {
             return .failure(err)
 
         case .success(let record):
-            record.progressValue = Int16(clamped)
+            record.progressValue = Int64(clamped)
             record.lastOpened = Date()
 
             do {
@@ -126,8 +139,8 @@ final class UserBookRecordRepository {
     }
 
 
-    func deleteRecord(bookId: UUID, user: User) -> Result<Void, UserBookRecordError> {
-        switch getRecord(for: bookId, user: user) {
+    func deleteRecord(book: Book, user: User) -> Result<Void, UserBookRecordError> {
+        switch getRecord(for: book, user: user) {
         case .failure(let err):
             return .failure(err)
 
@@ -160,6 +173,29 @@ final class UserBookRecordRepository {
             } catch {
                 return .failure(.updateFailed)
             }
+        }
+    }
+    
+    //may not need but check before removing
+    func fetchUserBookRecords(for userId: User) async -> Result<[UserBookRecord], UserBookRecordError> {
+        let context = CoreDataManager.shared.context
+        userId.owned?.allObjects
+        do {
+            let records = try await context.perform {
+                let request: NSFetchRequest<UserBookRecord> = UserBookRecord.fetchRequest()
+                
+                request.predicate = NSPredicate(format: "userId == %@", userId as CVarArg)
+                
+                let sortDescriptor = NSSortDescriptor(key: "lastOpenedDate", ascending: true)
+                request.sortDescriptors = [sortDescriptor]
+                
+                return try context.fetch(request)
+            }
+            
+            return .success(records)
+            
+        } catch {
+            return .failure(.coreDataError(error))
         }
     }
 }

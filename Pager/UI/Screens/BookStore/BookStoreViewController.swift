@@ -292,22 +292,19 @@ import UIKit
 
 class BookStoreViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate {
 
-    // MARK: - Sections Enum (Clean Architecture)
-    enum SectionType: Int, CaseIterable {
+     enum SectionType: Int, CaseIterable {
         case hero = 0
         case categories = 1
-        case books = 2 // This represents section index 2 and onwards
+        case books = 2
     }
 
-    // MARK: - Data
-private    var featuredBook: Book?
-    private var popularBook: [Book] = []
-    private var categories: [(name: String, books: [Book])] = []
-    
-    // MARK: - UI
-    private var collectionView: UICollectionView!
 
-    // MARK: - Lifecycle
+    
+    private var collectionView: UICollectionView!
+    private let activityIndicator = UIActivityIndicatorView(style: .large)
+
+    private let viewModel = BookStoreViewModel()
+    
     init() {
         super.init(nibName: nil, bundle: nil)
     }
@@ -325,28 +322,56 @@ private    var featuredBook: Book?
             navigationItem.largeTitleDisplayMode = .inline
         }
         setupCollectionView()
-        loadDemoData()
+        setupLoadingIndicator()
+        setupBindings()
+        viewModel.loadData()
+    }
+    private func setupLoadingIndicator() {
+        // Add indicator to the view, set constraints, and hide initially
+        activityIndicator.hidesWhenStopped = true
+        activityIndicator.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(activityIndicator)
+        
+        NSLayoutConstraint.activate([
+            activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+        ])
     }
     
-    // MARK: - Setup Collection View
+    private func setupBindings() {
+        viewModel.onLoadingStateChanged = { [weak self] isLoading in
+            DispatchQueue.main.async {
+                if isLoading {
+                    self?.activityIndicator.startAnimating()
+                    self?.collectionView.isHidden = true
+                } else {
+                    self?.activityIndicator.stopAnimating()
+                    self?.collectionView.isHidden = false
+                }
+            }
+        }
+        viewModel.onDataUpdated = { [weak self] in
+            DispatchQueue.main.async {
+                self?.collectionView.reloadData()
+            }
+        }
+        
+        viewModel.onError = { [weak self] errorMessage in
+            DispatchQueue.main.async {
+                print("Error loading home data: \(errorMessage)")
+            }
+        }
+    }
     private func setupCollectionView() {
-        // Initialize with Compositional Layout
         collectionView = UICollectionView(frame: .zero, collectionViewLayout: createCompositionalLayout())
         collectionView.translatesAutoresizingMaskIntoConstraints = false
         collectionView.backgroundColor = .clear // or AppColors.background
-        
-        // --- Register Cells ---
-        // Section 0: Hero
+
         collectionView.register(HeroContainerCell.self, forCellWithReuseIdentifier: HeroContainerCell.reuseID)
-        // Section 1: Categories
         collectionView.register(CategoryPillCell.self, forCellWithReuseIdentifier: CategoryPillCell.reuseID)
-        // Section 2+: Books
         collectionView.register(BookCell.self, forCellWithReuseIdentifier: "BookCell")
-        
-        // --- Register Headers ---
-        // Simple Header for "Categories" title
+
         collectionView.register(SimpleTitleHeader.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: SimpleTitleHeader.reuseID)
-        // Complex Header with "See All" for books
         collectionView.register(SectionHeaderView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: "SectionHeaderView")
 
         collectionView.dataSource = self
@@ -362,16 +387,13 @@ private    var featuredBook: Book?
         ])
     }
     
-    // MARK: - Compositional Layout
     private func createCompositionalLayout() -> UICollectionViewLayout {
         return UICollectionViewCompositionalLayout { [weak self] sectionIndex, _ in
             guard let self = self else { return nil }
             
             if sectionIndex == 0 {
-                // --- SECTION 0: HERO CARD ---
                 let item = NSCollectionLayoutItem(layoutSize: .init(widthDimension: .fractionalWidth(1), heightDimension: .fractionalHeight(1)))
                 
-                // Height 240 to match your Hero Card design (220 card + padding)
                 let group = NSCollectionLayoutGroup.horizontal(layoutSize: .init(widthDimension: .fractionalWidth(1), heightDimension: .absolute(220)), subitems: [item])
                 
                 let section = NSCollectionLayoutSection(group: group)
@@ -379,8 +401,6 @@ private    var featuredBook: Book?
                 return section
                 
             } else if sectionIndex == 1 {
-                // --- SECTION 1: CATEGORY PILLS ---
-                // Estimated width allows pills to resize based on text length
                 let item = NSCollectionLayoutItem(layoutSize: .init(widthDimension: .estimated(100), heightDimension: .fractionalHeight(1)))
                 
                 let group = NSCollectionLayoutGroup.horizontal(layoutSize: .init(widthDimension: .estimated(100), heightDimension: .absolute(40)), subitems: [item])
@@ -390,7 +410,6 @@ private    var featuredBook: Book?
                 section.interGroupSpacing = 10
                 section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 10, bottom: 20, trailing: 10)
                 
-                // Add "Categories" Title Header
                 let headerSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .absolute(40))
                 let header = NSCollectionLayoutBoundarySupplementaryItem(layoutSize: headerSize, elementKind: UICollectionView.elementKindSectionHeader, alignment: .top)
                 section.boundarySupplementaryItems = [header]
@@ -398,12 +417,10 @@ private    var featuredBook: Book?
                 return section
                 
             } else {
-                // --- SECTION 2+: BOOK SHELVES ---
                 let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1), heightDimension: .fractionalHeight(1))
                 let item = NSCollectionLayoutItem(layoutSize: itemSize)
                 item.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 5, bottom: 0, trailing: 5)
                 
-                // Adjust width (0.45) to change book card size
                 let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(0.40), heightDimension: .absolute(250))
                 let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
                 
@@ -411,7 +428,6 @@ private    var featuredBook: Book?
                 section.orthogonalScrollingBehavior = .continuousGroupLeadingBoundary
                 section.contentInsets = NSDirectionalEdgeInsets(top: 10, leading: 10, bottom: 30, trailing: 10)
                 
-                // Add Section Header ("Sci-Fi", "History" etc)
                 let headerSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .absolute(40))
                 let header = NSCollectionLayoutBoundarySupplementaryItem(layoutSize: headerSize, elementKind: UICollectionView.elementKindSectionHeader, alignment: .top)
                 section.boundarySupplementaryItems = [header]
@@ -421,28 +437,23 @@ private    var featuredBook: Book?
         }
     }
 
-    // MARK: - Data Source
     
-    // Total sections = Hero(1) + Categories(1) + BookShelves(N)
     func numberOfSections(in collectionView: UICollectionView) -> Int {
-        return 2 + categories.count
+        return 2 + viewModel.categories.count
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         if section == 0 { return 1 } // Hero Card (always 1)
         if section == 1 { return CategoryEnum.allCases.count } // Categories
         
-        // For book shelves (Section 2, 3, 4...)
-        // We subtract 2 to get the index for our 'categories' array
-        return categories[section - 2].books.count
+        return viewModel.categories[section - 2].books.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         
         if indexPath.section == 0 {
-            // --- HERO CELL ---
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: HeroContainerCell.reuseID, for: indexPath) as! HeroContainerCell
-            if let book = featuredBook {
+            if let book = viewModel.featuredBook {
                 cell.configure(with: book) { [weak self] in
                     // Handle "Read Now" tap
                     guard let self = self else { return }
@@ -464,7 +475,7 @@ private    var featuredBook: Book?
         } else {
             // --- BOOK CELL ---
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "BookCell", for: indexPath) as! BookCell
-            let item = categories[indexPath.section - 2].books[indexPath.item]
+            let item = viewModel.categories[indexPath.section - 2].books[indexPath.item]
             cell.configure(with: item)
             return cell
         }
@@ -486,8 +497,8 @@ private    var featuredBook: Book?
                 let header = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "SectionHeaderView", for: indexPath) as! SectionHeaderView
                 
                 let dataIndex = indexPath.section - 2
-                let title = categories[dataIndex].name
-                let books = categories[dataIndex].books
+                let title = viewModel.categories[dataIndex].name
+                let books = viewModel.categories[dataIndex].books
                 
                 header.titleLabel.text = title
                 header.seeAllAction = { [weak self] in
@@ -513,39 +524,132 @@ private    var featuredBook: Book?
         let sampleBooks: Result<[Book], BookError> = demotemp.fetchAllBooks()
         switch sampleBooks {
         case .success(let books):
-            popularBook = books
-            if let last = books.last { featuredBook = last }
+            viewModel.popularBook = books
+            if let last = books.last { viewModel.featuredBook = last }
         case .failure(let error):
             print(error)
         }
         
         // Mocking Data
-        categories.append((name: "Trending Now", books: popularBook))
-        categories.append((name: "Staff Picks", books: popularBook))
-        categories.append((name: "Classics", books: popularBook))
-        categories.append((name: "New Releases", books: popularBook))
+        viewModel.categories.append((name: "Trending Now", books: viewModel.popularBook))
+        viewModel.categories.append((name: "Staff Picks", books: viewModel.popularBook))
+        viewModel.categories.append((name: "Classics", books: viewModel.popularBook))
+        viewModel.categories.append((name: "New Releases", books: viewModel.popularBook))
         
         collectionView.reloadData()
     }
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         switch indexPath.section {
         case 0:
-            guard let featuredBook = featuredBook else {
+            guard let featuredBook = viewModel.featuredBook else {
                 return
             }
             bookCellTapped(book: featuredBook)
         case 1:
-            return
+            let categoryData = viewModel.categories[indexPath.item]
+            seeAllTapped(section: indexPath.section, title: categoryData.name, books: categoryData.books)
         default:
             print(indexPath.section, indexPath.item, indexPath.row)
-            let book = categories[indexPath.section - 2]
+            let book = viewModel.categories[indexPath.section - 2]
             bookCellTapped(book: book.books[indexPath.item])
         }
         
     }
+    
     func bookCellTapped(book: Book) {
         let vc = DetailViewController(book: book)
         present(vc, animated: true, completion: nil)
         print("Book '\(book.title)' tapped")
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, contextMenuConfigurationForItemAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
+        
+        return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
+            guard let self = self else { return nil }
+            
+            var selectedBook: Book?
+            
+            switch indexPath.section {
+            case 0:
+                selectedBook = self.viewModel.featuredBook
+                
+            case 1:
+                return nil
+                
+            default:
+                let categoryIndex = indexPath.section - 2
+                if categoryIndex < self.viewModel.categories.count {
+                    let books = self.viewModel.categories[categoryIndex].books
+                    if indexPath.item < books.count {
+                        selectedBook = books[indexPath.item]
+                    }
+                }
+            }
+            
+            guard let book = selectedBook else { return nil }
+            
+            let detailsAction = UIAction(title: "View Details", image: UIImage(systemName: "info.circle")) { _ in
+                let vc = DetailViewController(book: book)
+                self.present(vc, animated: true, completion: nil)
+            }
+            
+            let wantToReadAction = UIAction(title: "Add to Want to Read", image: UIImage(systemName: "bookmark")) { _ in
+//                guard let self = self else { return }
+
+                switch self.viewModel.addBookToDefault(book: book) {
+                case .success():
+                    print("Adding")
+                case .failure(let error):
+                    if error == .bookAlreadyInCollection {
+                        let alert = UIAlertController(
+                            title: "Already Added",
+                            message: "This book is already in the selected collection.",
+                            preferredStyle: .alert
+                        )
+                        alert.addAction(UIAlertAction(title: "OK", style: .default))
+                        self.present(alert, animated: true)
+                    }
+                    print("Error: \(error)")
+                }
+                print("Added to Want to Read: \(book.title ?? "")")
+            }
+
+            // 3. Collection Menu logic
+            let allCollections = UserSession.shared.currentUser?.collections?.allObjects as? [BookCollection] ?? []
+            
+            let collectionItems = allCollections.map { collection in
+                UIAction(title: collection.name ?? "Untitled", image: UIImage(systemName: "folder")) { _ in
+                    // Add your logic here
+                    print("Adding \(book.title ?? "") to collection: \(collection.name ?? "")")
+                     switch self.viewModel.addBook(book, to: collection)  {
+                     case .success():
+                         print("Adding")
+                     case .failure(let error):
+                         if error == .bookAlreadyInCollection {
+                             let alert = UIAlertController(
+                                 title: "Already Added",
+                                 message: "This book is already in the selected collection.",
+                                 preferredStyle: .alert
+                             )
+                             alert.addAction(UIAlertAction(title: "OK", style: .default))
+                             self.present(alert, animated: true)
+                         }
+                         print("Error: \(error)")
+                     }
+                }
+            }
+            
+            let addToCollectionMenu = UIMenu(
+                title: "Add to Collection",
+                image: UIImage(systemName: "folder.badge.plus"),
+                children: collectionItems
+            )
+            
+            // 4. Construct Final Menu
+            return UIMenu(title: "", children: [
+                UIMenu(options: .displayInline, children: [detailsAction]),
+                UIMenu(options: .displayInline, children: [wantToReadAction, addToCollectionMenu])
+            ])
+        }
     }
 }

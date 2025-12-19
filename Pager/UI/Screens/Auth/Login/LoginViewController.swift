@@ -225,7 +225,6 @@ class LoginViewController: UIViewController, UITextFieldDelegate {
                     .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene {
                 (sceneDelegate.delegate as? SceneDelegate)?.setTabBarAsRoot()
             }
-            print("Login Success\(user.email)")
         }
 
         viewModel.onLoginFailure = { [weak self] message in
@@ -251,6 +250,14 @@ class LoginViewController: UIViewController, UITextFieldDelegate {
         textField.layer.borderColor = AppColors.buttonBorder.cgColor
     }
 
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        if textField == emailField {
+            passwordField.becomeFirstResponder()
+        } else if textField == passwordField {
+            textField.resignFirstResponder()
+        }
+        return true
+    }
 
     deinit {
         NotificationCenter.default.removeObserver(self)

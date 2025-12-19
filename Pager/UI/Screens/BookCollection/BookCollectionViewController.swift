@@ -1,35 +1,10 @@
-////
-////  BookCollectionViewController.swift
-////  Pager
-////
-////  Created by Pradheep G on 01/12/25.
-////
 //
-//import UIKit
+//  BookCollectionViewController.swift
+//  Pager
 //
-//class BookCollectionViewController: UIViewController, UITableViewDelegate {
+//  Created by Pradheep G on 01/12/25.
 //
-//    private let booksTableView: UITableView = UITableView()
-//    private let collections: [Collection] = []
-//    override func viewDidLoad() {
-//        super.viewDidLoad()
-//        setUpTableView()
-//    }
-//    
-//    func setUpTableView() {
-//        
-//    }
-////    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-////        return collections.count + 1
-////    }
-////    
-////    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-////        
-////    }
-//    
-//    
-//}
-//
+
 
 
 
@@ -41,8 +16,7 @@ class BookCollectionViewController: UIViewController, UITableViewDataSource, UIT
     let tableView = UITableView()
     var items: [BookCollection] = []//["First Item", "Second Item", "Third Item"]
     let itemCellIdentifier = "ItemCell"
-        
-    lazy var collectionRepo: CollectionRepository = CollectionRepository()
+    let viewModel = BookCollectionViewModel()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -97,6 +71,7 @@ class BookCollectionViewController: UIViewController, UITableViewDataSource, UIT
             let cell = tableView.dequeueReusableCell(withIdentifier: itemCellIdentifier, for: indexPath)
             cell.textLabel?.text = items[indexPath.row].name
             cell.accessoryType = .disclosureIndicator
+
             return cell
         }
     }
@@ -135,40 +110,44 @@ class BookCollectionViewController: UIViewController, UITableViewDataSource, UIT
     }
     
     func addNewItem(name: String) {
-        guard let currentUser = UserSession.shared.currentUser else {
-            return
-        }
+        guard let _ = UserSession.shared.currentUser else { return }
         
-        let newRowIndex = items.count
-
-        let result = collectionRepo.createCollection(name: name, description: nil, owner: currentUser)
+        let result = viewModel.addNewCollection(as: name)
+        
         switch result {
         case .success(let newCollection):
+            
+            let newRowIndex = items.count
             items.append(newCollection)
+            
+            let newIndexPath = IndexPath(row: newRowIndex, section: 0)
+            
+            tableView.beginUpdates()
+            tableView.insertRows(at: [newIndexPath], with: .automatic)
+            tableView.endUpdates()
+            
+            tableView.scrollToRow(at: newIndexPath, at: .middle, animated: true)
+            
         case .failure(let error):
-            switch error {
-            case .alreadyExists:
-                showNameExistsAlert(name:name)
-                return
-            default:
-                return
+
+            if case .alreadyExists = error as? CollectionError {
+                 showNameExistsAlert(name: name)
+            } else {
+                 print("Generic creation error: \(error)")
             }
         }
-
-        let newIndexPath = IndexPath(row: newRowIndex, section: 0)
-        
-        tableView.beginUpdates()
-        tableView.insertRows(at: [newIndexPath], with: .automatic)
-        tableView.endUpdates()
-        
-        tableView.scrollToRow(at: newIndexPath, at: .middle, animated: true)
     }
 
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
-        
         if indexPath.row == items.count {
             return nil
         }
+        
+        guard !items[indexPath.row].isDefault else {
+            return nil
+        }
+        
+
         
         let deleteAction = UIContextualAction(style: .destructive, title: "Delete") { [weak self] (action, view, completionHandler) in
             guard let self = self else { return }
@@ -201,14 +180,54 @@ class BookCollectionViewController: UIViewController, UITableViewDataSource, UIT
         present(alertController, animated: true, completion: nil)
     }
     
-    private func deleteItem(at indexPath: IndexPath) {
-        collectionRepo.deleteCollection(items[indexPath.row])
-        items.remove(at: indexPath.row)
-        
-        tableView.beginUpdates()
-        tableView.deleteRows(at: [indexPath], with: .left) // Use .left or .fade for animation
-        tableView.endUpdates()
+    func tableView(_ tableView: UITableView, contextMenuConfigurationForRowAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
+        if indexPath.row >= items.count {
+                return nil
+            }
+        guard !items[indexPath.row].isDefault else {
+            return nil
+        }
+        return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
+            
+            let editAction = UIAction(title: "Edit", image: UIImage(systemName: "pencil")) { _ in
+                self?.showEditAlert(at: indexPath)
+            }
+            
+            let deleteAction = UIAction(title: "Delete", image: UIImage(systemName: "trash"), attributes: .destructive) { _ in
+                self?.deleteItem(at: indexPath)
+            }
+            
+            return UIMenu(title: "", children: [editAction, deleteAction])
+        }
     }
+    
+    private func deleteItem(at indexPath: IndexPath) {
+        let collectionToDelete = items[indexPath.row]
+        
+        let result = viewModel.deleteCollection(collectionToDelete)
+        
+        switch result {
+        case .success:
+            items.remove(at: indexPath.row)
+            
+            tableView.beginUpdates()
+            tableView.deleteRows(at: [indexPath], with: .left)
+            tableView.endUpdates()
+            
+        case .failure(let error):
+            print("Delete failed: \(error.localizedDescription)")
+            
+            let alert = UIAlertController(
+                title: "Delete Failed",
+                message: "Could not delete the collection. Please try again.",
+                preferredStyle: .alert
+            )
+            alert.addAction(UIAlertAction(title: "OK", style: .default))
+            present(alert, animated: true)
+        }
+    }
+    
+    
     private func setupEditButton() {
         let editButton = self.editButtonItem
         navigationItem.rightBarButtonItem = editButton
@@ -223,14 +242,14 @@ class BookCollectionViewController: UIViewController, UITableViewDataSource, UIT
         }
     }
 
-    private func handleCollectionTap(for collection: BookCollection) {        
+    private func handleCollectionTap(for collection: BookCollection) {
         if let books = collection.books?.allObjects {
             if books.isEmpty {
                 let vc = EmptyMyBooksViewController(message: "Your collection is empty!", isButtonNeeded: true)
                 vc.hidesBottomBarWhenPushed = true
                 navigationController?.pushViewController(vc, animated: true)
             } else {
-                let vc = BookGridViewController(categoryTitle: collection.name ?? "", books: books as! [Book])
+                let vc = BookGridViewController(categoryTitle: collection.name ?? "", books: books as! [Book], currentCollection: collection)
                 vc.hidesBottomBarWhenPushed = true
                 navigationController?.pushViewController(vc, animated: true)
             }
@@ -241,5 +260,72 @@ class BookCollectionViewController: UIViewController, UITableViewDataSource, UIT
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.navigationBar.prefersLargeTitles = false
+    }
+    
+
+    func showEditAlert(at indexPath: IndexPath) {
+        let collection = items[indexPath.row]
+        
+        let alertController = UIAlertController(
+            title: "Rename Collection",
+            message: "Enter a new name for this collection.",
+            preferredStyle: .alert
+        )
+        
+        alertController.addTextField { textField in
+            textField.placeholder = "Collection Name"
+            textField.text = collection.name
+            textField.autocapitalizationType = .sentences
+        }
+        
+        let saveAction = UIAlertAction(title: "Save", style: .default) { [weak self] _ in
+            guard let self = self,
+                  let text = alertController.textFields?.first?.text,
+                  !text.isEmpty else {
+                return
+            }
+            
+            let newName = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            
+            guard newName != collection.name else {
+                return
+            }
+            
+            let nameExists = self.items.contains { item in
+                return item.name?.caseInsensitiveCompare(newName) == .orderedSame
+            }
+            
+            if nameExists {
+                self.showNameExistsAlert(name: newName)
+                return
+            }
+            
+            self.updateCollectionName(at: indexPath, with: newName)
+        }
+        
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+        
+        alertController.addAction(saveAction)
+        alertController.addAction(cancelAction)
+        
+        present(alertController, animated: true)
+    }
+
+    func updateCollectionName(at indexPath: IndexPath, with newName: String) {
+        let collection = items[indexPath.row]
+        
+        let result = viewModel.renameCollection(collection, to: newName)
+        
+        switch result {
+        case .success:
+            tableView.reloadRows(at: [indexPath], with: .automatic)
+            
+        case .failure(let error):
+            print("Failed to rename: \(error.localizedDescription)")
+            
+            let alert = UIAlertController(title: "Error", message: "Could not save the new name.", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "OK", style: .default))
+            present(alert, animated: true)
+        }
     }
 }

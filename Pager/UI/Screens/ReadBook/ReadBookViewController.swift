@@ -7760,9 +7760,9 @@ class PageContentViewController: UIViewController {
         }
     }
     
-    deinit {
-        print("deinit PageContentViewController")
-    }
+//    deinit {
+//        print("deinit PageContentViewController")
+//    }
     
     let bookTitle: UILabel = {
         let lable = UILabel()
@@ -7845,18 +7845,140 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
     override var preferredStatusBarUpdateAnimation: UIStatusBarAnimation {
         return .fade
     }
+
+    
+    var pages: [String] = []
+    var currentIndex: Int = 0
+    let bookTitle: String
+    let fullBookText: String
+    var pageContentVCs = NSHashTable<PageContentViewController>.weakObjects()
+    let settingsVC = SettingsViewController()
+    var fontSize = 18
+    var themeTitle:UIColor = .black
+    var themeBackGroung:UIColor = .white
+    var transitionStyle: UIPageViewController.TransitionStyle = .scroll
+    var navigationOrientation: UIPageViewController.NavigationOrientation = .horizontal
+    private let loadingSpinner: UIActivityIndicatorView = {
+        let spinner = UIActivityIndicatorView(style: .large)
+        spinner.translatesAutoresizingMaskIntoConstraints = false
+        spinner.hidesWhenStopped = true
+        spinner.color = .gray // Or use your theme color
+        return spinner
+    }()
+    private lazy var pageController: UIPageViewController = createPageController(transitionStyle: transitionStyle, navigationOrientation: navigationOrientation)
+    private let viewModel: ReadBookViewModel
+    
+    init(book: Book) {
+        self.bookTitle = book.title ?? ""
+        self.fullBookText = fullBoookText//book.contentText ?? ""\
+        self.viewModel = ReadBookViewModel(book: book)
+        self.currentIndex = self.viewModel.loadProgress()
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        setUpNavBarItem()
+    }
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = themeBackGroung
+        view.addSubview(loadingSpinner)
+        NSLayoutConstraint.activate([
+            loadingSpinner.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            loadingSpinner.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+        ])
+        loadingSpinner.startAnimating()
+        
+        didChangeTheme(isDark: viewModel.isDark)
+        didChangeNavigationOrientation(to: viewModel.isSwipe ? .horizontal : .vertical)
+        didChangePageStyle(to: viewModel.isSide ? .scroll : .pageCurl)
+        viewModel.loadSetting()
+
+        let screenWidth = view.bounds.width > 0 ? view.bounds.width : UIScreen.main.bounds.width
+        let screenHeight = view.bounds.height > 0 ? view.bounds.height : UIScreen.main.bounds.height
+        
+        let textAreaSize = CGSize(
+            width: screenWidth - 40,
+            height: screenHeight - 60 // Adjusted based on previous discussion
+        )
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                guard let self = self else { return }
+                
+                let calculatedPages = BookPaginator.splitTextIntoPages(
+                    text: self.fullBookText,
+                    size: textAreaSize,
+                    font: .systemFont(ofSize: 20)
+                )
+                // ---------------------------------------
+                
+            DispatchQueue.main.async {
+                self.loadingSpinner.stopAnimating()
+                
+                self.pages = calculatedPages
+                let totalPageCount = calculatedPages.count
+                self.viewModel.saveTotalPages(count: totalPageCount)
+                let currentIndex = self.currentIndex <= totalPageCount ? self.currentIndex : 0
+                self.pageControllerSetUp(startPage: currentIndex)
+                self.setupSliderLayout()
+                self.setUpGesture()
+                //                    self.setUpNavBarItem()
+                self.setupPageNumberLabel()
+                self.updatePageLabel(currentIndex: currentIndex)
+            }
+            }
+
+    }
+    
+    private func setupPageNumberLabel() {
+        // A. Add Container to Main View
+        view.addSubview(pageNumberContainer)
+        
+        
+        pageNumberLabel.textColor = themeTitle
+        
+        // B. Add Label to Container's Content View
+        pageNumberContainer.contentView.addSubview(pageNumberLabel)
+        
+        NSLayoutConstraint.activate([
+            // 1. Pin Container to Bottom Center
+            pageNumberContainer.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            pageNumberContainer.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+            
+            // 2. Optional: Set a minimum width for the capsule
+            pageNumberContainer.widthAnchor.constraint(greaterThanOrEqualToConstant: 100),
+            pageNumberContainer.heightAnchor.constraint(equalToConstant: 30),
+            
+            // 3. Pin Label INSIDE Container (This creates the "Padding")
+            pageNumberLabel.centerXAnchor.constraint(equalTo: pageNumberContainer.contentView.centerXAnchor),
+            pageNumberLabel.centerYAnchor.constraint(equalTo: pageNumberContainer.contentView.centerYAnchor),
+            // Ensure label doesn't touch the edges of the capsule
+            pageNumberLabel.leadingAnchor.constraint(equalTo: pageNumberContainer.contentView.leadingAnchor, constant: 10),
+            pageNumberLabel.trailingAnchor.constraint(equalTo: pageNumberContainer.contentView.trailingAnchor, constant: -10)
+        ])
+    }
     
     func didChangeNavigationOrientation(to style: UIPageViewController.NavigationOrientation) {
+        let isVertical = (style == .vertical)
+        viewModel.isSwipe = !isVertical
         navigationOrientation = style
         managePageControllerChange(transitionStyle: nil, navigationOrientation: navigationOrientation)
     }
     
     func didChangePageStyle(to style: UIPageViewController.TransitionStyle) {
+        let isCurl = (style == .pageCurl)
+        viewModel.isSide = !isCurl
+        
         transitionStyle = style
         managePageControllerChange(transitionStyle: transitionStyle, navigationOrientation: nil)
     }
     
     func didChangeTheme(isDark: Bool) {
+        viewModel.isDark = isDark
         if isDark {
             themeBackGroung = .black
             themeTitle = .white
@@ -7889,121 +8011,6 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
         }
         pageNumberLabel.textColor = themeTitle
         
-    }
-    
-    var pages: [String] = []
-    var currentIndex: Int = 2
-    let bookTitle: String
-    let fullBookText: String
-    var pageContentVCs = NSHashTable<PageContentViewController>.weakObjects()
-    let settingsVC = SettingsViewController()
-    var fontSize = 18
-    var themeTitle:UIColor = .black
-    var themeBackGroung:UIColor = .white
-    var transitionStyle: UIPageViewController.TransitionStyle = .scroll
-    var navigationOrientation: UIPageViewController.NavigationOrientation = .horizontal
-    private let loadingSpinner: UIActivityIndicatorView = {
-        let spinner = UIActivityIndicatorView(style: .large)
-        spinner.translatesAutoresizingMaskIntoConstraints = false
-        spinner.hidesWhenStopped = true
-        spinner.color = .gray // Or use your theme color
-        return spinner
-    }()
-    private lazy var pageController: UIPageViewController = createPageController(transitionStyle: transitionStyle, navigationOrientation: navigationOrientation)
-    
-    init(book: Book) {
-        self.bookTitle = book.title ?? ""
-        self.fullBookText = fullBoookText//book.contentText ?? ""
-        super.init(nibName: nil, bundle: nil)
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        setUpNavBarItem() // Add it here
-    }
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        view.backgroundColor = themeBackGroung
-        view.addSubview(loadingSpinner)
-        NSLayoutConstraint.activate([
-            loadingSpinner.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            loadingSpinner.centerYAnchor.constraint(equalTo: view.centerYAnchor)
-        ])
-        loadingSpinner.startAnimating()
-        
-        let screenWidth = view.bounds.width > 0 ? view.bounds.width : UIScreen.main.bounds.width
-        let screenHeight = view.bounds.height > 0 ? view.bounds.height : UIScreen.main.bounds.height
-        
-        let textAreaSize = CGSize(
-            width: screenWidth - 40,
-            height: screenHeight - 60 // Adjusted based on previous discussion
-        )
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-                guard let self = self else { return }
-                
-                let calculatedPages = BookPaginator.splitTextIntoPages(
-                    text: self.fullBookText,
-                    size: textAreaSize,
-                    font: .systemFont(ofSize: 20)
-                )
-                // ---------------------------------------
-                
-                DispatchQueue.main.async {
-                    self.loadingSpinner.stopAnimating()
-                    
-                    self.pages = calculatedPages
-                    
-                    self.pageControllerSetUp(startPage: 0)
-                    self.setupSliderLayout()
-                    self.setUpGesture()
-//                    self.setUpNavBarItem()
-                    self.setupPageNumberLabel()
-                    self.updatePageLabel(currentIndex: 0)
-                }
-            }
-        
-//        print("Helo")
-//        pages = BookPaginator.splitTextIntoPages(text: fullBookText, size: textAreaSize, font: .systemFont(ofSize: 20))
-//        print("End")
-//        pageControllerSetUp(startPage: 0)
-//        setupSliderLayout()
-//        //        setUpMainSettingButton()
-//        setUpGesture()
-////        setUpNavBarItem()
-//        setupPageNumberLabel()
-//        updatePageLabel(currentIndex: 0)
-    }
-    
-    private func setupPageNumberLabel() {
-        // A. Add Container to Main View
-        view.addSubview(pageNumberContainer)
-        
-        
-        pageNumberLabel.textColor = themeTitle
-        
-        // B. Add Label to Container's Content View
-        pageNumberContainer.contentView.addSubview(pageNumberLabel)
-        
-        NSLayoutConstraint.activate([
-            // 1. Pin Container to Bottom Center
-            pageNumberContainer.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            pageNumberContainer.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
-            
-            // 2. Optional: Set a minimum width for the capsule
-            pageNumberContainer.widthAnchor.constraint(greaterThanOrEqualToConstant: 100),
-            pageNumberContainer.heightAnchor.constraint(equalToConstant: 30),
-            
-            // 3. Pin Label INSIDE Container (This creates the "Padding")
-            pageNumberLabel.centerXAnchor.constraint(equalTo: pageNumberContainer.contentView.centerXAnchor),
-            pageNumberLabel.centerYAnchor.constraint(equalTo: pageNumberContainer.contentView.centerYAnchor),
-            // Ensure label doesn't touch the edges of the capsule
-            pageNumberLabel.leadingAnchor.constraint(equalTo: pageNumberContainer.contentView.leadingAnchor, constant: 10),
-            pageNumberLabel.trailingAnchor.constraint(equalTo: pageNumberContainer.contentView.trailingAnchor, constant: -10)
-        ])
     }
     
     private func setupPpageNumberLabel() {
@@ -8109,7 +8116,7 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
     @objc func showSlider() {
         isFullScreen = !isFullScreen
         pageNumberContainer.isHidden = !pageNumberContainer.isHidden
-        //        mainSettingButton.isHidden = !mainSettingButton.isHidden
+//                mainSettingButton.isHidden = !mainSettingButton.isHidden
     }
     
     // MARK: - Setup Methods
@@ -8170,7 +8177,7 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
     
     func presentSettings() {
         settingsVC.delegate = self
-        
+        settingsVC.configure(isDark: viewModel.isDark, isVertical: !viewModel.isSwipe, isCurl: !viewModel.isSide)
         if let sheet = settingsVC.sheetPresentationController {
             sheet.detents = [.medium(), .large()]
             
@@ -8202,7 +8209,6 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
         ])
     }
     
-    // MARK: - Logic: Handle Slider
     @objc func handleSliderChange(_ sender: UISlider) {
         let targetIndex = Int(sender.value.rounded())
         guard targetIndex != currentIndex else { return }
@@ -8217,7 +8223,6 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
         updatePageLabel(currentIndex: targetIndex)
     }
     
-    // MARK: - Helper
     func viewControllerAtIndex(_ index: Int) -> PageContentViewController? {
         if index >= pages.count || index < 0 { return nil }
         let vc = PageContentViewController()
@@ -8229,6 +8234,11 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
         vc.fontSize = CGFloat(fontSize)
         pageContentVCs.add(vc)
         return vc
+    }
+    
+    deinit {
+        viewModel.saveProgress(progressValue: currentIndex)
+        viewModel.saveSetting()
     }
 }
 
@@ -8294,20 +8304,7 @@ extension MainBookReaderViewController: UIPageViewControllerDataSource, UIPageVi
             dismiss(animated: true)
         }
     }
-    
-    @objc private func editButtonTapped() {
-        let vc = ReviewEditViewController()
-        if let nav = navigationController {
-            nav.pushViewController(vc, animated: true)
-        } else {
-            let nav = UINavigationController(rootViewController: vc)
-            nav.modalPresentationStyle = .fullScreen
-            present(nav, animated: true)
-        }
-    }
 }
-
-import UIKit
 
 // Protocol remains the same
 protocol SettingsViewControllerDelegate: AnyObject {
@@ -8376,6 +8373,7 @@ class SettingsViewController: UIViewController {
             let style: UIPageViewController.TransitionStyle = (index == 0) ? .scroll : .pageCurl
             self?.delegate?.didChangePageStyle(to: style)
         }
+        //driver
         return segment
     }()
     
@@ -8385,6 +8383,14 @@ class SettingsViewController: UIViewController {
         // Force dark background for the sheet to match the dark theme controls
         view.backgroundColor = UIColor(red: 0.05, green: 0.05, blue: 0.05, alpha: 1.0)
         setupLayout()
+    }
+    
+    func configure(isDark: Bool, isVertical: Bool, isCurl: Bool) {
+        themeSegment.setSelectedIndex(isDark ? 1 : 0)
+        
+        pageStyleSegment.setSelectedIndex(isVertical ? 1 : 0)
+        
+        navigationSegment.setSelectedIndex(isCurl ? 1 : 0)
     }
     
     // MARK: - Layout Setup
@@ -8513,6 +8519,12 @@ class GenericSegmentedTile: UIView {
         }
     }
     
+    func setSelectedIndex(_ index: Int) {
+            guard index >= 0 && index < buttons.count else { return }
+            self.selectedIndex = index
+            updateSelectionState()
+        }
+    
     // MARK: - Actions & Logic
     @objc private func buttonTapped(_ sender: UIButton) {
         guard sender.tag != selectedIndex else { return }
@@ -8536,7 +8548,6 @@ class GenericSegmentedTile: UIView {
         }
     }
     
-    // MARK: - Button Builder (Vertical Stack Style)
     private func createButton(title: String, imageName: String) -> UIButton {
         // Use .filled so we can control background color easily
         var config = UIButton.Configuration.filled()

@@ -67,7 +67,7 @@ struct UserBookRecordDTO: Decodable {
     let progressValue: Int16
     let bookMark: String?
     let lastOpened: Date?
-    let purchaseDate: Double    // Timestamp in JSON
+    let purchaseDate: Date    // Timestamp in JSON
     let purchasePrice: Double
     let bookId: String          // Foreign Key
     let ownedByUserId: String   // Foreign Key
@@ -183,13 +183,13 @@ class DataLoader {
             for dto in seedData.userBookRecords {
                 let record = UserBookRecord(context: context)
                 record.userBookRecordId = UUID(uuidString: dto.userBookRecordId)
-                record.progressValue = dto.progressValue
+                record.progressValue = Int64(dto.progressValue)
                 record.bookMark = dto.bookMark
                 record.lastOpened = dto.lastOpened
                 
                 // Handle Double Timestamp -> Date? if your Core Data uses Date,
                 // OR map to Double if your schema used Double (based on XML it was Double)
-                record.pruchaseData = dto.purchaseDate // Maps to the Double in your XML
+                record.pruchaseDate = dto.purchaseDate // Maps to the Double in your XML
                 record.pruchasePrice = dto.purchasePrice
                 
                 if let user = userMap[dto.ownedByUserId] {

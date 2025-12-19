@@ -83,19 +83,41 @@ final class CollectionRepository {
             return .failure(.notFound)
         }
     }
-
-    func fetchDefaultCollection(for user: User) -> Result<BookCollection?, CollectionError> {
-        let request: NSFetchRequest<BookCollection> = BookCollection.fetchRequest()
-        request.predicate = NSPredicate(format: "owner == %@ AND isDefault == YES", user)
-        request.fetchLimit = 1
+    
+    func fetchDefaultCollection(for user: User) async -> Result<BookCollection?, CollectionError> {
+        let context = CoreDataManager.shared.context
+        let userID = user.objectID
 
         do {
-            let found = try context.fetch(request).first
-            return .success(found)
+            let foundCollection = try await context.perform {
+                
+                let request: NSFetchRequest<BookCollection> = BookCollection.fetchRequest()
+                let userInContext = context.object(with: userID)
+
+                request.predicate = NSPredicate(format: "owner == %@ AND isDefault == YES", userInContext)
+                request.fetchLimit = 1
+
+                return try context.fetch(request).first
+            }
+            
+            return .success(foundCollection)
+            
         } catch {
             return .failure(.notFound)
         }
     }
+//    func fetchDefaultCollection(for user: User) -> Result<BookCollection?, CollectionError> {
+//        let request: NSFetchRequest<BookCollection> = BookCollection.fetchRequest()
+//        request.predicate = NSPredicate(format: "owner == %@ AND isDefault == YES", user)
+//        request.fetchLimit = 1
+//
+//        do {
+//            let found = try context.fetch(request).first
+//            return .success(found)
+//        } catch {
+//            return .failure(.notFound)
+//        }
+//    }
 
     func updateCollection(_ collection: BookCollection,
                           name: String?,
@@ -178,7 +200,29 @@ final class CollectionRepository {
         }
     }
 
-    func removeBook(_ book: Book, from collection: BookCollection) -> Result<Void, CollectionError> {
+//    func removeBook(_ book: Book, from collection: BookCollection) -> Result<Void, CollectionError> {
+//        if !isBook(book, in: collection) {
+//            return .failure(.bookNotInCollection)
+//        }
+//
+//        var currentSet = collection.books as? Set<Book> ?? Set<Book>()
+//        currentSet.remove(book)
+//        collection.books = currentSet as NSSet
+//
+//        do {
+//            try CoreDataManager.shared.saveContext()
+//            return .success(())
+//        } catch {
+//            return .failure(.saveFailed)
+//        }
+//    }
+    
+    func removeBook(_ book: Book, from collection: BookCollection, for user: User?) -> Result<Void, CollectionError> {
+        
+        guard let user = user, let collectionOwner = collection.owner, collectionOwner == user else {
+            return .failure(.invalidOwner)
+        }
+
         if !isBook(book, in: collection) {
             return .failure(.bookNotInCollection)
         }

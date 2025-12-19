@@ -1,18 +1,15 @@
 //
-//  ChangePasswordLogoutCell.swift
+//  logoutCell.swift
 //  Pager
 //
-//  Created by Pradheep G on 10/12/25.
+//  Created by Pradheep G on 18/12/25.
 //
+
 import UIKit
 
-class ChangePasswordLogoutCell: UITableViewCell {
-    
-    // 1. Define callbacks to tell the Parent VC when buttons are tapped
-    var onChangePasswordTapped: (() -> Void)?
+class LogoutCell: UITableViewCell {
     var onLogoutTapped: (() -> Void)?
-    
-    static let reuseKey = "ChangePasswordLogoutCell"
+    static let resueKey = "LogoutCell"
     
     private let footerButtonStack: UIStackView = {
         let stack = UIStackView()
@@ -30,7 +27,7 @@ class ChangePasswordLogoutCell: UITableViewCell {
         config.image = UIImage(systemName: "iphone.and.arrow.right.outward")
         config.imagePlacement = .leading
         config.imagePadding = 8
-        config.cornerStyle = .capsule
+        config.cornerStyle = .large
         config.baseBackgroundColor = .systemRed
         config.baseForegroundColor = .systemRed
         
@@ -38,36 +35,22 @@ class ChangePasswordLogoutCell: UITableViewCell {
         return button // No need for translatesAutoresizing... in stack view usually
     }()
     
-    private let changePasswordButton: UIButton = {
-        var config = UIButton.Configuration.tinted()
-        config.title = "Change Password" // Fixed spacing
-        config.image = UIImage(systemName: "rectangle.and.pencil.and.ellipsis")
-        config.imagePlacement = .leading
-        config.imagePadding = 8
-        config.cornerStyle = .large
-        
-        let button = UIButton(configuration: config)
-        return button
-    }()
-    
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         
-        // Setup Visuals
         backgroundColor = .clear
         selectionStyle = .none // Prevent cell from turning gray on tap
         
         contentView.addSubview(footerButtonStack)
-        footerButtonStack.addArrangedSubview(changePasswordButton)
-//        footerButtonStack.addArrangedSubview(logOutButton)
+//        footerButtonStack.addArrangedSubview(changePasswordButton)
+        footerButtonStack.addArrangedSubview(logOutButton)
         
         // Setup Actions
-        changePasswordButton.addTarget(self, action: #selector(didTapChangePasswordButton), for: .touchUpInside)
-//        logOutButton.addTarget(self, action: #selector(didTapLogoutButton), for: .touchUpInside)
+//        changePasswordButton.addTarget(self, action: #selector(didTapChangePasswordButton), for: .touchUpInside)
+        logOutButton.addTarget(self, action: #selector(didTapLogoutButton), for: .touchUpInside)
         
         setupConstraints()
     }
-    
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
     
     private func setupConstraints() {
@@ -86,10 +69,10 @@ class ChangePasswordLogoutCell: UITableViewCell {
         ])
     }
     
-    @objc private func didTapChangePasswordButton() {
-        // 3. Delegate the action to the Controller
-        onChangePasswordTapped?()
-    }
+//    @objc private func didTapChangePasswordButton() {
+//        // 3. Delegate the action to the Controller
+//        onChangePasswordTapped?()
+//    }
     
     @objc private func didTapLogoutButton() {
         // 3. Delegate the action to the Controller
