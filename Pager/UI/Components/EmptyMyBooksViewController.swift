@@ -36,12 +36,15 @@ class EmptyMyBooksViewController: UIViewController {
         
         containerView.addSubview(imageView)
         imageView.image = UIImage(named: "emptyStateImage")
+        imageView.alpha = 0.7
         imageView.translatesAutoresizingMaskIntoConstraints = false
         
         containerView.addSubview(messageLable)
         messageLable.text = message
         messageLable.font = .systemFont(ofSize: 20,weight: .semibold)
         messageLable.textColor = AppColors.title
+        messageLable.alpha = 0.7
+
         messageLable.translatesAutoresizingMaskIntoConstraints = false
         
         containerView.addSubview(bookStoreButton)
@@ -58,6 +61,8 @@ class EmptyMyBooksViewController: UIViewController {
         bookStoreButton.translatesAutoresizingMaskIntoConstraints = false
         bookStoreButton.addTarget(self, action: #selector(goToBookStore), for: .touchUpInside)
         bookStoreButton.isHidden = !isButtonNeeded
+        bookStoreButton.alpha = 0.7
+
 
         
         NSLayoutConstraint.activate([

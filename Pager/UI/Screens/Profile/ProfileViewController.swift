@@ -30,9 +30,15 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
     }
     let profileImageView = UIImageView()
     var isProfileImageNil: Bool = true
+//    let date = UserSession.shared.currentUser?.dob ?? Date()
+//
+//    let formatter = DateFormatter().dateFormat = "dd/MM/yyyy"
+//
+//    let dateString = formatter.string(from: date)
     var personalData = [
         ProfileOption(title: "Name", value: UserSession.shared.currentUser?.profileName ?? "Guest"),
-        ProfileOption(title: "Email", value: UserSession.shared.currentUser?.email ?? "No Email")
+        ProfileOption(title: "Email", value: UserSession.shared.currentUser?.email ?? "No Email"),
+        ProfileOption(title: "Date of Brith", value: UserSession.shared.currentUser?.formattedDOB ?? "NA" )
     ]
     
     var preferenceData = [
@@ -252,29 +258,41 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
             return cell
             
         } else if indexPath.section == 3 {
-            if indexPath.row == 0 {
-                guard let cell = tableView.dequeueReusableCell(withIdentifier: ChangePasswordLogoutCell.reuseKey, for: indexPath) as? ChangePasswordLogoutCell else {
-                    return UITableViewCell()
-                }
-                cell.onChangePasswordTapped = { [weak self] in
-                    let vc = ChangePasswordViewController()
-                    self?.navigationController?.pushViewController(vc, animated: true)
-                }
-                
-                cell.onLogoutTapped = { [weak self] in
-                    self?.showLogoutAlert()
-                }
-                
-                return cell
-            } else {
-                guard let cell = tableView.dequeueReusableCell(withIdentifier: LogoutCell.resueKey, for: indexPath) as? LogoutCell else {
-                    return UITableViewCell()
-                }
-                cell.onLogoutTapped = { [weak self] in
-                    self?.showLogoutAlert()
-                }
-                return cell
+            guard let cell = tableView.dequeueReusableCell(withIdentifier: "cell") else {
+                return UITableViewCell()
             }
+            cell.accessoryType = .disclosureIndicator
+            if indexPath.row == 0{
+                cell.textLabel?.text = "Change Password"
+                cell.textLabel?.textColor = .systemBlue
+            } else {
+                cell.textLabel?.text = "Logout"
+                cell.textLabel?.textColor = .systemRed
+            }
+            return cell
+//            if indexPath.row == 0 {
+//                guard let cell = tableView.dequeueReusableCell(withIdentifier: ChangePasswordLogoutCell.reuseKey, for: indexPath) as? ChangePasswordLogoutCell else {
+//                    return UITableViewCell()
+//                }
+//                cell.onChangePasswordTapped = { [weak self] in
+//                    let vc = ChangePasswordViewController()
+//                    self?.navigationController?.pushViewController(vc, animated: true)
+//                }
+//                
+//                cell.onLogoutTapped = { [weak self] in
+//                    self?.showLogoutAlert()
+//                }
+//                
+//                return cell
+//            } else {
+//                guard let cell = tableView.dequeueReusableCell(withIdentifier: LogoutCell.resueKey, for: indexPath) as? LogoutCell else {
+//                    return UITableViewCell()
+//                }
+//                cell.onLogoutTapped = { [weak self] in
+//                    self?.showLogoutAlert()
+//                }
+//                return cell
+//            }
         } else {
             guard let cell = tableView.dequeueReusableCell(withIdentifier: "EditableCell", for: indexPath) as? EditableProfileCell else {
                 return UITableViewCell()
@@ -282,22 +300,28 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
             
             let isSectionZero = indexPath.section == 0
             let data = isSectionZero ? personalData[indexPath.row] : preferenceData[indexPath.row]
-            if !isSectionZero {
+            if !isSectionZero || indexPath.row == personalData.count-1 {
                 cell.inputTextView.isEditable = false
                 cell.inputTextView.isUserInteractionEnabled = false
-                //                cell.isUserInteractionEnabled = false
                 cell.setEditingMode(isEditingMode, onlyChangeColor: true)
+                if !isSectionZero {
+                    cell.accessoryType = .disclosureIndicator
+                } else {
+                    cell.accessoryType = .none
+                }
             } else {
                 cell.setEditingMode(isEditingMode)
                 cell.inputTextView.returnKeyType = .done
+                cell.accessoryType = .none
 
+                
                 if indexPath.row == 1 {
                     cell.inputTextView.keyboardType = .emailAddress
                     
                 }
             }
             cell.titleLabel.text = data.title
-            cell.inputTextView.text = data.value
+            cell.inputTextView.text = data.value == "" ? "None" : data.value
             
             cell.onTextChange = { [weak self] newText in
                 if isSectionZero {
@@ -319,13 +343,14 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
 
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        if indexPath.section == 1 && indexPath.row == 0 && isEditingMode{
+        if indexPath.section == 1 && indexPath.row == 0 {
             let myViewController = GeneraSelectionViewController(genreString: self.preferenceData[indexPath.row].value)
             myViewController.OnDone = {[weak self] genreString in
                 guard let self = self else {
                     return
                 }
                 self.preferenceData[indexPath.row].value = genreString
+                self.genreSeleted()//driver
                 self.tableView.reloadData()
             }
             
@@ -338,14 +363,39 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
                 sheet.prefersScrollingExpandsWhenScrolledToEdge = false
             }
             self.present(navigationController, animated: true, completion: nil)
+        } else if indexPath.section == 0 && indexPath.row == (personalData.count - 1) && isEditingMode{
+            let myViewController = DOBselectionViewController(currentDate: UserSession.shared.currentUser?.dob)
+            myViewController.onDone = {[weak self] seletedDOB in
+                guard let self = self else {
+                    return
+                }
+                dobSelected(date: seletedDOB)//driver
+                personalData[indexPath.row].value = UserSession.shared.currentUser?.formattedDOB ?? "None"
+                tableView.reloadData()
+            }
+            
+            let navigationController = UINavigationController(rootViewController: myViewController)
+            
+            //                navigationController.modalPresentationStyle = .popover
+            if let sheet = navigationController.sheetPresentationController {
+                sheet.detents = [.medium()]
+                sheet.prefersGrabberVisible = false
+                sheet.prefersScrollingExpandsWhenScrolledToEdge = false
+            }
+            self.present(navigationController, animated: true, completion: nil)
+        } else if indexPath.section == 3 {
+            tableView.deselectRow(at: indexPath, animated: true)
+            if indexPath.row == 0 {
+                let vc = ChangePasswordViewController()
+                self.navigationController?.pushViewController(vc, animated: true)
+            } else {
+                self.showLogoutAlert()
+            }
         }
-        //        let vc = GeneraSelectionViewController()
-        //        if let sheet = vc.sheetPresentationController {
-        //            sheet.detents = [.medium()]
-        //            sheet.prefersGrabberVisible = false
-        //            sheet.prefersScrollingExpandsWhenScrolledToEdge = false
-        //        }
-        //        present(vc, animated: true)
+    }
+    
+    func dobSelected(date: Date) {
+        viewModel.saveUserDOB(date: date)
     }
     
     @objc func didTapCancel() {
@@ -356,6 +406,12 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
         }
     }
     
+    func genreSeleted() {
+        let newName = personalData[0].value.trimmingCharacters(in: .whitespacesAndNewlines)
+        let newEmail = personalData[1].value.trimmingCharacters(in: .whitespacesAndNewlines)
+        let newGenre = preferenceData[0].value
+        viewModel.saveUserChange(newName, newEmail, newGenre)
+    }
     
     @objc func didTapToggleEdit() {
         if isEditingMode {

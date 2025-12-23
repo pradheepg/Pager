@@ -12,7 +12,7 @@ struct PasswordOption {
     var value: String
 }
 
-class ChangePasswordViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
+class ChangePasswordViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UITextFieldDelegate {
     
     let viewModel = ChangePasswordViewModel()
 
@@ -72,6 +72,21 @@ class ChangePasswordViewController: UIViewController, UITableViewDataSource, UIT
         guard let cell = tableView.dequeueReusableCell(withIdentifier: "EditableCell", for: indexPath) as? ChangePasswordCell else {
             return UITableViewCell()
         }
+        if indexPath.section == 0 {
+            cell.inputTextField.tag = 0
+            cell.inputTextField.returnKeyType = .next
+            cell.inputTextField.delegate = self
+        } else {
+            let tag = indexPath.row + 1
+            cell.inputTextField.tag = tag
+            cell.inputTextField.delegate = self
+
+            if indexPath.row == newPassword.count - 1 {
+                cell.inputTextField.returnKeyType = .done
+            } else {
+                cell.inputTextField.returnKeyType = .next
+            }
+        }        
         let isSectionZero = indexPath.section == 0
         let data = isSectionZero ? currentPassword[indexPath.row] : newPassword[indexPath.row]
         
@@ -91,6 +106,19 @@ class ChangePasswordViewController: UIViewController, UITableViewDataSource, UIT
         
         return cell
     }
+    
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+            let nextTag = textField.tag + 1
+            
+            if let nextResponder = view.viewWithTag(nextTag) {
+                nextResponder.becomeFirstResponder()
+            } else {
+                textField.resignFirstResponder()
+                didTapDone()
+            }
+            
+            return true
+        }
     
     
     private func setUpTableView() {
@@ -123,12 +151,62 @@ class ChangePasswordViewController: UIViewController, UITableViewDataSource, UIT
     }
     
     @objc func didTapDone() {
+        let currentInput = currentPassword[0].value
+        let newInput = newPassword[0].value
+        let confirmInput = newPassword[1].value
+
+        guard !currentInput.isEmpty, !newInput.isEmpty, !confirmInput.isEmpty else {
+            showAlert(title: "Missing Input", message: "Please fill in all password fields.")
+            return
+        }
+
+        guard newInput.count >= 6 else {
+            showAlert(title: "Weak Password", message: "New password must be at least 6 characters long.")
+            return
+        }
+
+        guard newInput == confirmInput else {
+            showAlert(title: "Password Mismatch", message: "The new password and confirmation do not match.")
+            return
+        }
+        
+        guard PasswordHashing.hashFuntion(password: currentInput) == UserSession.shared.currentUser?.password else {
+            showAlert(title: "Incorrect Password", message: "The current password you entered is incorrect.")
+            return
+        }
+//        self.resignFirstResponder()
+        viewModel.changePassword(currentInput, newInput)
+        showToast(title: "Success", message: "Password Changed!") {
+            self.navigationController?.popViewController(animated: true)
+        }
+    }
+
+    private func showAlert(title: String, message: String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        self.present(alert, animated: true)
+    }
+    
+    @objc func didTapDonee() {
         
         guard PasswordHashing.hashFuntion(password: currentPassword[0].value) == UserSession.shared.currentUser?.password else {
             
             let alert = UIAlertController(
                 title: "Incorrect Password",
                 message: "The current password you entered is incorrect.",
+                preferredStyle: .alert
+            )
+            let okAction = UIAlertAction(title: "OK", style: .default)
+            alert.addAction(okAction)
+            self.present(alert, animated: true, completion: nil)
+            return
+        }
+        
+        guard !newPassword[0].value.isEmpty else //|| newPassword[0].value.count < 6 else
+        {
+            let alert = UIAlertController(
+                title: "Missing Input",
+                message: "The password fields cannot be empty. Please fill in both.",
                 preferredStyle: .alert
             )
             let okAction = UIAlertAction(title: "OK", style: .default)
@@ -150,18 +228,7 @@ class ChangePasswordViewController: UIViewController, UITableViewDataSource, UIT
             return
         }
         
-        guard !newPassword[0].value.isEmpty else //|| newPassword[0].value.count < 6 else
-        {
-            let alert = UIAlertController(
-                title: "Missing Input",
-                message: "The password fields cannot be empty. Please fill in both.",
-                preferredStyle: .alert
-            )
-            let okAction = UIAlertAction(title: "OK", style: .default)
-            alert.addAction(okAction)
-            self.present(alert, animated: true, completion: nil)
-            return
-        }
+
         
         viewModel.changePassword(currentPassword[0].value, newPassword[0].value)
         

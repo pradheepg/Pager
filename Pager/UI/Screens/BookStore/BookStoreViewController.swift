@@ -458,7 +458,10 @@ class BookStoreViewController: UIViewController, UICollectionViewDataSource, UIC
                     // Handle "Read Now" tap
                     guard let self = self else { return }
                     let detailVC = DetailViewController(book: book)
-                    present(detailVC, animated: true, completion: nil)
+                    let nav = UINavigationController(rootViewController: detailVC)
+                    nav.modalPresentationStyle = .fullScreen
+                    present(nav, animated: true)
+//                    present(detailVC, animated: true, completion: nil)
 
 //                    self.navigationController?.pushViewController(detailVC, animated: true)
                 }
@@ -558,8 +561,10 @@ class BookStoreViewController: UIViewController, UICollectionViewDataSource, UIC
     
     func bookCellTapped(book: Book) {
         let vc = DetailViewController(book: book)
-        present(vc, animated: true, completion: nil)
-        print("Book '\(book.title)' tapped")
+        let nav = UINavigationController(rootViewController: vc)
+        nav.modalPresentationStyle = .fullScreen
+        present(nav, animated: true)
+//        present(vc, animated: true, completion: nil)
     }
     
     func collectionView(_ collectionView: UICollectionView, contextMenuConfigurationForItemAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
@@ -590,7 +595,10 @@ class BookStoreViewController: UIViewController, UICollectionViewDataSource, UIC
             
             let detailsAction = UIAction(title: "View Details", image: UIImage(systemName: "info.circle")) { _ in
                 let vc = DetailViewController(book: book)
-                self.present(vc, animated: true, completion: nil)
+                let nav = UINavigationController(rootViewController: vc)
+                nav.modalPresentationStyle = .fullScreen
+                self.present(nav, animated: true)
+//                self.present(vc, animated: true, completion: nil)
             }
             
             let wantToReadAction = UIAction(title: "Add to Want to Read", image: UIImage(systemName: "bookmark")) { _ in

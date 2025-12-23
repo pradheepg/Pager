@@ -7,8 +7,10 @@
 
 import UIKit
 
-class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayout {
+class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayout, UISearchBarDelegate {
     private let collectionView: UICollectionView
+    private let searchBar: UISearchBar
+    
     let viewModel: BookGridViewModel
     init(categoryTitle: String, books: [Book],currentCollection: BookCollection? = nil) {
         viewModel = BookGridViewModel(categoryTitle: categoryTitle, books: books, currentCollection: currentCollection)
@@ -20,6 +22,7 @@ class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayo
         layout.minimumInteritemSpacing = 0
         
         self.collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        self.searchBar = UISearchBar()
         
         super.init(nibName: nil, bundle: nil)
         
@@ -34,8 +37,41 @@ class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayo
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        setUpSearchBar()
         setupUI()
+        let _ = viewModel.searchBook(searchText: "")
         updateEmptyState()
+    }
+    
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        searchBar.resignFirstResponder()
+    }
+    
+    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        searchBar.text = ""
+        searchBar.resignFirstResponder()
+        
+        let _ = viewModel.searchBook(searchText: "")
+        
+        hideEmptyState()
+        
+        collectionView.reloadData()
+    }
+    private func setUpSearchBar() {
+        view.addSubview(searchBar)
+        searchBar.placeholder = "Search..."
+        searchBar.searchBarStyle = .minimal
+        searchBar.searchTextField.backgroundColor = .clear//AppColors.secondaryBackground
+        searchBar.translatesAutoresizingMaskIntoConstraints = false
+        searchBar.delegate = self
+        searchBar.showsCancelButton = true
+        searchBar.searchTextField.enablesReturnKeyAutomatically = false
+        NSLayoutConstraint.activate([
+            searchBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            searchBar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 5),
+            searchBar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -5),
+            searchBar.heightAnchor.constraint(lessThanOrEqualToConstant: 40),
+        ])
     }
     
     private func setupUI() {
@@ -45,14 +81,14 @@ class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayo
         collectionView.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
-            collectionView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            collectionView.topAnchor.constraint(equalTo: searchBar.bottomAnchor, constant: 10),
             collectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            collectionView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+            collectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
         ])
     }
     func prefersLargeTitles(_ bool: Bool){
-        if #available(iOS 17.0, *) {
+        if #available(iOS 16.0, *) {
             navigationController?.navigationBar.prefersLargeTitles = bool
         }
     }
@@ -80,18 +116,39 @@ class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayo
         return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
             guard let self = self else { return nil }
             
-            let book = self.viewModel.books[indexPath.item]
+            let book = self.viewModel.resultBooks[indexPath.item]
 
             
             let detailsAction = UIAction(title: "View Details", image: UIImage(systemName: "info.circle")) { _ in
-                let book = self.viewModel.books[indexPath.item]
+                let book = self.viewModel.resultBooks[indexPath.item]
                 let vc = DetailViewController(book: book)
-                self.present(vc, animated: true, completion: .none)
+                let nav = UINavigationController(rootViewController: vc)
+                nav.modalPresentationStyle = .fullScreen
+                self.present(nav, animated: true)
+//                self.present(vc, animated: true, completion: .none)
                  // self.showBookDetails(book)
             }
             
             let wantToReadAction = UIAction(title: "Add to Want to Read", image: UIImage(systemName: "bookmark")) { _ in
-                 // self.viewModel.addToWantToRead(book)
+                let result = self.viewModel.addBookToDefault(book: book)
+                switch result {
+                case .success:
+                    print("Success")
+                    //                            self.viewModel.getUpdatedBookList()
+                    //                            self.collectionView.reloadData()
+                    //                            self.updateEmptyState()
+                case .failure(let error):
+                    if error == .bookAlreadyInCollection {
+                        let alert = UIAlertController(
+                            title: "Already Added",
+                            message: "This book is already in the selected collection.",
+                            preferredStyle: .alert
+                        )
+                        alert.addAction(UIAlertAction(title: "OK", style: .default))
+                        self.present(alert, animated: true)
+                    }
+                    print("Error: \(error)")
+                }
             }
 
             let allCollections = UserSession.shared.currentUser?.collections?.allObjects as? [BookCollection] ?? []
@@ -160,8 +217,8 @@ class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayo
     }
     
     func updateEmptyState() {
-        if viewModel.books.isEmpty {
-            showEmptyState()
+        if viewModel.resultBooks.isEmpty {
+            showEmptyState(message: "Your Collection is empty!")
         } else {
             hideEmptyState()
         }
@@ -169,17 +226,25 @@ class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayo
 
     private var emptyStateVC: UIViewController?
 
-    private func showEmptyState() {
+    private func showEmptyState(message: String, isButtonNeeded: Bool = true) {
         guard emptyStateVC == nil else { return }
         
-        let vc = EmptyMyBooksViewController(message: "Your Collection is empty!", isButtonNeeded: true)
+        let vc = EmptyMyBooksViewController(message: message, isButtonNeeded: isButtonNeeded)
         
         addChild(vc)
         view.addSubview(vc.view)
         
-        vc.view.frame = view.bounds
-        vc.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+//        vc.view.frame = collectionView.frame
+        vc.view.translatesAutoresizingMaskIntoConstraints = false
         
+        NSLayoutConstraint.activate([
+            vc.view.topAnchor.constraint(equalTo: searchBar.bottomAnchor),
+            vc.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            vc.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            vc.view.bottomAnchor.constraint(equalTo: view.keyboardLayoutGuide.topAnchor),
+        ])
+        
+        vc.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         vc.didMove(toParent: self)
         
         emptyStateVC = vc
@@ -199,22 +264,44 @@ class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayo
 
 extension BookGridViewController: UICollectionViewDataSource, UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return viewModel.books.count
+        print("Number of row")
+
+        return viewModel.resultBooks.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        print("cell getting \(indexPath.row)")
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: BookGridCell.reuseID, for: indexPath) as! BookGridCell
         cell.contentView.backgroundColor = AppColors.secondaryBackground
         cell.layer.cornerRadius = 12
         cell.layer.masksToBounds = true
-        cell.configure(with: viewModel.books[indexPath.item])
+        cell.configure(with: viewModel.resultBooks[indexPath.row])
         return cell
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        let book = viewModel.books[indexPath.item]
+        let book = viewModel.resultBooks[indexPath.item]
         let vc = DetailViewController(book: book)
-        present(vc, animated: true, completion: .none)
+        let nav = UINavigationController(rootViewController: vc)
+        nav.modalPresentationStyle = .fullScreen
+        present(nav, animated: true)
+    }
+    
+    
+    
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        print(searchText)
+        let result = viewModel.searchBook(searchText: searchText)
+        switch result {
+        case .success():
+            hideEmptyState()
+            collectionView.reloadData()
+            updateEmptyState()
+        case .failure(let error):
+            if error == .noMatches {
+                showEmptyState(message: "No result found!", isButtonNeeded: false)
+            }
+        }
     }
     
 //    

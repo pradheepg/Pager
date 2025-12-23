@@ -72,19 +72,23 @@ class SignUpViewController: UIViewController, UITextFieldDelegate, UITextViewDel
 
         nameField.placeholder = "Name\u{002A}"
         nameField.autocapitalizationType = .words
+        nameField.returnKeyType = .next
         styleTextField(nameField)
         
         emailField.placeholder = "Email\u{002A}"
         emailField.keyboardType = .emailAddress
         emailField.autocapitalizationType = .none
+        emailField.returnKeyType = .next
         styleTextField(emailField)
         
         passwordField.placeholder = "Password\u{002A}"
         passwordField.isSecureTextEntry = true
+        passwordField.returnKeyType = .next
         styleTextField(passwordField)
         
         confirmPasswordField.placeholder = "Confirm Password\u{002A}"
         confirmPasswordField.isSecureTextEntry = true
+        confirmPasswordField.returnKeyType = .done
         styleTextField(confirmPasswordField)
         
         warningLabel.text = "Password must be at least 6 characters long"
@@ -234,7 +238,6 @@ class SignUpViewController: UIViewController, UITextFieldDelegate, UITextViewDel
 //        guard let genre = genreTextView.text, !genre.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
 //            showAlert("Please enter your favorite genre"); return
 //        }
-        print("Sign up details:", name, email, password)
         viewModel.signUp(name: name, email: email, password: password, confirmPassword: confirmPassword, genre: nil)
     }
     
@@ -302,7 +305,7 @@ class SignUpViewController: UIViewController, UITextFieldDelegate, UITextViewDel
         viewModel.onSignUpSuccess = { [weak self] user in
             if let sceneDelegate = UIApplication.shared.connectedScenes
                     .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene {
-                (sceneDelegate.delegate as? SceneDelegate)?.setTabBarAsRoot()
+                (sceneDelegate.delegate as? SceneDelegate)?.setSampleDataAlertAsRoot()
             }
         }
 

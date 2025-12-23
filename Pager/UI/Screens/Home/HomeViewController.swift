@@ -18,21 +18,6 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
     private let profileButton = UIButton(type: .custom)
     private var collectionView: UICollectionView!
     private let activityIndicator = UIActivityIndicatorView(style: .large)
-    //    private var currentBook: Book?
-    //    private var recentBooks: [Book] = []
-    //    private var wantToReadBooks: [Book] = []
-    //    private var categories: [(name: String, books: [Book])] = []
-    //    var displayedSections: [HomeSection] {
-    //        var sections: [HomeSection] = [.currently]
-    //        if !recentBooks.isEmpty { sections.append(.recent) }
-    //        if !wantToReadBooks.isEmpty { sections.append(.wantToRead) }
-    //        for category in categories {
-    //            if !category.books.isEmpty {
-    //                sections.append(.category(category.name, category.books))
-    //            }
-    //        }
-    //        return sections
-    //    }
     private let viewModel = HomeViewModel()
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -83,7 +68,7 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
     }
     
     private func setupTitleAndProfile() {
-        profileButton.setImage(UIImage(systemName: "person"), for: .normal)
+        profileButton.setImage(UIImage(systemName: "person"), for: .normal)//person.crop.circle.fill
         profileButton.tintColor = .label
         profileButton.translatesAutoresizingMaskIntoConstraints = false
         profileButton.addTarget(self, action: #selector(profileButtonTapped), for: .touchUpInside)
@@ -124,7 +109,7 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
             if section == 0 {
                 let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1), heightDimension: .fractionalHeight(1))
                 let item = NSCollectionLayoutItem(layoutSize: itemSize)
-                item.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8)
+                item.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16)
                 let groupSize : NSCollectionLayoutSize
                 if self.viewModel.currentBook == nil {
                     groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1), heightDimension: .fractionalHeight(0.20))
@@ -210,11 +195,18 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
     }
     
     func bookCellTapped(book: Book) {
-        let vc = DetailViewController(book: book)
-        vc.onDismiss = { [weak self] in
-            self?.handleDismissal()
-        }
-        present(vc, animated: true, completion: nil)
+        
+        let vc = SampleDataLoaderViewController()
+        vc.modalPresentationStyle = .fullScreen
+        present(vc, animated: true)
+        //driver
+        //        let vc = DetailViewController(book: book)
+        //        vc.onDismiss = { [weak self] in
+        //            self?.handleDismissal()
+        //        }
+        //        let nav = UINavigationController(rootViewController: vc)
+        //        nav.modalPresentationStyle = .fullScreen
+        //        present(nav, animated: true)
     }
     
     func seeAllTapped(section: Int,title: String, books: [Book]) {
@@ -300,13 +292,26 @@ extension HomeViewController: UICollectionViewDataSource {
         cell.configure(with: book)
         return cell
     }
-    
+//    
+//    func configureCategoryCell(_ collectionView: UICollectionView, indexPath: IndexPath) -> UICollectionViewCell {
+//        let catIdx = indexPath.section - 3
+//        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "BookCell", for: indexPath) as! BookCell
+//        let book = viewModel.categories[catIdx].books[indexPath.item]
+//        cell.configure(with: book)
+//        return cell
+//    }
+//    
     func configureCategoryCell(_ collectionView: UICollectionView, indexPath: IndexPath) -> UICollectionViewCell {
-        let catIdx = indexPath.section - 3
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "BookCell", for: indexPath) as! BookCell
-        let book = viewModel.categories[catIdx].books[indexPath.item]
-        cell.configure(with: book)
-        return cell
+        let sectionType = viewModel.displayedSections[indexPath.section]
+        
+        if case .category(_, let books) = sectionType {
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "BookCell", for: indexPath) as! BookCell
+            let book = books[indexPath.item]
+            cell.configure(with: book)
+            return cell
+        }
+        
+        return UICollectionViewCell() // Fallback safety
     }
     
     @objc func headerTapped(_ sender: UITapGestureRecognizer) {
@@ -395,14 +400,16 @@ extension HomeViewController: UICollectionViewDataSource {
             // 2. Define Actions
             let detailsAction = UIAction(title: "View Details", image: UIImage(systemName: "info.circle")) { _ in
                 let vc = DetailViewController(book: book)
-                self.present(vc, animated: true, completion: nil)
+                let nav = UINavigationController(rootViewController: vc)
+                nav.modalPresentationStyle = .fullScreen
+                self.present(nav, animated: true)
+//                self.present(vc, animated: true, completion: nil)
             }
             
             let wantToReadAction = UIAction(title: "Add to Want to Read", image: UIImage(systemName: "bookmark")) { _ in
-                print("adlhja")
                 switch self.viewModel.addBookToDefault(book: book)  {
                 case .success():
-                    print("Adding")
+                    self.viewModel.loadData()
                 case .failure(let error):
                     if error == .bookAlreadyInCollection {
                         let alert = UIAlertController(
@@ -424,10 +431,11 @@ extension HomeViewController: UICollectionViewDataSource {
             let collectionItems = allCollections.map { collection in
                 UIAction(title: collection.name ?? "Untitled", image: UIImage(systemName: "folder")) { _ in
                     // Add your logic here
-                    print("Adding \(book.title ?? "") to collection: \(collection.name ?? "")")
                     switch self.viewModel.addBook(book, to: collection) {
                     case .success():
-                        print("Adding")
+                        if collection.isDefault {
+                            self.viewModel.loadData()
+                        }
                     case .failure(let error):
                         if error == .bookAlreadyInCollection {
                             let alert = UIAlertController(
@@ -449,7 +457,6 @@ extension HomeViewController: UICollectionViewDataSource {
                 children: collectionItems
             )
             
-            // 4. Final Menu Construction
             return UIMenu(title: "", children: [
                 UIMenu(options: .displayInline, children: [detailsAction]),
                 UIMenu(options: .displayInline, children: [wantToReadAction, addToCollectionMenu])
@@ -509,20 +516,44 @@ class SectionHeaderView: UICollectionReusableView {
     }
 }
 extension HomeViewController {
+//    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+//        switch indexPath.section {
+//        case 0:
+//            if let book = viewModel.currentBook {
+//                bookCellTapped(book: book)
+//            }
+//        case 1:
+//            let book = viewModel.recentBooks[indexPath.item]
+//            bookCellTapped(book: book)
+//        case 2:
+//            let book = viewModel.wantToReadBooks[indexPath.item]
+//            bookCellTapped(book: book)
+//        default:
+//            let book = viewModel.categories[indexPath.section - 3].books[indexPath.item]
+//            bookCellTapped(book: book)
+//        }
+//    }
+    
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        switch indexPath.section {
-        case 0:
+        let sectionType = viewModel.displayedSections[indexPath.section]
+        
+        switch sectionType {
+        case .currently:
             if let book = viewModel.currentBook {
                 bookCellTapped(book: book)
             }
-        case 1:
+            
+        case .recent:
             let book = viewModel.recentBooks[indexPath.item]
             bookCellTapped(book: book)
-        case 2:
+            
+        case .wantToRead:
             let book = viewModel.wantToReadBooks[indexPath.item]
             bookCellTapped(book: book)
-        default:
-            let book = viewModel.categories[indexPath.section - 3].books[indexPath.item]
+            
+        case .category(_, let books):
+            // FIX: No more (section - 3)
+            let book = books[indexPath.item]
             bookCellTapped(book: book)
         }
     }

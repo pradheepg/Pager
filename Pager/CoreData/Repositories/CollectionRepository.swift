@@ -17,6 +17,7 @@ enum CollectionError: Error {
     case bookAlreadyInCollection
     case bookNotInCollection
     case cannotDeleteDefaultCollection
+    case noMatches
 }
 
 final class CollectionRepository {

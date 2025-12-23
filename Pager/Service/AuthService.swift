@@ -39,15 +39,10 @@ final class AuthService {
         case .failure(let error):
             switch error {
             case .invalidCredentials:
-                print("!!!!!Invale user")
-
                 return .failure(.invalidPassword)
             case .userNotFound:
-                print("Invale user")
                 return .failure(.userNotFound)
             default :
-                print("????Invale user")
-
                 return .failure(.unKnownError)
             }
         }

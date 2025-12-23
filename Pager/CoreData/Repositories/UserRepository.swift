@@ -36,13 +36,13 @@ final class UserRepository {
         dailyReadingGoalMinutes: Int?,
         genre: String
     ) -> Result<User, UserError> {
-
+        
         if emailExists(email) {
             return .failure(.emailAlreadyExists)
         }
         
         let user = User(context: context)
-
+        
         let passwordHash = PasswordHashing.hashFuntion(password: password)
         
         user.userId = UUID()
@@ -52,7 +52,7 @@ final class UserRepository {
         user.profileImage = profileImage
         user.createDate = createDate
         user.favoriteGenres = genre
-
+        
         if let goal = dailyReadingGoalMinutes {
             user.dailyReadingGoal = Int16(goal)
         }
@@ -71,20 +71,20 @@ final class UserRepository {
             return .failure(.saveFailed)
         }
     }
-
+    
     
     private func fetchUser(byEmail email: String) -> User? {
         let request: NSFetchRequest<User> = User.fetchRequest()
         request.predicate = NSPredicate(format: "email == %@", email)
         request.fetchLimit = 1
-
+        
         return try? context.fetch(request).first
     }
     
     func emailExists(_ email: String) -> Bool {
         return fetchUser(byEmail: email) != nil
     }
-
+    
     func validateUser(email: String, password: String) -> Result<User, UserError> {
         guard let user = fetchUser(byEmail: email) else {
             return .failure(.userNotFound)
@@ -104,59 +104,59 @@ final class UserRepository {
         profileName: String? = nil,
         genre: String? = nil
     ) async -> Result<Void, UserError> {
-
+        
         guard let context = user.managedObjectContext else {
             return .failure(.saveFailed)
         }
-
+        
         let userID = user.objectID
-
+        
         do {
             try await context.perform {
                 guard let safeUser = context.object(with: userID) as? User else {
                     throw UserError.userNotFound
                 }
-
+                
                 if let email = email {
                     safeUser.email = email
                 }
-
+                
                 if let profileName = profileName {
                     safeUser.profileName = profileName
                 }
-
+                
                 if let genre = genre {
                     safeUser.favoriteGenres = genre
                 }
-
+                
                 if context.hasChanges {
                     try context.save()
                 }
             }
-
+            
             return .success(())
-
+            
         } catch {
             return .failure(.saveFailed)
         }
     }
-
+    
     func updatePassword(
         for user: User,
         currentPassword: String,
         newPassword: String
     ) async -> Result<Void, UserError> {
-
+        
         let currentHash = PasswordHashing.hashFuntion(password: currentPassword)
-
+        
         guard user.password == currentHash else {
             return .failure(.invalidCredentials)
         }
-
+        
         let newHash = PasswordHashing.hashFuntion(password: newPassword)
         
         user.password = newHash
-
+        
         do {
             try CoreDataManager.shared.saveContext()
             return .success(())
@@ -169,7 +169,7 @@ final class UserRepository {
         let request: NSFetchRequest<User> = User.fetchRequest()
         request.predicate = NSPredicate(format: "userId == %@", userId as CVarArg)
         request.fetchLimit = 1
-
+        
         do {
             if let user = try context.fetch(request).first {
                 return .success(user)
@@ -183,7 +183,7 @@ final class UserRepository {
     
     func deleteUser(_ user: User) -> Result<Void, UserError> {
         context.delete(user)
-
+        
         do {
             try CoreDataManager.shared.saveContext()
             return .success(())
@@ -191,10 +191,10 @@ final class UserRepository {
             return .failure(.deleteFailed)
         }
     }
-
+    
     func updateDailyReadingGoal(for user: User, minutes: Int) -> Result<Void, UserError> {
         user.dailyReadingGoal = Int16(minutes)
-
+        
         do {
             try CoreDataManager.shared.saveContext()
             return .success(())
@@ -202,7 +202,7 @@ final class UserRepository {
             return .failure(.saveFailed)
         }
     }
-
+    
     func updateProfileImage(for user: User, imageData: Data) async -> Result<Void, UserError> {
         guard let context = user.managedObjectContext else {
             return .failure(.saveFailed)
@@ -214,17 +214,17 @@ final class UserRepository {
                 guard let safeUser = context.object(with: userID) as? User else {
                     throw UserError.userNotFound
                 }
-
+                
                 safeUser.profileImage = imageData
                 try context.save()
             }
-
+            
             return .success(())
         } catch {
             return .failure(.saveFailed)
         }
     }
-
+    
     
     func getCurrentBookUUID(_ user: User) -> Result<UUID, UserError> {
         guard let bookId = user.lastOpenedBookId else {
@@ -232,5 +232,17 @@ final class UserRepository {
         }
         
         return .success(bookId)
+    }
+    
+    func updateUserDob(date: Date, _ user: User) -> Result<Void, UserError> {
+        
+        user.dob = date
+        
+        do {
+            try CoreDataManager.shared.saveContext()
+            return .success(())
+        } catch {
+            return .failure(.saveFailed)
+        }
     }
 }

@@ -36,6 +36,13 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
         setUpTagsCollectionView()
         setUpResultsCollectionView()
         setUpSearchController()
+        setupNotificationObserver()
+    }
+    
+    func setupNotificationObserver() {
+        let notificationCenter = NotificationCenter.default
+        notificationCenter.addObserver(self, selector: #selector(adjustForKeyboard), name: UIResponder.keyboardWillShowNotification, object: nil)
+        notificationCenter.addObserver(self, selector: #selector(adjustForKeyboard), name: UIResponder.keyboardWillHideNotification, object: nil)
     }
     
     
@@ -51,7 +58,7 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
             emptyStateView.view.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             emptyStateView.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             emptyStateView.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            emptyStateView.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            emptyStateView.view.bottomAnchor.constraint(equalTo: view.keyboardLayoutGuide.topAnchor),
         ])
     }
     
@@ -212,6 +219,24 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
         }
     }
     
+    @objc func adjustForKeyboard(notification: Notification) {
+        guard let keyboardValue = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue else { return }
+        
+        let keyboardScreenEndFrame = keyboardValue.cgRectValue
+        let keyboardViewEndFrame = view.convert(keyboardScreenEndFrame, from: view.window)
+
+        if notification.name == UIResponder.keyboardWillHideNotification {
+            resultsCollectionView.contentInset = .zero
+        } else {
+            let searchBarHeight = searchController.searchBar.frame.height
+            let bottomInset = keyboardViewEndFrame.height - view.safeAreaInsets.bottom + searchBarHeight
+//            emptyStateView.view.contentInset =
+            resultsCollectionView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: bottomInset, right: 0)
+            
+        }
+        resultsCollectionView.scrollIndicatorInsets = resultsCollectionView.contentInset
+    }
+    
     func numberOfSections(in collectionView: UICollectionView) -> Int {
         if collectionView  == resultsCollectionView {
             return 2
@@ -273,7 +298,10 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
                 book = viewModel.books[indexPath.item]
             }
             let vc = DetailViewController(book: book)
-            present(vc, animated: true)
+            let nav = UINavigationController(rootViewController: vc)
+            nav.modalPresentationStyle = .fullScreen
+            present(nav, animated: true)
+//            present(vc, animated: true)
 //            navigationController?.pushViewController(vc, animated: true)
         }
     }

@@ -81,6 +81,7 @@ class LoginViewController: UIViewController, UITextFieldDelegate {
         emailField.layer.borderWidth = 1
         emailField.layer.borderColor = AppColors.buttonBorder.cgColor
         emailField.delegate = self
+        emailField.returnKeyType = .next
         
         passwordField.placeholder = "Type in your password"
         passwordField.backgroundColor = AppColors.textFieldBackground
@@ -94,6 +95,7 @@ class LoginViewController: UIViewController, UITextFieldDelegate {
         passwordField.layer.borderWidth = 1
         passwordField.layer.borderColor = AppColors.buttonBorder.cgColor
         passwordField.delegate = self
+        passwordField.returnKeyType = .done
         
         loginButton.setTitle("Log In", for: .normal)
         loginButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)

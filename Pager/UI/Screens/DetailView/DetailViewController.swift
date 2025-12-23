@@ -8,17 +8,7 @@
 import UIKit
 
 class DetailViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate {
-    
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return viewModel.reviews.count
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ReviewCell", for: indexPath) as! ReviewCell
-        cell.configure(with: viewModel.reviews[indexPath.item])
-        return cell
-    }
-    
+
     private let mainScrollView = UIScrollView()
     private let contentView = UIView()
     private let mainStackView = UIStackView()
@@ -39,7 +29,14 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
     private let averageRatingLabel: UILabel = UILabel()
     private let starStack: UIStackView = UIStackView()
     private let totalRatingLabel: UILabel = UILabel()
-    
+    private let readMoreButton: UIButton = {
+        let btn = UIButton(type: .system)
+        btn.setTitle("More", for: .normal)
+        btn.setTitleColor(AppColors.title, for: .normal)
+        btn.titleLabel?.font = UIFont.systemFont(ofSize: 12, weight: .bold)
+        btn.translatesAutoresizingMaskIntoConstraints = false
+        return btn
+    }()
     
     
     var onDismiss: (() -> Void)?
@@ -68,6 +65,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
             }
         }
         super.init(nibName: nil, bundle: nil)
+        modalPresentationStyle = .fullScreen
     }
     
     required init?(coder: NSCoder) {
@@ -76,6 +74,8 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        title = viewModel.book.title
+        navigationItem.titleView = UIView()
         //        loadSameData()
         viewModel.loadData()
         setUpScrollView()
@@ -83,29 +83,13 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         setUpContent()
         setupMoreMenu()
         updateButtonUI()
+        setupCloseButton()
         if let existingReview = viewModel.getCurrentUserReview() {
             let savedRating = Int(existingReview.rating)
             updateStarUI(rating: savedRating)
         }
         
     }
-    //    func loadSameData() {
-    //        let repoDemo = ReviewRepository()
-    //        let temptemp = repoDemo.fetchReviews(for: viewModel.book)
-    //        switch temptemp {
-    //        case .success(let resu):
-    //            if let ejdladla = resu.first{
-    //                repoDemo.deleteReview(ejdladla)
-    //            }
-    //
-    //        default:
-    //            print("Nother")
-    //        }
-    //        repoDemo.createReview(for: viewModel.book, by: UserSession.shared.currentUser!, rating: 4, title: "Best bookhat is what i tell ", text: "Omg that is what i tell ,you know what i telling know ,right omg and that little showing off what he is telling you ok so behat is what i tell ,you know what i telling know ,right omg and that little showing off but i will be there for you and that what he is telling you ok so be happy")
-    //    }
-    //    func loadData() {
-    //        reviews = viewModel.book.reviews?.allObjects as? [Review] ?? []
-    //    }
     
     func updateButtonUI() {
         if isOwned {
@@ -118,20 +102,22 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
             
         } else {
             getReadButton.setTitle("GET", for: .normal)
-            ratingStackView.alpha = 0.5
-            ratingStackView.isUserInteractionEnabled = false
+            ratingStackView.alpha = 0.3
+            ratingStackView.isUserInteractionEnabled = true
             setupMoreMenu()
         }
     }
     
     private func setUpScrollView() {
+
+        
         view.backgroundColor = AppColors.background
         mainScrollView.translatesAutoresizingMaskIntoConstraints = false
         
         view.addSubview(mainScrollView)
         
         NSLayoutConstraint.activate([
-            mainScrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            mainScrollView.topAnchor.constraint(equalTo: view.topAnchor),
             mainScrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             mainScrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             mainScrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -254,9 +240,19 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         descriptionContentLable.text = viewModel.book.descriptionText
         descriptionContentLable.textAlignment = .left
         descriptionContentLable.font = UIFont.systemFont(ofSize: 12)
-        descriptionContentLable.numberOfLines = 0
+        descriptionContentLable.numberOfLines = 4
         descriptionContentLable.translatesAutoresizingMaskIntoConstraints = false
+        let tapGestore = UITapGestureRecognizer(target: self, action: #selector(toggleDescription))
+        descriptionView.addGestureRecognizer(tapGestore)
         descriptionView.addSubview(descriptionContentLable)
+        
+        descriptionView.addSubview(readMoreButton)
+        readMoreButton.addTarget(self, action: #selector(toggleDescription), for: .allTouchEvents)
+
+        if (descriptionContentLable.text?.count ?? 0) < 150 {
+            readMoreButton.isHidden = true
+            descriptionContentLable.numberOfLines = 0
+        }
         
         setUpOtherInfoStack()
         let verticalSeparator3 = makeVerticalSeparator()
@@ -283,9 +279,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
             
             verticalSeparator1.widthAnchor.constraint(equalTo: mainStackView.widthAnchor, multiplier: 0.9),
             verticalSeparator1.heightAnchor.constraint(lessThanOrEqualToConstant: 50),
-            
-            descriptionView.widthAnchor.constraint(equalTo: mainStackView.widthAnchor, multiplier: 0.9),
-            descriptionView.heightAnchor.constraint(lessThanOrEqualToConstant: 200),
+
             
             descriptionTitleLable.topAnchor.constraint(equalTo: descriptionView.topAnchor),
             descriptionTitleLable.leadingAnchor.constraint(equalTo: descriptionView.leadingAnchor),
@@ -293,8 +287,15 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
             
             descriptionContentLable.topAnchor.constraint(equalTo: descriptionTitleLable.bottomAnchor),
             descriptionContentLable.leadingAnchor.constraint(equalTo: descriptionTitleLable.leadingAnchor),
-            descriptionContentLable.bottomAnchor.constraint(equalTo: descriptionView.bottomAnchor),
+            descriptionContentLable.bottomAnchor.constraint(equalTo: descriptionView.bottomAnchor, constant: -10),
             descriptionContentLable.trailingAnchor.constraint(equalTo: descriptionView.trailingAnchor),
+            
+            readMoreButton.topAnchor.constraint(equalTo: descriptionContentLable.bottomAnchor, constant: 5),
+            readMoreButton.leadingAnchor.constraint(equalTo: descriptionView.leadingAnchor),
+            readMoreButton.bottomAnchor.constraint(equalTo: descriptionView.bottomAnchor),
+            
+            descriptionView.widthAnchor.constraint(equalTo: mainStackView.widthAnchor, multiplier: 0.9),
+            descriptionView.heightAnchor.constraint(lessThanOrEqualToConstant: 2000),
             
             verticalSeparator2.widthAnchor.constraint(equalTo: mainStackView.widthAnchor, multiplier: 0.9),
             verticalSeparator2.heightAnchor.constraint(lessThanOrEqualToConstant: 50),
@@ -825,6 +826,20 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         return container
     }
     
+    private func setupCloseButton() {
+        let closeButton = UIBarButtonItem(barButtonSystemItem: .close, target: self, action: #selector(didTapClose))
+
+        closeButton.tintColor = AppColors.title
+        
+        navigationItem.rightBarButtonItem = closeButton
+        // OR: navigationItem.leftBarButtonItem = closeButton
+    }
+
+    @objc private func didTapClose() {
+        onDismiss?()
+        dismiss(animated: true, completion: nil)
+    }
+    
     func makeVerticalSeparator(color: UIColor = .white,
                                inset: CGFloat = 0) -> UIView {
         let lineView = UIView()
@@ -849,6 +864,18 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
     }
     
     @objc func starTapped(_ sender: UIButton) {
+        if !isOwned {
+            let alert = UIAlertController(
+                title: "Purchase Required",
+                message: "You need to purchase this book before you can rate it.",
+                preferredStyle: .alert
+            )
+            
+            alert.addAction(UIAlertAction(title: "OK", style: .default))
+            
+            present(alert, animated: true)
+            return
+        }
         updateTotalRatingText()
         let selectedRating = sender.tag
         let result = viewModel.submitReview(rating: selectedRating)
@@ -894,6 +921,36 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         } else {
             updateStarUI(rating: 0)
         }
+    }
+    
+    @objc func toggleDescription() {
+        descriptionContentLable.numberOfLines = 0
+        readMoreButton.isHidden = true
+        descriptionContentLable.gestureRecognizers?.first?.isEnabled = false
+        UIView.animate(withDuration: 0.3) {
+            self.view.layoutIfNeeded()
+        }
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        let vc = ViewReviewViewController(review: viewModel.reviews[indexPath.item])
+        if let nav = navigationController {
+            nav.pushViewController(vc, animated: true)
+        } else {
+            let nav = UINavigationController(rootViewController: vc)
+            nav.modalPresentationStyle = .fullScreen
+            present(nav, animated: true)
+        }
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        return viewModel.reviews.count
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ReviewCell", for: indexPath) as! ReviewCell
+        cell.configure(with: viewModel.reviews[indexPath.item])
+        return cell
     }
     
     //    override func viewDidLayoutSubviews() {

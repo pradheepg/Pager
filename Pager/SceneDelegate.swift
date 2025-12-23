@@ -48,6 +48,14 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             print("Error checking database: \(error)")
         }
     }
+    
+    func setSampleDataAlertAsRoot() {
+        let sampleDateAlert = SampleDataLoaderViewController()
+        window?.rootViewController = sampleDateAlert
+        SceneDelegate.applySavedTheme()
+        window?.makeKeyAndVisible()
+    }
+    
     func setTabBarAsRoot() {
         let tabBarVC = MainTabBarController()
         window?.rootViewController = tabBarVC
@@ -130,10 +138,8 @@ extension SceneDelegate {
     }
     
     static func applySavedTheme() {
-            // 1. Read the saved index (0=System, 1=Light, 2=Dark)
             let savedIndex = UserDefaults.standard.integer(forKey: "selectedThemeIndex")
             
-            // 2. Determine the Style
             let style: UIUserInterfaceStyle
             switch savedIndex {
             case 1:
@@ -141,11 +147,9 @@ extension SceneDelegate {
             case 2:
                 style = .dark
             default:
-                style = .unspecified // Follow System
+                style = .unspecified
             }
             
-            // 3. Apply to all active windows
-            // We iterate through connected scenes to find the window
             UIApplication.shared.connectedScenes.forEach { scene in
                 if let windowScene = scene as? UIWindowScene {
                     windowScene.windows.forEach { window in

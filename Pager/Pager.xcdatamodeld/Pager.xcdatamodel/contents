@@ -37,6 +37,7 @@
     <entity name="User" representedClassName="User" syncable="YES">
         <attribute name="createDate" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="dailyReadingGoal" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="dob" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="email" attributeType="String"/>
         <attribute name="favoriteGenres" optional="YES" attributeType="String"/>
         <attribute name="lastOpenedBookId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>

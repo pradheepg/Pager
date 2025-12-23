@@ -222,10 +222,11 @@ class MyBooksViewController: UIViewController, UICollectionViewDataSource, UICol
         let book = viewModel.books[indexPath.item]
         let vc = DetailViewController(book: book)
         vc.onDismiss = { [weak self] in
-                    self?.didFinishTask?()
-                }
-        present(vc, animated: true, completion: .none)
-        print("Tapped book:", book.bookId)
+            self?.didFinishTask?()
+        }
+        let nav = UINavigationController(rootViewController: vc)
+        nav.modalPresentationStyle = .fullScreen
+        present(nav, animated: true)
     }
     
     

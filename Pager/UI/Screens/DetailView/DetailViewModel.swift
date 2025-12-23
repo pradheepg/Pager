@@ -6,6 +6,7 @@
 //
 
 import UIKit
+internal import CoreData
 
 class DetailViewModel {
     let book: Book
@@ -43,6 +44,10 @@ class DetailViewModel {
     func unpurchaseBook(_ book: Book) -> Result<Void, UserBookRecordError> {
         guard let user = UserSession.shared.currentUser else {
             return .failure(.notFound)
+        }
+        if user.lastOpenedBookId == book.bookId {
+            user.lastOpenedBookId = nil
+            try? user.managedObjectContext?.save()
         }
         return userBookRecordRepository.deleteRecord(book: book, user: user)
     }

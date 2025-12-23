@@ -8325,33 +8325,28 @@ class SettingsViewController: UIViewController {
         return stack
     }()
     
-    // --- Section 1: Page Turn Style ---
     private let pageStyleLabel = SettingsLabel(text: "Reading Preferences")
     private lazy var pageStyleSegment: GenericSegmentedTile = {
         let items = [
             SegmentItem(title: "Swipe", iconName: "hand.draw.fill"),
             SegmentItem(title: "Scroll", iconName: "scroll.fill")
         ]
-        // Assuming 0 is Scroll, 1 is Swipe based on your previous code. Adjust default as needed.
+
         let segment = GenericSegmentedTile(items: items, defaultIndex: 0)
         
-        // Handle selection
         segment.onSelectionChanged = { [weak self] index in
             let style: UIPageViewController.NavigationOrientation = (index == 0) ? .horizontal : .vertical
-            print(index)
             self?.delegate?.didChangeNavigationOrientation(to: style)
         }
         return segment
     }()
     
-    // --- Section 2: Theme ---
     private let themeLabel = SettingsLabel(text: "Reading Mode")
     private lazy var themeSegment: GenericSegmentedTile = {
         let items = [
             SegmentItem(title: "Light", iconName: "sun.max.fill"),
             SegmentItem(title: "Dark", iconName: "moon.fill")
         ]
-        // Determine current system brightness to set default
 //        let isDarkNow = UITraitCollection.current.userInterfaceStyle == .dark
         let segment = GenericSegmentedTile(items: items, defaultIndex: 0)
         
@@ -8377,7 +8372,6 @@ class SettingsViewController: UIViewController {
         return segment
     }()
     
-    // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         // Force dark background for the sheet to match the dark theme controls
@@ -8393,15 +8387,13 @@ class SettingsViewController: UIViewController {
         navigationSegment.setSelectedIndex(isCurl ? 1 : 0)
     }
     
-    // MARK: - Layout Setup
     private func setupLayout() {
         view.addSubview(mainContainerStack)
         
-        // Add sections to main stack
         mainContainerStack.addArrangedSubview(pageStyleLabel)
         mainContainerStack.addArrangedSubview(pageStyleSegment)
         
-        mainContainerStack.setCustomSpacing(12, after: pageStyleLabel) // Closer spacing between label and control
+        mainContainerStack.setCustomSpacing(12, after: pageStyleLabel)
         
         mainContainerStack.addArrangedSubview(themeLabel)
         mainContainerStack.addArrangedSubview(themeSegment)
@@ -8416,13 +8408,10 @@ class SettingsViewController: UIViewController {
         
         
         NSLayoutConstraint.activate([
-            // Pin main stack to the sheet view
             mainContainerStack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 30),
             mainContainerStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             mainContainerStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            // No bottom constraint, let it grow based on content
             
-            // Set heights for the custom segments
             pageStyleSegment.heightAnchor.constraint(equalToConstant: 80),
             themeSegment.heightAnchor.constraint(equalToConstant: 80),
             navigationSegment.heightAnchor.constraint(equalToConstant: 80),

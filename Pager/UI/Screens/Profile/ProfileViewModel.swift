@@ -28,4 +28,11 @@ class ProfileViewModel {
             _ = await userRepository.updateProfileImage(for: user, imageData: imageData)
         }
     }
+    
+    func saveUserDOB(date: Date) {
+        guard let user = UserSession.shared.currentUser else {
+            return
+        }
+        _ = userRepository.updateUserDob(date: date, user)
+    }
 }

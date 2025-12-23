@@ -42,6 +42,8 @@ class ReviewViewController: UIViewController, UICollectionViewDelegate, UICollec
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        title = "Ratings & Reviews"
+//        navigationItem.titleView = UIView()
         view.backgroundColor = AppColors.background
         
         viewModel.loadData()
@@ -56,8 +58,8 @@ class ReviewViewController: UIViewController, UICollectionViewDelegate, UICollec
             updateStarUI(rating: savedRating)
         }
         if !isOwned {
-            starButtonStack.isUserInteractionEnabled = false
-            starButtonStack.alpha = 0.5
+            starButtonStack.isUserInteractionEnabled = true
+            ratingStackView.alpha = 0.3
         }
         NSLayoutConstraint.activate([
             rootStackView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor,constant: 20),
@@ -113,11 +115,14 @@ class ReviewViewController: UIViewController, UICollectionViewDelegate, UICollec
     }
     
     func setUpNavBarItem() {
-        let closeBarButton = UIBarButtonItem(barButtonSystemItem: .close,
-                                             target: self,
-                                             action: #selector(closeButtonTapped))
-        
-        navigationItem.leftBarButtonItems = [closeBarButton]
+        if isModal {
+            let closeBarButton = UIBarButtonItem(barButtonSystemItem: .close,
+                                                 target: self,
+                                                 action: #selector(closeButtonTapped))
+            
+            navigationItem.leftBarButtonItems = [closeBarButton]
+        }
+
         if isOwned {
             if #available(iOS 26.0, *) {
                 let editBarButton = UIBarButtonItem(image: UIImage(systemName: "square.and.pencil"),
@@ -164,9 +169,9 @@ class ReviewViewController: UIViewController, UICollectionViewDelegate, UICollec
         rootStackView.spacing = 20
         rootStackView.translatesAutoresizingMaskIntoConstraints = false
         
-        
+        //headerStackView this is need to be remove after testing
         let headerStackView: UIStackView = UIStackView()
-        rootStackView.addArrangedSubview(headerStackView)
+//        rootStackView.addArrangedSubview(headerStackView)
         headerStackView.axis = .horizontal
         headerStackView.distribution = .equalSpacing
         headerStackView.alignment = .fill
@@ -306,6 +311,18 @@ class ReviewViewController: UIViewController, UICollectionViewDelegate, UICollec
     }
     
     @objc func starTapped(_ sender: UIButton) {
+        if !isOwned {
+            let alert = UIAlertController(
+                title: "Purchase Required",
+                message: "You need to purchase this book before you can rate it.",
+                preferredStyle: .alert
+            )
+            
+            alert.addAction(UIAlertAction(title: "OK", style: .default))
+            
+            present(alert, animated: true)
+            return
+        }
         updateTotalRatingText()
         let selectedRating = sender.tag
         let result = viewModel.submitReview(rating: selectedRating)
@@ -354,6 +371,17 @@ class ReviewViewController: UIViewController, UICollectionViewDelegate, UICollec
             updateStarUI(rating: savedRating)
         } else {
             updateStarUI(rating: 0)
+        }
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        let vc = ViewReviewViewController(review: viewModel.reviews[indexPath.item])
+        if let nav = navigationController {
+            nav.pushViewController(vc, animated: true)
+        } else {
+            let nav = UINavigationController(rootViewController: vc)
+            nav.modalPresentationStyle = .fullScreen
+            present(nav, animated: true)
         }
     }
 }

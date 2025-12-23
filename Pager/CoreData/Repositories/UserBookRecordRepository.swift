@@ -18,11 +18,8 @@ enum UserBookRecordError: Error {
 
 final class UserBookRecordRepository {
 
-    private let context: NSManagedObjectContext
+    private let context = CoreDataManager.shared.context
 
-    init(context: NSManagedObjectContext = CoreDataManager.shared.context) {
-        self.context = context
-    }
 
     func createRecord(for book: Book, user: User) -> Result<Void, UserBookRecordError> {
 
@@ -92,7 +89,7 @@ final class UserBookRecordRepository {
             record.lastOpened = Date()
 
             do {
-                try CoreDataManager.shared.saveContext()
+                try context.save()
                 return .success(())
             } catch {
                 return .failure(.updateFailed)

@@ -29,7 +29,11 @@ class BookCollectionViewController: UIViewController, UITableViewDataSource, UIT
     }
     
     private func loadData() {
-        items = UserSession.shared.currentUser?.collections?.allObjects as? [BookCollection] ?? []
+        let allCollections = UserSession.shared.currentUser?.collections?.allObjects as? [BookCollection] ?? []
+            items = allCollections.sorted { (first, second) -> Bool in
+                return first.isDefault && !second.isDefault
+            }
+//        items = UserSession.shared.currentUser?.collections?.allObjects as? [BookCollection] ?? []
     }
         
     private func setupTableView() {
@@ -47,7 +51,7 @@ class BookCollectionViewController: UIViewController, UITableViewDataSource, UIT
         tableView.delegate = self
         
         tableView.register(AddButtonCell.self, forCellReuseIdentifier: AddButtonCell.reuseIdentifier)
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: itemCellIdentifier)
+//        tableView.register(UITableViewCell.self, forCellReuseIdentifier: itemCellIdentifier)
     }
     
     
@@ -68,11 +72,16 @@ class BookCollectionViewController: UIViewController, UITableViewDataSource, UIT
             return cell
             
         } else {
-            let cell = tableView.dequeueReusableCell(withIdentifier: itemCellIdentifier, for: indexPath)
-            cell.textLabel?.text = items[indexPath.row].name
-            cell.accessoryType = .disclosureIndicator
-
-            return cell
+            var cell = tableView.dequeueReusableCell(withIdentifier: itemCellIdentifier)
+            if cell == nil {
+                cell = UITableViewCell(style: .value1, reuseIdentifier: itemCellIdentifier)
+            }
+            cell?.textLabel?.text = items[indexPath.row].name
+            cell?.textLabel?.numberOfLines = 3
+            cell?.accessoryType = .disclosureIndicator
+            cell?.detailTextLabel?.text = String(items[indexPath.row].books?.count ?? 0)
+            cell?.detailTextLabel?.textColor = AppColors.subtitle
+            return cell ?? UITableViewCell()
         }
     }
     
@@ -116,17 +125,19 @@ class BookCollectionViewController: UIViewController, UITableViewDataSource, UIT
         
         switch result {
         case .success(let newCollection):
-            
-            let newRowIndex = items.count
-            items.append(newCollection)
-            
-            let newIndexPath = IndexPath(row: newRowIndex, section: 0)
-            
-            tableView.beginUpdates()
-            tableView.insertRows(at: [newIndexPath], with: .automatic)
-            tableView.endUpdates()
-            
-            tableView.scrollToRow(at: newIndexPath, at: .middle, animated: true)
+            showToast(message: "Collection created successfully") {
+                let newRowIndex = self.items.count
+                self.items.append(newCollection)
+                
+                let newIndexPath = IndexPath(row: newRowIndex, section: 0)
+                
+                self.tableView.beginUpdates()
+                self.tableView.insertRows(at: [newIndexPath], with: .automatic)
+                self.tableView.endUpdates()
+                
+                self.tableView.scrollToRow(at: newIndexPath, at: .middle, animated: true)
+            }
+
             
         case .failure(let error):
 
@@ -327,5 +338,10 @@ class BookCollectionViewController: UIViewController, UITableViewDataSource, UIT
             alert.addAction(UIAlertAction(title: "OK", style: .default))
             present(alert, animated: true)
         }
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        tableView.reloadData()
     }
 }

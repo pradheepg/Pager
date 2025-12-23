@@ -147,8 +147,8 @@ class EditReviewViewController: UIViewController, UITextViewDelegate {
         }
         
         
-        let finalTitle = isTitleEmpty ? nil : titleText
-        let finalBody = isBodyEmpty ? nil : bodyText
+        let finalTitle = titleText//isTitleEmpty ? nil : titleText
+        let finalBody = bodyText//isBodyEmpty ? nil : bodyText
         
         let result = viewModel.submitReview(
             rating: viewModel.currentRating,
