@@ -44,15 +44,44 @@ class BookGridViewModel {
     }
     
     func addBookToDefault(book: Book) -> Result<Void, CollectionError> {
-        guard let collections = UserSession.shared.currentUser?.collections?.allObjects as? [BookCollection] else {
+        guard let user = UserSession.shared.currentUser else {
             return .failure(.notFound)
         }
-        guard let defaultCollection = collections.first(where: { $0.isDefault == true }) else {
+        
+        let wantToReadCollection = (user.collections?.allObjects as? [BookCollection])?.first(where: {
+            $0.isDefault == true && $0.name == DefaultsName.wantToRead})
+        guard let wantToReadCollection = wantToReadCollection else {
             return .failure(.notFound)
         }
-        return addToCollection(collection: defaultCollection, book: book)
+        return addToCollection(collection: wantToReadCollection, book: book)
+        
     }
-
+    
+    func removeBookFromDefault(book: Book) -> Result<Void, CollectionError> {
+        guard let user = UserSession.shared.currentUser else {
+            return .failure(.notFound)
+        }
+        
+        let wantToReadCollection = (user.collections?.allObjects as? [BookCollection])?.first(where: {
+            $0.isDefault == true && $0.name == DefaultsName.wantToRead})
+        guard let wantToReadCollection = wantToReadCollection else {
+            return .failure(.notFound)
+        }
+        return deleteFromCollection(collection: wantToReadCollection, book: book)
+    }
+    
+    func isBookInDefaultCollection(_ book: Book) -> Bool {
+        guard let user = UserSession.shared.currentUser else { return false }
+        
+        let wantToReadCollection = (user.collections?.allObjects as? [BookCollection])?.first(where: {
+            $0.isDefault == true && $0.name == DefaultsName.wantToRead
+        })
+        if let collection = wantToReadCollection, let books = collection.books as? Set<Book> {
+            return books.contains(book)
+        }
+        
+        return false
+    }
     func searchBook(searchText: String) -> Result<Void, CollectionError> {
         if searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             resultBooks = books

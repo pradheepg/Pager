@@ -6,7 +6,7 @@
 //
 
 import UIKit
-internal import CoreData
+import CoreData
 
 class DetailViewModel {
     let book: Book
@@ -45,10 +45,12 @@ class DetailViewModel {
         guard let user = UserSession.shared.currentUser else {
             return .failure(.notFound)
         }
-        if user.lastOpenedBookId == book.bookId {
-            user.lastOpenedBookId = nil
-            try? user.managedObjectContext?.save()
-        }
+//        if user.lastOpenedBookId == book.bookId {
+//            user.lastOpenedBookId = nil
+//            try? user.managedObjectContext?.save()
+//        }
+        removeBookFromLastOpened(book: book)
+        removeBookFromFinishedIfPresent(book: book)
         return userBookRecordRepository.deleteRecord(book: book, user: user)
     }
     
@@ -108,5 +110,51 @@ class DetailViewModel {
         let userReviews = currentUser.reviews?.allObjects as? [Review] ?? []
         return userReviews.first(where: { $0.book == self.book })
     }
+    func removeBookFromFinishedIfPresent(book: Book) {
+        guard let user = UserSession.shared.currentUser else { return }
+        
+        let finishedCollection = (user.collections?.allObjects as? [BookCollection])?.first(where: {
+            $0.isDefault == true && $0.name == "Finished"
+        })
+
+        if let collection = finishedCollection,
+           let books = collection.books as? Set<Book>,
+           books.contains(book) {
+            
+            _ = deleteFromCollection(collection: collection, book: book)
+            
+            print("Called deleteFromCollection for Finished list.")
+        }
+    }
     
+    func deleteFromCollection(collection: BookCollection, book: Book) -> Result<Void, CollectionError> {
+        let result = collectionRepository.removeBook(book, from: collection, for: UserSession.shared.currentUser)
+        switch result {
+        case .success:
+            return .success(())
+        case .failure(let error):
+            return .failure(error)
+        }
+    }
+    func removeBookFromLastOpened(book: Book) {
+        guard let user = UserSession.shared.currentUser else {
+            return
+        }
+
+        if user.lastOpenedBookId == book.bookId {
+            
+            if let ownedBooks = user.owned?.allObjects as? [UserBookRecord] {
+                
+                let nextBook = ownedBooks
+                    .filter { $0.book?.bookId != book.bookId }
+                    .sorted(by: {
+                        ($0.lastOpened ?? $0.pruchaseDate ?? .distantPast) >
+                        ($1.lastOpened ?? $1.pruchaseDate ?? .distantPast)
+                    })
+                    .first
+                
+                user.lastOpenedBookId = nextBook?.userBookRecordId
+            }
+        }
+    }
 }

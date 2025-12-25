@@ -103,32 +103,23 @@ class CurrentBookCell: UICollectionViewCell {
         let collectionsMenu = UIDeferredMenuElement.uncached { [weak self] completion in
             guard let self = self else { return }
             
-            // Fetch Collections from your UserSession
             let allCollections = UserSession.shared.currentUser?.collections?.allObjects as? [BookCollection] ?? []
             
-            // Create an Action for each collection
             let collectionItems = allCollections.map { collection in
                 UIAction(title: collection.name ?? "Untitled", image: UIImage(systemName: "folder")) { action in
-                    // Logic to add book to this collection
                     print("Adding to \(collection.name ?? "")")
-                    // self.viewModel.addBook(self.book, to: collection)
                 }
             }
             
-            // Add a "Create New" option at the end
             let createNewAction = UIAction(title: "New Collection...", image: UIImage(systemName: "plus")) { action in
                 print("Create new collection tapped")
-                // self.showCreateCollectionAlert()
             }
             
-            // Combine them into a menu
             let menu = UIMenu(title: "Add to Collection", image: UIImage(systemName: "folder.badge.plus"), children: collectionItems + [createNewAction])
             
-            // Pass back to the system
             completion([menu])
         }
         
-        // 2. Create Standard Actions
         let reviewAction = UIAction(title: "View Reviews", image: UIImage(systemName: "square.and.arrow.up")) { [weak self] _ in
             //            self?.shareBook()
         }
@@ -162,9 +153,9 @@ class CurrentBookCell: UICollectionViewCell {
         if let userBookRecords = UserSession.shared.currentUser?.owned as? Set<UserBookRecord> {
             for record in userBookRecords {
                 if record.book == book {
-                    print(record.progressValue, record.totalPages)
+                    print("this this this his",record.progressValue, record.totalPages)
                     if record.progressValue > 0 && record.totalPages > 0 {
-                        progress = Float(record.progressValue) / Float(record.totalPages) * 100
+                        progress = Float(record.progressValue + 1) / Float(record.totalPages) * 100
                         print(progress)
                     }
                 }

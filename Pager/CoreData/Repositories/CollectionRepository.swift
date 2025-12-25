@@ -45,9 +45,9 @@ final class CollectionRepository {
 
         collection.owner = owner
 
-        if isDefault {
-            let _ = unsetDefaultCollections(for: owner)
-        }
+//        if isDefault {
+//            let _ = unsetDefaultCollections(for: owner)
+//        }
 
         do {
             try CoreDataManager.shared.saveContext()
@@ -85,7 +85,7 @@ final class CollectionRepository {
         }
     }
     
-    func fetchDefaultCollection(for user: User) async -> Result<BookCollection?, CollectionError> {
+    func fetchWantToReadCollection(for user: User) async -> Result<BookCollection, CollectionError> {
         let context = CoreDataManager.shared.context
         let userID = user.objectID
 
@@ -95,18 +95,66 @@ final class CollectionRepository {
                 let request: NSFetchRequest<BookCollection> = BookCollection.fetchRequest()
                 let userInContext = context.object(with: userID)
 
-                request.predicate = NSPredicate(format: "owner == %@ AND isDefault == YES", userInContext)
+                request.predicate = NSPredicate(
+                                format: "owner == %@ AND isDefault == YES AND name == %@",
+                                userInContext,
+                                DefaultsName.wantToRead
+                            )
                 request.fetchLimit = 1
-
                 return try context.fetch(request).first
             }
-            
+            guard let foundCollection = foundCollection else {
+                return .failure(.notFound)
+            }
             return .success(foundCollection)
             
         } catch {
             return .failure(.notFound)
         }
     }
+    
+    
+    func fetchFinishedCollection(for user: User) -> Result<BookCollection, CollectionError> {
+        
+        let context = CoreDataManager.shared.context
+        let userID = user.objectID
+
+        do {
+            let foundCollection = try context.performAndWait {
+                
+                let request: NSFetchRequest<BookCollection> = BookCollection.fetchRequest()
+                let userInContext = context.object(with: userID)
+
+                request.predicate = NSPredicate(
+                                format: "owner == %@ AND isDefault == YES AND name == %@",
+                                userInContext,
+                                DefaultsName.finiahed
+                            )
+                request.fetchLimit = 1
+                return try context.fetch(request).first
+            }
+            if let foundCollection = foundCollection {
+                return .success(foundCollection)
+            } else {
+                return .failure(.notFound)
+            }
+            
+        } catch {
+            return .failure(.notFound)
+        }
+    }
+    
+    func addBookToFinishedCollection(book: Book, user: User) -> Result<Void, CollectionError> {
+        let finishedCollection = fetchFinishedCollection(for: user)
+        switch finishedCollection {
+        case.success(let collection):
+            return addBook(book, to: collection)
+        case .failure(let error):
+            return .failure(error)
+        }
+    }
+    
+    
 //    func fetchDefaultCollection(for user: User) -> Result<BookCollection?, CollectionError> {
 //        let request: NSFetchRequest<BookCollection> = BookCollection.fetchRequest()
 //        request.predicate = NSPredicate(format: "owner == %@ AND isDefault == YES", user)

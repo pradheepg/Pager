@@ -14,7 +14,7 @@ import UIKit
 class BookCollectionViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, ListViewControllerDelegate {
     
     let tableView = UITableView()
-    var items: [BookCollection] = []//["First Item", "Second Item", "Third Item"]
+    var items: [BookCollection] = []
     let itemCellIdentifier = "ItemCell"
     let viewModel = BookCollectionViewModel()
     
@@ -30,12 +30,12 @@ class BookCollectionViewController: UIViewController, UITableViewDataSource, UIT
     
     private func loadData() {
         let allCollections = UserSession.shared.currentUser?.collections?.allObjects as? [BookCollection] ?? []
-            items = allCollections.sorted { (first, second) -> Bool in
-                return first.isDefault && !second.isDefault
-            }
-//        items = UserSession.shared.currentUser?.collections?.allObjects as? [BookCollection] ?? []
+        items = allCollections.sorted { (first, second) -> Bool in
+            return first.isDefault && !second.isDefault
+        }
+        //        items = UserSession.shared.currentUser?.collections?.allObjects as? [BookCollection] ?? []
     }
-        
+    
     private func setupTableView() {
         view.addSubview(tableView)
         tableView.translatesAutoresizingMaskIntoConstraints = false

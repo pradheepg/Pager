@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import CoreData
 
 @MainActor
 class MyBooksViewModel {
@@ -13,12 +14,15 @@ class MyBooksViewModel {
     var onDataUpdated: (() -> Void)?
     
     var books: [Book]
-    
+    private let collectionRepository: CollectionRepository
+    private let userBookRecordRepository: UserBookRecordRepository
     private(set) var currentSortOption: BookSortOption = .lastOpened
     private(set) var currentSortOrder: SortOrder = .ascending
     
     init(books: [Book]) {
         self.books = books
+        collectionRepository = CollectionRepository()
+        userBookRecordRepository = UserBookRecordRepository()
         applySort()
     }
     
@@ -34,7 +38,7 @@ class MyBooksViewModel {
     }
     
     func applySort() {
-        
+        print(currentSortOrder)
         books.sort { [weak self] (book1: Book, book2: Book) in
             guard let self = self else { return false }
 
@@ -87,5 +91,144 @@ class MyBooksViewModel {
         }
         
         return records.first { $0.book == book }
+    }
+    func isBookInDefaultCollection(_ book: Book, name: String) -> Bool {
+        guard let user = UserSession.shared.currentUser else { return false }
+        
+        let targetCollection = (user.collections?.allObjects as? [BookCollection])?.first(where: {
+            $0.isDefault == true && $0.name == name
+        })
+        
+        if let collection = targetCollection, let books = collection.books as? Set<Book> {
+            return books.contains(book)
+        }
+        return false
+    }
+    
+    
+    func deleteFromCollection(collection: BookCollection, book: Book) -> Result<Void, CollectionError> {
+        let result = collectionRepository.removeBook(book, from: collection, for: UserSession.shared.currentUser)
+        switch result {
+        case .success:
+            return .success(())
+        case .failure(let error):
+            return .failure(error)
+        }
+    }
+
+    
+    func addToCollection(collection: BookCollection, book: Book) -> Result<Void, CollectionError> {
+        let result = collectionRepository.addBook(book, to: collection)
+        return result
+    }
+    
+    func addBookToDefault(book: Book) -> Result<Void, CollectionError> {
+        guard let user = UserSession.shared.currentUser else {
+            return .failure(.notFound)
+        }
+        
+        let wantToReadCollection = (user.collections?.allObjects as? [BookCollection])?.first(where: {
+            $0.isDefault == true && $0.name == DefaultsName.wantToRead})
+        guard let wantToReadCollection = wantToReadCollection else {
+            return .failure(.notFound)
+        }
+        return addToCollection(collection: wantToReadCollection, book: book)
+        
+    }
+    
+    func removeBookFromWantToRead(book: Book) -> Result<Void, CollectionError> {
+        guard let user = UserSession.shared.currentUser else {
+            return .failure(.notFound)
+        }
+        
+        let wantToReadCollection = (user.collections?.allObjects as? [BookCollection])?.first(where: {
+            $0.isDefault == true && $0.name == DefaultsName.wantToRead})
+        guard let wantToReadCollection = wantToReadCollection else {
+            return .failure(.notFound)
+        }
+        return deleteFromCollection(collection: wantToReadCollection, book: book)
+    }
+    
+    func isBookInDefaultCollection(_ book: Book) -> Bool {
+        guard let user = UserSession.shared.currentUser else { return false }
+        
+        let wantToReadCollection = (user.collections?.allObjects as? [BookCollection])?.first(where: {
+            $0.isDefault == true && $0.name == DefaultsName.wantToRead
+        })
+        if let collection = wantToReadCollection, let books = collection.books as? Set<Book> {
+            return books.contains(book)
+        }
+        
+        return false
+    }
+    func toggleDefaultCollection(book: Book, collectionName: String) {
+        guard let user = UserSession.shared.currentUser else {
+            return
+        }
+        let exists = isBookInDefaultCollection(book, name: collectionName)
+        
+        guard let collection = (user.collections?.allObjects as? [BookCollection])?.first(where: {
+            $0.isDefault == true && $0.name == collectionName
+        }) else {
+            return
+        }
+        if exists {
+            _ = deleteFromCollection(collection: collection, book: book)
+            print("Removed from \(collectionName)")
+        } else {
+            _ = addToCollection(collection: collection, book: book)
+            print("Added to \(collectionName)")
+        }
+    }
+    
+    func unpurchaseBook(_ book: Book) -> Result<Void, UserBookRecordError> {
+        guard let user = UserSession.shared.currentUser else {
+            return .failure(.notFound)
+        }
+//        if user.lastOpenedBookId == book.bookId {
+//            user.lastOpenedBookId = nil
+//            try? user.managedObjectContext?.save()
+//        }
+        removeBookFromLastOpened(book: book)
+        removeBookFromFinishedIfPresent(book: book)
+        return userBookRecordRepository.deleteRecord(book: book, user: user)
+    }
+    func removeBookFromFinishedIfPresent(book: Book) {
+        guard let user = UserSession.shared.currentUser else { return }
+        
+        let finishedCollection = (user.collections?.allObjects as? [BookCollection])?.first(where: {
+            $0.isDefault == true && $0.name == "Finished"
+        })
+
+        if let collection = finishedCollection,
+           let books = collection.books as? Set<Book>,
+           books.contains(book) {
+            
+            _ = deleteFromCollection(collection: collection, book: book)
+            
+            print("Called deleteFromCollection for Finished list.")
+        }
+    }
+    
+    func removeBookFromLastOpened(book: Book) {
+        guard let user = UserSession.shared.currentUser else {
+            return
+        }
+
+        if user.lastOpenedBookId == book.bookId {
+            
+            if let ownedBooks = user.owned?.allObjects as? [UserBookRecord] {
+                
+                let nextBook = ownedBooks
+                    .filter { $0.book?.bookId != book.bookId }
+                    .sorted(by: {
+                        ($0.lastOpened ?? $0.pruchaseDate ?? .distantPast) >
+                        ($1.lastOpened ?? $1.pruchaseDate ?? .distantPast)
+                    })
+                    .first
+                
+                user.lastOpenedBookId = nextBook?.userBookRecordId
+            }
+        }
     }
 }

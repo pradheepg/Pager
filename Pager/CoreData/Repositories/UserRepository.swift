@@ -56,11 +56,17 @@ final class UserRepository {
         if let goal = dailyReadingGoalMinutes {
             user.dailyReadingGoal = Int16(goal)
         }
-        let defaultCollection = BookCollection(context: context)
-        defaultCollection.collectionID = UUID()
-        defaultCollection.name = "Want to Read"
-        defaultCollection.isDefault = true
-        defaultCollection.owner = user
+        let wantToReadCollection = BookCollection(context: context)
+        wantToReadCollection.collectionID = UUID()
+        wantToReadCollection.name = DefaultsName.wantToRead
+        wantToReadCollection.isDefault = true
+        wantToReadCollection.owner = user
+        
+        let finishedCollection = BookCollection(context: context)
+        finishedCollection.collectionID = UUID()
+        finishedCollection.name = DefaultsName.finiahed
+        finishedCollection.isDefault = true
+        finishedCollection.owner = user
         
         do {
             try CoreDataManager.shared.saveContext()

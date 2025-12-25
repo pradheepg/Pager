@@ -433,15 +433,21 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
                 return
             }
             viewModel.saveUserChange(newName, newEmail, newGenre)
-            if !isProfileImageNil && (isProfileImageNil != tempImageIsNil) {
-                if let header = tableView.tableHeaderView {
-                    for subview in header.subviews {
-                        if let imgView = subview as? UIImageView {
-                            viewModel.saveUserProfieImage(image: imgView.image)
-                        }
-                    }
-                }
-            }
+            viewModel.saveUserProfieImage(image: profileImageView.image)
+//            if !isProfileImageNil && (isProfileImageNil != tempImageIsNil) {
+//                print("Save user profile\(profileImageView.image)")
+//
+//                viewModel.saveUserProfieImage(image: profileImageView.image)
+
+//                if let header = tableView.tableHeaderView {
+//                    for subview in header.subviews {
+//                        if let imgView = subview as? UIImageView {
+//                            print("Save user profile")
+//                            viewModel.saveUserProfieImage(image: imgView.image)
+//                        }
+//                    }
+//                }
+//            }
         } else {
             tempPersonalData = personalData
             tempPreferenceData = preferenceData
@@ -609,14 +615,7 @@ extension ProfileViewController {
     }
     
     private func updateProfileImage(_ image: UIImage) {
-        if let header = tableView.tableHeaderView {
-            for subview in header.subviews {
-                if let imgView = subview as? UIImageView {
-                    imgView.image = image
-                    break
-                }
-            }
-        }
+        profileImageView.image = image
         
         isProfileImageNil = false
         

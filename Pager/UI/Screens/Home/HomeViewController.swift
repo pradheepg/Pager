@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import CoreData
 
 enum HomeSection {
     case currently
@@ -26,7 +27,7 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
         setupCollectionView()
         setupLoadingIndicator()
         setupBindings()
-        viewModel.loadData()
+//        viewModel.loadData()
         //        loadDemoData()
     }
     
@@ -47,7 +48,9 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
             DispatchQueue.main.async {
                 if isLoading {
                     self?.activityIndicator.startAnimating()
-                    self?.collectionView.isHidden = true
+                    if self?.viewModel.displayedSections.isEmpty ?? true {
+                        self?.collectionView.isHidden = true
+                    }
                 } else {
                     self?.activityIndicator.stopAnimating()
                     self?.collectionView.isHidden = false
@@ -156,7 +159,6 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
         let sampleBooks: Result<[Book], BookError> = demotemp.fetchAllBooks()
         switch sampleBooks {
         case .success(let books):
-            print("Helo")
             viewModel.currentBook = books.first
             viewModel.wantToReadBooks = books
             viewModel.recentBooks = books
@@ -196,17 +198,17 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
     
     func bookCellTapped(book: Book) {
         
-        let vc = SampleDataLoaderViewController()
-        vc.modalPresentationStyle = .fullScreen
-        present(vc, animated: true)
+        //        let vc = SampleDataLoaderViewController()
+        //        vc.modalPresentationStyle = .fullScreen
+        //        present(vc, animated: true)
         //driver
-        //        let vc = DetailViewController(book: book)
-        //        vc.onDismiss = { [weak self] in
-        //            self?.handleDismissal()
-        //        }
-        //        let nav = UINavigationController(rootViewController: vc)
-        //        nav.modalPresentationStyle = .fullScreen
-        //        present(nav, animated: true)
+        let vc = DetailViewController(book: book)
+        vc.onDismiss = { [weak self] in
+            self?.handleDismissal()
+        }
+        let nav = UINavigationController(rootViewController: vc)
+        nav.modalPresentationStyle = .fullScreen
+        present(nav, animated: true)
     }
     
     func seeAllTapped(section: Int,title: String, books: [Book]) {
@@ -292,15 +294,7 @@ extension HomeViewController: UICollectionViewDataSource {
         cell.configure(with: book)
         return cell
     }
-//    
-//    func configureCategoryCell(_ collectionView: UICollectionView, indexPath: IndexPath) -> UICollectionViewCell {
-//        let catIdx = indexPath.section - 3
-//        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "BookCell", for: indexPath) as! BookCell
-//        let book = viewModel.categories[catIdx].books[indexPath.item]
-//        cell.configure(with: book)
-//        return cell
-//    }
-//    
+    
     func configureCategoryCell(_ collectionView: UICollectionView, indexPath: IndexPath) -> UICollectionViewCell {
         let sectionType = viewModel.displayedSections[indexPath.section]
         
@@ -346,7 +340,7 @@ extension HomeViewController: UICollectionViewDataSource {
             case .wantToRead:
                 header.seeAllButton.isHidden = false
                 
-                title = "Want to Read"
+                title = DefaultsName.wantToRead
                 books = viewModel.wantToReadBooks
             case .category(let name, let bookList):
                 header.seeAllButton.isHidden = false
@@ -369,84 +363,155 @@ extension HomeViewController: UICollectionViewDataSource {
         }
     }
     
+//    func collectionView(_ collectionView: UICollectionView, contextMenuConfigurationForItemAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
+//        
+//        return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
+//            guard let self = self else { return nil }
+//            
+//            let section = self.viewModel.displayedSections[indexPath.section]
+//            var selectedBook: Book?
+//            
+//            switch section {
+//            case .currently:
+//                guard let book = self.viewModel.currentBook else { return nil }
+//                selectedBook = book
+//                
+//            case .recent:
+//                selectedBook = self.viewModel.recentBooks[indexPath.item]
+//                
+//            case .wantToRead:
+//                selectedBook = self.viewModel.wantToReadBooks[indexPath.item]
+//                
+//            case .category(_, let books):
+//                selectedBook = books[indexPath.item]
+//            }
+//            
+//            guard let book = selectedBook else { return nil }
+//            
+//            let detailsAction = UIAction(title: "View Details", image: UIImage(systemName: "info.circle")) { _ in
+//                let vc = DetailViewController(book: book)
+//                let nav = UINavigationController(rootViewController: vc)
+//                nav.modalPresentationStyle = .fullScreen
+//                self.present(nav, animated: true)
+////                self.present(vc, animated: true, completion: nil)
+//            }
+//            
+//            let wantToReadAction = UIAction(title: "Add to Want to Read", image: UIImage(systemName: "bookmark")) { _ in
+//                switch self.viewModel.addBookToDefault(book: book)  {
+//                case .success():
+//                    self.viewModel.loadData()
+//                case .failure(let error):
+//                    if error == .bookAlreadyInCollection {
+//                        let alert = UIAlertController(
+//                            title: "Already Added",
+//                            message: "This book is already in the selected collection.",
+//                            preferredStyle: .alert
+//                        )
+//                        alert.addAction(UIAlertAction(title: "OK", style: .default))
+//                        self.present(alert, animated: true)
+//                    }
+//                    print("Error: \(error)")
+//                }
+//                
+//            }
+//            
+//            let allCollections = UserSession.shared.currentUser?.collections?.allObjects as? [BookCollection] ?? []
+//            
+//            let collectionItems = allCollections.map { collection in
+//                UIAction(title: collection.name ?? "Untitled", image: UIImage(systemName: "folder")) { _ in
+//                    switch self.viewModel.addBook(book, to: collection) {
+//                    case .success():
+//                        if collection.isDefault {
+//                            self.viewModel.loadData()
+//                        }
+//                    case .failure(let error):
+//                        if error == .bookAlreadyInCollection {
+//                            let alert = UIAlertController(
+//                                title: "Already Added",
+//                                message: "This book is already in the selected collection.",
+//                                preferredStyle: .alert
+//                            )
+//                            alert.addAction(UIAlertAction(title: "OK", style: .default))
+//                            self.present(alert, animated: true)
+//                        }
+//                        print("Error: \(error)")
+//                    }
+//                }
+//            }
+//            
+//            let addToCollectionMenu = UIMenu(
+//                title: "Add to Collection",
+//                image: UIImage(systemName: "folder.badge.plus"),
+//                children: collectionItems
+//            )
+//            
+//            return UIMenu(title: "", children: [
+//                UIMenu(options: .displayInline, children: [detailsAction]),
+//                UIMenu(options: .displayInline, children: [wantToReadAction, addToCollectionMenu])
+//            ])
+//        }
+//    }
     func collectionView(_ collectionView: UICollectionView, contextMenuConfigurationForItemAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
         
         return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
             guard let self = self else { return nil }
             
-            // 1. Identify the correct book based on the section
             let section = self.viewModel.displayedSections[indexPath.section]
             var selectedBook: Book?
             
             switch section {
             case .currently:
-                // If it's the empty placeholder, don't show a menu
-                guard let book = self.viewModel.currentBook else { return nil }
-                selectedBook = book
-                
+                selectedBook = self.viewModel.currentBook
             case .recent:
                 selectedBook = self.viewModel.recentBooks[indexPath.item]
-                
             case .wantToRead:
                 selectedBook = self.viewModel.wantToReadBooks[indexPath.item]
-                
             case .category(_, let books):
                 selectedBook = books[indexPath.item]
             }
             
-            // Ensure we actually found a book before creating the menu
             guard let book = selectedBook else { return nil }
             
-            // 2. Define Actions
             let detailsAction = UIAction(title: "View Details", image: UIImage(systemName: "info.circle")) { _ in
                 let vc = DetailViewController(book: book)
                 let nav = UINavigationController(rootViewController: vc)
                 nav.modalPresentationStyle = .fullScreen
                 self.present(nav, animated: true)
-//                self.present(vc, animated: true, completion: nil)
             }
             
-            let wantToReadAction = UIAction(title: "Add to Want to Read", image: UIImage(systemName: "bookmark")) { _ in
-                switch self.viewModel.addBookToDefault(book: book)  {
-                case .success():
-                    self.viewModel.loadData()
-                case .failure(let error):
-                    if error == .bookAlreadyInCollection {
-                        let alert = UIAlertController(
-                            title: "Already Added",
-                            message: "This book is already in the selected collection.",
-                            preferredStyle: .alert
-                        )
-                        alert.addAction(UIAlertAction(title: "OK", style: .default))
-                        self.present(alert, animated: true)
-                    }
-                    print("Error: \(error)")
+            let isWantToRead = self.viewModel.isBookInCollection(book, collectionName: DefaultsName.wantToRead)
+            
+            let wantToReadAction = UIAction(
+                title: isWantToRead ? "Remove from Want to Read" : "Add to Want to Read",
+                image: UIImage(systemName: isWantToRead ? "bookmark.fill" : "bookmark"),
+                attributes: []//isWantToRead ? .destructive : []
+            ) { _ in
+                if isWantToRead {
+                    _ = self.viewModel.removeBookFromWantToRead(book: book)
+                } else {
+                    _ = self.viewModel.addBookToWantToRead(book: book)
                 }
-                
+                self.viewModel.updateData()//driver
             }
             
-            // 3. Collection Menu (Cleaned up)
             let allCollections = UserSession.shared.currentUser?.collections?.allObjects as? [BookCollection] ?? []
             
-            let collectionItems = allCollections.map { collection in
-                UIAction(title: collection.name ?? "Untitled", image: UIImage(systemName: "folder")) { _ in
-                    // Add your logic here
-                    switch self.viewModel.addBook(book, to: collection) {
-                    case .success():
-                        if collection.isDefault {
-                            self.viewModel.loadData()
-                        }
-                    case .failure(let error):
-                        if error == .bookAlreadyInCollection {
-                            let alert = UIAlertController(
-                                title: "Already Added",
-                                message: "This book is already in the selected collection.",
-                                preferredStyle: .alert
-                            )
-                            alert.addAction(UIAlertAction(title: "OK", style: .default))
-                            self.present(alert, animated: true)
-                        }
-                        print("Error: \(error)")
+            let customCollections = allCollections.filter {
+                $0.isDefault == false
+            }
+            
+            let collectionItems = customCollections.map { collection in
+                let isAdded = (collection.books as? Set<Book>)?.contains(book) ?? false
+                
+                return UIAction(
+                    title: collection.name ?? "Untitled",
+                    image: UIImage(systemName: "folder"),
+                    state: isAdded ? .on : .off
+                ) { _ in
+                    if isAdded {
+                        _ = self.viewModel.deleteFromCollection(collection: collection, book: book)
+                    } else {
+                        _ = self.viewModel.addBook(book, to: collection)
                     }
                 }
             }
@@ -459,11 +524,11 @@ extension HomeViewController: UICollectionViewDataSource {
             
             return UIMenu(title: "", children: [
                 UIMenu(options: .displayInline, children: [detailsAction]),
-                UIMenu(options: .displayInline, children: [wantToReadAction, addToCollectionMenu])
+                UIMenu(options: .displayInline, children: [wantToReadAction]),
+                addToCollectionMenu
             ])
         }
     }
-    
 }
 class SectionHeaderView: UICollectionReusableView {
     let titleLabel = UILabel()
@@ -516,23 +581,6 @@ class SectionHeaderView: UICollectionReusableView {
     }
 }
 extension HomeViewController {
-//    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-//        switch indexPath.section {
-//        case 0:
-//            if let book = viewModel.currentBook {
-//                bookCellTapped(book: book)
-//            }
-//        case 1:
-//            let book = viewModel.recentBooks[indexPath.item]
-//            bookCellTapped(book: book)
-//        case 2:
-//            let book = viewModel.wantToReadBooks[indexPath.item]
-//            bookCellTapped(book: book)
-//        default:
-//            let book = viewModel.categories[indexPath.section - 3].books[indexPath.item]
-//            bookCellTapped(book: book)
-//        }
-//    }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         let sectionType = viewModel.displayedSections[indexPath.section]

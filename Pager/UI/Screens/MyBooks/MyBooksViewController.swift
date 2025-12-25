@@ -5,6 +5,7 @@
 //  Created by Pradheep G on 01/12/25.
 //
 import UIKit
+import CoreData
 
 enum BookSortOption: String, CaseIterable {
     case lastOpened = "Last Opened"
@@ -93,7 +94,7 @@ class MyBooksViewController: UIViewController, UICollectionViewDataSource, UICol
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = AppColors.background
-        setupSortStack()
+        setupSortStackLayout()//setupSortStack()
         setUpCollectionView()
         
         viewModel.onDataUpdated = { [weak self] in
@@ -107,31 +108,60 @@ class MyBooksViewController: UIViewController, UICollectionViewDataSource, UICol
         collectionView.reloadData()
         viewModel.applySort()
     }
+//    
+//    func setupSortStack() {
+//        let sortOption = viewModel.currentSortOption
+//        let lastOpened = UIAction(title: BookSortOption.lastOpened.displayTitle, state: sortOption == .lastOpened ? .on : .off) { [weak self] _ in
+//            self?.handleSortChange(sortOption: .lastOpened) }
+//        let title = UIAction(title: BookSortOption.title.displayTitle, state: sortOption == .title ? .on : .off) { [weak self] _ in
+//            self?.handleSortChange(sortOption: .title) }
+//        let author = UIAction(title: BookSortOption.author.displayTitle, state: sortOption == .author ? .on : .off) { [weak self] _ in
+//            self?.handleSortChange(sortOption: .author) }
+//        let dateAdded = UIAction(title: BookSortOption.dateAdded.displayTitle, state: sortOption == .dateAdded ? .on : .off) { [weak self] _ in
+//            self?.handleSortChange(sortOption: .dateAdded) }
+//        
+//        let sortSection = UIMenu(title: "Sort By", options: .displayInline, children: [lastOpened, title, author, dateAdded])
+//        
+//        let sortOrder = viewModel.currentSortOrder
+//        
+//        let ascending = UIAction(title: SortOrder.ascending.displayTitle, image: UIImage(systemName: SortOrder.ascending.iconName), state: sortOrder == SortOrder.ascending ? .on : .off) { [weak self]  _ in self?.handleOrderChange(sortOrder: .ascending) }
+//        let descending = UIAction(title: SortOrder.descending.displayTitle, image: UIImage(systemName: SortOrder.descending.iconName), state: sortOrder == SortOrder.descending ? .on : .off) { [weak self]  _ in self?.handleOrderChange(sortOrder: .descending) }
+//        
+//        let viewSection = UIMenu(title: "Order", options: .displayInline, children: [ascending, descending])
+//        
+//        
+//        let mainMenu = UIMenu(title: "", children: [sortSection, viewSection])
+//        sortButton.menu = mainMenu
+//        sortButton.showsMenuAsPrimaryAction = true
+//        sortStack.addArrangedSubview(sortLable)
+//        sortStack.addArrangedSubview(sortButton)
+//        view.addSubview(sortStack)
+//        
+//        NSLayoutConstraint.activate([
+//            sortStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+//            sortStack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10)
+//        ])
+//    }
+    func handleSortChange(sortOption: BookSortOption) {
+        viewModel.didSelectSortOption(sortOption)
+//        currentSortTitle = sortOption
+        var config = sortButton.configuration
+        
+        config?.title = sortOption.displayTitle
+        
+        sortButton.configuration = config
+        updateSortButtonMenu()// setupSortStack()
+    }
     
-    func setupSortStack() {
-        let sortOption = viewModel.currentSortOption
-        let lastOpened = UIAction(title: BookSortOption.lastOpened.displayTitle, state: sortOption == .lastOpened ? .on : .off) { [weak self] _ in
-            self?.handleSortChange(sortOption: .lastOpened) }
-        let title = UIAction(title: BookSortOption.title.displayTitle, state: sortOption == .title ? .on : .off) { [weak self] _ in
-            self?.handleSortChange(sortOption: .title) }
-        let author = UIAction(title: BookSortOption.author.displayTitle, state: sortOption == .author ? .on : .off) { [weak self] _ in
-            self?.handleSortChange(sortOption: .author) }
-        let dateAdded = UIAction(title: BookSortOption.dateAdded.displayTitle, state: sortOption == .dateAdded ? .on : .off) { [weak self] _ in
-            self?.handleSortChange(sortOption: .dateAdded) }
-        
-        let sortSection = UIMenu(title: "Sort By", options: .displayInline, children: [lastOpened, title, author, dateAdded])
-        
-        let sortOrder = viewModel.currentSortOrder
-        
-        let ascending = UIAction(title: SortOrder.ascending.displayTitle, image: UIImage(systemName: SortOrder.ascending.iconName), state: sortOrder == SortOrder.ascending ? .on : .off) { [weak self]  _ in self?.handleOrderChange(sortOrder: .ascending) }
-        let descending = UIAction(title: SortOrder.descending.displayTitle, image: UIImage(systemName: SortOrder.descending.iconName), state: sortOrder == SortOrder.descending ? .on : .off) { [weak self]  _ in self?.handleOrderChange(sortOrder: .descending) }
-        
-        let viewSection = UIMenu(title: "Order", options: .displayInline, children: [ascending, descending])
-        
-        
-        let mainMenu = UIMenu(title: "", children: [sortSection, viewSection])
-        sortButton.menu = mainMenu
-        sortButton.showsMenuAsPrimaryAction = true
+    func handleOrderChange(sortOrder: SortOrder) {
+//        isAscending = sortOrder
+        viewModel.didSelectSortOrder(sortOrder)
+        updateSortButtonMenu()//setupSortStack()
+
+    }
+    
+    
+    func setupSortStackLayout() {
         sortStack.addArrangedSubview(sortLable)
         sortStack.addArrangedSubview(sortButton)
         view.addSubview(sortStack)
@@ -140,30 +170,44 @@ class MyBooksViewController: UIViewController, UICollectionViewDataSource, UICol
             sortStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             sortStack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10)
         ])
-    }
-    func handleSortChange(sortOption: BookSortOption) {
-        viewModel.didSelectSortOption(sortOption)
-//        currentSortTitle = sortOption
-        print(sortButton.titleLabel)
-        var config = sortButton.configuration
-        
-        config?.title = sortOption.displayTitle
-        
-        sortButton.configuration = config
-        setupSortStack()
-        
-        // TODO: Call your actual sorting logic here (e.g. sortBooks())
-        print("Sorting by: \(sortOption.displayTitle)")
+        updateSortButtonMenu()
     }
     
-    func handleOrderChange(sortOrder: SortOrder) {
-//        isAscending = sortOrder
-        viewModel.didSelectSortOrder(sortOrder)
-        setupSortStack()
+    func updateSortButtonMenu() {
+        var config = sortButton.configuration
+        config?.title = viewModel.currentSortOption.displayTitle
+        sortButton.configuration = config
         
-        // TODO: Call your reordering logic here
-        print("Order: \(sortOrder.displayTitle)")
+        let sortOption = viewModel.currentSortOption
+        
+        let lastOpened = UIAction(title: BookSortOption.lastOpened.displayTitle, state: sortOption == .lastOpened ? .on : .off) { [weak self] _ in
+            self?.handleSortChange(sortOption: .lastOpened)
+        }
+        let title = UIAction(title: BookSortOption.title.displayTitle, state: sortOption == .title ? .on : .off) { [weak self] _ in
+            self?.handleSortChange(sortOption: .title)
+        }
+        let author = UIAction(title: BookSortOption.author.displayTitle, state: sortOption == .author ? .on : .off) { [weak self] _ in
+            self?.handleSortChange(sortOption: .author)
+        }
+        let dateAdded = UIAction(title: BookSortOption.dateAdded.displayTitle, state: sortOption == .dateAdded ? .on : .off) { [weak self] _ in
+            self?.handleSortChange(sortOption: .dateAdded)
+        }
+        
+        let sortSection = UIMenu(title: "Sort By", options: .displayInline, children: [lastOpened, title, author, dateAdded])
+        
+        let sortOrder = viewModel.currentSortOrder
+        let ascending = UIAction(title: SortOrder.ascending.displayTitle, image: UIImage(systemName: SortOrder.ascending.iconName), state: sortOrder == .ascending ? .on : .off) { [weak self] _ in
+            self?.handleOrderChange(sortOrder: .ascending)
+        }
+        let descending = UIAction(title: SortOrder.descending.displayTitle, image: UIImage(systemName: SortOrder.descending.iconName), state: sortOrder == .descending ? .on : .off) { [weak self] _ in
+            self?.handleOrderChange(sortOrder: .descending)
+        }
+        
+        let viewSection = UIMenu(title: "Order", options: .displayInline, children: [ascending, descending])
+        
+        sortButton.menu = UIMenu(title: "", children: [sortSection, viewSection])
     }
+    
     
     private static func createCompositionalLayout() -> UICollectionViewLayout {
         let itemSize = NSCollectionLayoutSize(
@@ -229,6 +273,115 @@ class MyBooksViewController: UIViewController, UICollectionViewDataSource, UICol
         present(nav, animated: true)
     }
     
+    func collectionView(_ collectionView: UICollectionView, contextMenuConfigurationForItemAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
+        
+        let book = viewModel.books[indexPath.item] // Get the book
+        
+        return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { _ in
+            return self.makeContextMenu(for: book)
+        }
+    }
+    
+    func makeContextMenu(for book: Book) -> UIMenu {
+        
+        let detailsAction = UIAction(title: "View Details", image: UIImage(systemName: "info.circle")) { [weak self] _ in
+            let vc = DetailViewController(book: book)
+            vc.onDismiss = { [weak self] in
+                self?.didFinishTask?()
+            }
+            let nav = UINavigationController(rootViewController: vc)
+            nav.modalPresentationStyle = .fullScreen
+            self?.present(nav, animated: true)
+        }
+        
+        let isWantToRead = viewModel.isBookInDefaultCollection(book, name: DefaultsName.wantToRead)
+        
+        let wantToReadAction = UIAction(
+            title: isWantToRead ? "Remove from Want to Read" : "Add to Want to Read",
+            image: UIImage(systemName: isWantToRead ? "bookmark.fill" : "bookmark"),
+            attributes: []//isWantToRead ? .destructive : []
+        ) { [weak self] _ in
+            // You can reuse the toggle logic here
+            self?.viewModel.toggleDefaultCollection(book: book, collectionName: DefaultsName.wantToRead)
+        }
+
+        // --- 3. Toggle "Mark as Completed" (Finished) ---
+        // (Checks if book is in "Finished" collection)
+        let isFinished = viewModel.isBookInDefaultCollection(book, name: DefaultsName.finiahed)
+        
+        let finishedAction = UIAction(
+            title: isFinished ? "Mark as Unread" : "Mark as Completed",
+            image: UIImage(systemName: isFinished ? "checkmark.circle.fill" : "checkmark.circle"),
+            attributes: []
+        ) { [weak self] _ in
+            self?.viewModel.toggleDefaultCollection(book: book, collectionName: DefaultsName.finiahed)
+        }
+
+        // --- 4. Add to Custom Collection (Submenu) ---
+        // Get all collections except defaults ("Want to Read", "Finished") and the current one
+        let allCollections = UserSession.shared.currentUser?.collections?.allObjects as? [BookCollection] ?? []
+        
+        // Optimization: Get IDs of collections this book is ALREADY in
+        let containingCollectionIDs = (book.collections as? Set<BookCollection>)?.map { $0.objectID } ?? []
+        let containingSet = Set(containingCollectionIDs)
+
+        let customCollectionActions = allCollections
+            .filter { collection in
+                let name = collection.name ?? ""
+                // Filter out defaults and current view
+                return name !=  DefaultsName.wantToRead && name != DefaultsName.finiahed //&& collection != viewModel.currentCollection
+            }
+            .map { collection in
+                let isPresent = containingSet.contains(collection.objectID)
+                
+                return UIAction(
+                    title: collection.name ?? "Untitled",
+                    image: UIImage(systemName: "folder"),//isPresent ? "checkmark.square.fill" : "square"),
+                    state: isPresent ? .on : .off
+                ) { [weak self] _ in
+                    if isPresent {
+                        _ = self?.viewModel.deleteFromCollection(collection: collection, book: book)
+                    } else {
+                        _ = self?.viewModel.addToCollection(collection: collection, book: book)
+                    }
+                }
+            }
+        
+        let addToCollectionMenu = UIMenu(
+            title: "Add to Collection",
+            image: UIImage(systemName: "folder.badge.plus"),
+            children: customCollectionActions
+        )
+
+        let removeAction = UIAction(
+            title: "Remove",
+            image: UIImage(systemName: "trash"),
+            attributes: .destructive
+        ) { [weak self] _ in
+            let result = self?.viewModel.unpurchaseBook(book)
+            switch result {
+            case .success():
+                self?.didFinishTask?()
+                self?.collectionView.reloadData()
+            case .failure(let error):
+                print(error.localizedDescription)
+            case .none:
+                print("Non AS responce!!")
+            }
+        }
+
+        return UIMenu(
+            title: "",
+            children: [
+                detailsAction,
+                UIMenu(options: .displayInline, children: [wantToReadAction, finishedAction]),
+                addToCollectionMenu,
+                UIMenu(options: .displayInline, children: [removeAction])
+            ]
+        )
+    }
+    
+
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")

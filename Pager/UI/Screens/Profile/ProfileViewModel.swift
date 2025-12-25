@@ -25,7 +25,13 @@ class ProfileViewModel {
         }
         Task {
             
-            _ = await userRepository.updateProfileImage(for: user, imageData: imageData)
+            let result = await userRepository.updateProfileImage(for: user, imageData: imageData)
+            switch result {
+            case .success():
+                print("Saved")
+            case .failure(let error):
+                print(error.localizedDescription)
+            }
         }
     }
     

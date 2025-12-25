@@ -125,7 +125,6 @@ class HomeService {
             throw UserError.loginRequired
         } //pr
         let currentBookId = user.lastOpenedBookId // UUID(uuidString:"B0000000-0000-0000-0000-000000001342")
-        print(currentBookId)
         let recentBooks = fetchOwnedBooksSorted(user: user)
         var currentBook: Book? = nil
         if let id = currentBookId {
@@ -139,7 +138,7 @@ class HomeService {
             filteredRecentBooks = recentBooks
         }
         var collectionsBooks: BookCollection?
-        switch await collectionRepository.fetchDefaultCollection(for: user) {
+        switch await collectionRepository.fetchWantToReadCollection(for: user) {
         case .success(let collectionBooks):
             collectionsBooks = collectionBooks
         case .failure(let error):

@@ -126,60 +126,159 @@ class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayo
                 nav.modalPresentationStyle = .fullScreen
                 self.present(nav, animated: true)
 //                self.present(vc, animated: true, completion: .none)
-                 // self.showBookDetails(book)
             }
             
-            let wantToReadAction = UIAction(title: "Add to Want to Read", image: UIImage(systemName: "bookmark")) { _ in
-                let result = self.viewModel.addBookToDefault(book: book)
-                switch result {
-                case .success:
-                    print("Success")
-                    //                            self.viewModel.getUpdatedBookList()
-                    //                            self.collectionView.reloadData()
-                    //                            self.updateEmptyState()
-                case .failure(let error):
-                    if error == .bookAlreadyInCollection {
-                        let alert = UIAlertController(
-                            title: "Already Added",
-                            message: "This book is already in the selected collection.",
-                            preferredStyle: .alert
-                        )
-                        alert.addAction(UIAlertAction(title: "OK", style: .default))
-                        self.present(alert, animated: true)
+//            let wantToReadAction = UIAction(title: "Add to Want to Read", image: UIImage(systemName: "bookmark")) { _ in
+//                let result = self.viewModel.addBookToDefault(book: book)
+//                switch result {
+//                case .success:
+//                    print("Success")
+//                    //                            self.viewModel.getUpdatedBookList()
+//                    //                            self.collectionView.reloadData()
+//                    //                            self.updateEmptyState()
+//                case .failure(let error):
+//                    if error == .bookAlreadyInCollection {
+//                        let alert = UIAlertController(
+//                            title: "Already Added",
+//                            message: "This book is already in the selected collection.",
+//                            preferredStyle: .alert
+//                        )
+//                        alert.addAction(UIAlertAction(title: "OK", style: .default))
+//                        self.present(alert, animated: true)
+//                    }
+//                    print("Error: \(error)")
+//                }
+//            }
+            let isAlreadyInWantToRead = self.viewModel.isBookInDefaultCollection(book)
+
+            let wantToReadAction = UIAction(
+                title: isAlreadyInWantToRead ? "Remove from Want to Read" : "Add to Want to Read",
+                image: UIImage(systemName: isAlreadyInWantToRead ? "bookmark.fill" : "bookmark"),
+                attributes: []//isAlreadyInWantToRead ? .destructive : []
+            ) { [weak self] _ in
+                guard let self = self else { return }
+                
+                if isAlreadyInWantToRead {
+                    let result = self.viewModel.removeBookFromDefault(book: book)
+                    
+                    switch result {
+                    case .success:
+                        print("Removed successfully")
+                        
+                        if self.viewModel.currentCollection?.name == DefaultsName.wantToRead {
+                            self.viewModel.getUpdatedBookList()
+                            self.collectionView.reloadData()
+                            self.updateEmptyState()
+                        }
+                        
+                    case .failure(let error):
+                        print("Error removing: \(error)")
                     }
-                    print("Error: \(error)")
+                    
+                } else {
+                    let result = self.viewModel.addBookToDefault(book: book)
+                    
+                    switch result {
+                    case .success:
+                        print("Added successfully")
+                        if self.viewModel.currentCollection?.name == DefaultsName.wantToRead {
+                            self.viewModel.getUpdatedBookList()
+                            self.collectionView.reloadData()
+                            self.updateEmptyState()
+                        }
+                        
+                    case .failure(let error):
+                        if error == .bookAlreadyInCollection {
+                            let alert = UIAlertController(
+                                title: "Already Added",
+                                message: "This book is already in the selected collection.",
+                                preferredStyle: .alert
+                            )
+                            alert.addAction(UIAlertAction(title: "OK", style: .default))
+                            self.present(alert, animated: true)
+                        }
+                        print("Error adding: \(error)")
+                    }
                 }
             }
-
+//            let allCollections = UserSession.shared.currentUser?.collections?.allObjects as? [BookCollection] ?? []
+//            
+//
+//            
+//            let collectionItems = allCollections
+//                .filter { $0 != self.viewModel.currentCollection }
+//                .map { collection in
+//                    UIAction(title: collection.name ?? "Untitled", image: UIImage(systemName: "folder")) { _ in
+//                        let result = self.viewModel.addToCollection(collection: collection, book: book)
+//                        switch result {
+//                        case .success:
+//                            print("Success")
+//                            //                            self.viewModel.getUpdatedBookList()
+//                            //                            self.collectionView.reloadData()
+//                            //                            self.updateEmptyState()
+//                            
+//                        case .failure(let error):
+//                            if error == .bookAlreadyInCollection {
+//                                let alert = UIAlertController(
+//                                    title: "Already Added",
+//                                    message: "This book is already in the selected collection.",
+//                                    preferredStyle: .alert
+//                                )
+//                                alert.addAction(UIAlertAction(title: "OK", style: .default))
+//                                self.present(alert, animated: true)
+//                            }
+//                            print("Error: \(error)")
+//                        }
+//                    }
+//                }
             let allCollections = UserSession.shared.currentUser?.collections?.allObjects as? [BookCollection] ?? []
-            
 
-            
             let collectionItems = allCollections
-                .filter { $0 != self.viewModel.currentCollection }
+                .filter { collection in
+                    let isCurrent = collection == self.viewModel.currentCollection
+                    return !isCurrent && !collection.isDefault
+                }
                 .map { collection in
-                    UIAction(title: collection.name ?? "Untitled", image: UIImage(systemName: "folder")) { _ in
-                        let result = self.viewModel.addToCollection(collection: collection, book: book)
-                        switch result {
-                        case .success:
-                            print("Success")
-                            //                            self.viewModel.getUpdatedBookList()
-                            //                            self.collectionView.reloadData()
-                            //                            self.updateEmptyState()
+                    
+                    let isAlreadyAdded = (collection.books as? Set<Book>)?.contains(book) ?? false
+                    
+                    let action = UIAction(
+                        title: collection.name ?? "Untitled",
+                        image: UIImage(systemName: "folder"), //isAlreadyAdded ? "checkmark.circle.fill" : "folder"),
+                        attributes: [],
+                        state: isAlreadyAdded ? .on : .off
+                    ) { [weak self] _ in
+                        guard let self = self else { return }
+                        
+                        if isAlreadyAdded {
+                            let result = self.viewModel.deleteFromCollection(collection: collection, book: book)
                             
-                        case .failure(let error):
-                            if error == .bookAlreadyInCollection {
-                                let alert = UIAlertController(
-                                    title: "Already Added",
-                                    message: "This book is already in the selected collection.",
-                                    preferredStyle: .alert
-                                )
-                                alert.addAction(UIAlertAction(title: "OK", style: .default))
-                                self.present(alert, animated: true)
+                            switch result {
+                            case .success:
+                                print("Successfully removed from \(collection.name ?? "")")
+//                                collectionView.reloadData()
+                            case .failure(let error):
+                                print("Error removing: \(error)")
                             }
-                            print("Error: \(error)")
+                            
+                        } else {
+                            let result = self.viewModel.addToCollection(collection: collection, book: book)
+                            
+                            switch result {
+                            case .success:
+                                print("Successfully added to \(collection.name ?? "")")
+                                
+                            case .failure(let error):
+                                if error == .bookAlreadyInCollection {
+                                    print("Already in collection")
+                                } else {
+                                    print("Error adding: \(error)")
+                                }
+                            }
                         }
                     }
+                    
+                    return action
                 }
             
             let addToCollectionMenu = UIMenu(
@@ -192,13 +291,12 @@ class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayo
                 UIMenu(title: "", options: .displayInline, children: [wantToReadAction, addToCollectionMenu])
             ]
 
-            if let collection = viewModel.currentCollection {
+            if let collection = self.viewModel.currentCollection {
                 let deleteAction = UIAction(title: "Remove from Collection", image: UIImage(systemName: "minus.circle"), attributes: .destructive) { _ in
                     let result = self.viewModel.deleteFromCollection(collection: collection, book: book)
                     
                     switch result {
                     case .success:
-                        print("Book removed")
                         self.viewModel.getUpdatedBookList()
                         self.collectionView.reloadData()
                         self.updateEmptyState()
@@ -264,13 +362,10 @@ class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayo
 
 extension BookGridViewController: UICollectionViewDataSource, UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        print("Number of row")
-
         return viewModel.resultBooks.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        print("cell getting \(indexPath.row)")
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: BookGridCell.reuseID, for: indexPath) as! BookGridCell
         cell.contentView.backgroundColor = AppColors.secondaryBackground
         cell.layer.cornerRadius = 12
@@ -290,7 +385,6 @@ extension BookGridViewController: UICollectionViewDataSource, UICollectionViewDe
     
     
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-        print(searchText)
         let result = viewModel.searchBook(searchText: searchText)
         switch result {
         case .success():
@@ -303,22 +397,4 @@ extension BookGridViewController: UICollectionViewDataSource, UICollectionViewDe
             }
         }
     }
-    
-//    
-//    
-//    @objc func getButtonTapped(_ sender: UIButton) {
-//        let index = sender.tag
-//        let book = viewModel.books[index]
-//        print("GET tapped for:", book.title)
-//    }
-//    override var preferredStatusBarStyle: UIStatusBarStyle {
-//        return .darkContent
-////        if userInterfaceStyle
-////        return UIColor { trait in
-////            trait.userInterfaceStyle == .dark
-////                ? UIColor.black
-////                : UIColor.white
-////        }
-//    }
-    
 }

@@ -7376,7 +7376,8 @@ Gutenberg eBooks may be modified and printed and given away—you may
 do practically ANYTHING in the United States with eBooks not protected
 by U.S. copyright law. Redistribution is subject to the trademark
 license, especially commercial redistribution.
-
+"""
+let newbook = """
 
 START: FULL LICENSE
 
@@ -7741,7 +7742,10 @@ class BookPaginator {
             let pageString = String(text[pageStart..<pageEnd])
             
             pages.append(pageString)
-            
+            if pageRange.length == 0 {
+                print("Error: Page frame is too small to fit any text.")
+                break 
+            }
             textPos += pageRange.length
         }
         
@@ -7870,7 +7874,7 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
     
     init(book: Book) {
         self.bookTitle = book.title ?? ""
-        self.fullBookText = fullBoookText//book.contentText ?? ""\
+        self.fullBookText = newbook//book.contentText ?? ""\
         self.viewModel = ReadBookViewModel(book: book)
         self.currentIndex = self.viewModel.loadProgress()
         super.init(nibName: nil, bundle: nil)
@@ -8242,8 +8246,6 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
     }
 }
 
-// MARK: - PageViewController Delegate & DataSource
-// We must now explicitly adopt these protocols since we don't inherit from UIPageViewController
 extension MainBookReaderViewController: UIPageViewControllerDataSource, UIPageViewControllerDelegate{
     
     func pageViewController(_ pageViewController: UIPageViewController, viewControllerBefore viewController: UIViewController) -> UIViewController? {

@@ -461,7 +461,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
             self?.reviewsSeeallButtonTapped()
         }
         
-        let wantToReadAction = UIAction(title: "Want to Read", image: UIImage(systemName: "bookmark")) { [weak self] _ in
+        let wantToReadAction = UIAction(title: DefaultsName.wantToRead, image: UIImage(systemName: "bookmark")) { [weak self] _ in
             guard let self = self else { return }
             
             switch self.viewModel.addBookToDefault(book: self.viewModel.book) {

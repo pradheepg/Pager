@@ -15,22 +15,33 @@ class ReadBookViewModel {
     private let isSwipeKey: String = "isSwipeKey"
     private let isSideKey: String = "isSideKey"
 
+    private lazy var repostory: CollectionRepository = CollectionRepository()
+    
     var isDark: Bool = false
     var isSwipe: Bool = true
     var isSide: Bool = true
     var progress: Int = 0
     
     let defaults = UserDefaults.standard
-
+    
     init(book: Book) {
         self.book = book
         loadSetting()
     }
     
     func loadSetting() {
+        if let savedSwipe = defaults.object(forKey: isSwipeKey) as? Bool {
+            isSwipe = savedSwipe
+        } else {
+            isSwipe = true
+        }
+        
+        if let savedSide = defaults.object(forKey: isSideKey) as? Bool {
+            isSide = savedSide
+        } else {
+            isSide = true
+        }
         isDark = defaults.bool(forKey: "isDark")
-        isSwipe = defaults.bool(forKey: "isSwipe")
-        isSide = defaults.bool(forKey: "isSide")
     }
     
     func saveSetting() {
@@ -43,12 +54,14 @@ class ReadBookViewModel {
         guard let user = UserSession.shared.currentUser else {
             return
         }
-        print("Saving book Progress")
         user.lastOpenedBookId = book.bookId
         
         let bookRecord = (user.owned?.allObjects as? [UserBookRecord])?.first(where: { $0.book == book })
         bookRecord?.lastOpened = Date()
         bookRecord?.progressValue = Int64(progressValue)
+        if let totalPages = bookRecord?.totalPages , (progressValue + 1) >= totalPages  {
+            addBookToFinished(book: book)
+        }
         
         let context = user.managedObjectContext
         guard let context, context.hasChanges else { return }
@@ -59,6 +72,13 @@ class ReadBookViewModel {
             print("Failed to save progress: \(error)")
         }
 
+    }
+    
+    func addBookToFinished(book: Book) {
+        guard let user = UserSession.shared.currentUser else {
+            return
+        }
+        _ = repostory.addBookToFinishedCollection(book: book, user: user)
     }
     
     func loadProgress() -> Int {

@@ -25,6 +25,7 @@ class BookStoreViewModel {
     func addBook(_ book: Book, to collection: BookCollection) -> Result<Void, CollectionError> {
         return collectionRepository.addBook(book, to: collection)
     }
+    
     func addBookToDefault(book: Book) -> Result<Void, CollectionError> {
         guard let collections = UserSession.shared.currentUser?.collections?.allObjects as? [BookCollection] else {
             return .failure(.notFound)
@@ -57,4 +58,53 @@ class BookStoreViewModel {
         }
     }
     
+    func isBookInCollection(_ book: Book, collectionName: String) -> Bool {
+        guard let user = UserSession.shared.currentUser else { return false }
+        
+        let wantToReadCollection = (user.collections?.allObjects as? [BookCollection])?.first(where: {
+            $0.isDefault == true && $0.name == collectionName
+        })
+        if let collection = wantToReadCollection, let books = collection.books as? Set<Book> {
+            return books.contains(book)
+        }
+        
+        return false
+    }
+    
+    func deleteFromCollection(collection: BookCollection, book: Book) -> Result<Void, CollectionError> {
+        let result = collectionRepository.removeBook(book, from: collection, for: UserSession.shared.currentUser)
+        switch result {
+        case .success:
+            return .success(())
+        case .failure(let error):
+            return .failure(error)
+        }
+    }
+    
+    func removeBookFromWantToRead(book: Book) -> Result<Void, CollectionError> {
+        guard let user = UserSession.shared.currentUser else {
+            return .failure(.notFound)
+        }
+        
+        let wantToReadCollection = (user.collections?.allObjects as? [BookCollection])?.first(where: {
+            $0.isDefault == true && $0.name == DefaultsName.wantToRead})
+        guard let wantToReadCollection = wantToReadCollection else {
+            return .failure(.notFound)
+        }
+        return deleteFromCollection(collection: wantToReadCollection, book: book)
+    }
+    
+    func addBookToWantToRead(book: Book) -> Result<Void, CollectionError> {
+        guard let collections = UserSession.shared.currentUser?.collections?.allObjects as? [BookCollection] else {
+            return .failure(.notFound)
+        }
+        guard let wantToReadCollection = collections.first(
+            where: { $0.isDefault && $0.name == DefaultsName.wantToRead }
+        ) else {
+            return .failure(.notFound)
+        }
+
+        return addBook(book, to: wantToReadCollection)
+    }
+
 }

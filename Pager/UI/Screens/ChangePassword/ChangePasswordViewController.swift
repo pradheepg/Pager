@@ -25,9 +25,6 @@ class ChangePasswordViewController: UIViewController, UITableViewDataSource, UIT
         PasswordOption(title: "Verify", placeholder: "Re-enter new password", value: ""),
     ]
     
-    var currentPasswordString: String = ""
-    var newPasswordString: String = ""
-    var verifyPasswordString: String = ""
     private let tableView: UITableView = {
         let table = UITableView(frame: .zero, style: .insetGrouped)
         table.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
@@ -187,55 +184,55 @@ class ChangePasswordViewController: UIViewController, UITableViewDataSource, UIT
         self.present(alert, animated: true)
     }
     
-    @objc func didTapDonee() {
-        
-        guard PasswordHashing.hashFuntion(password: currentPassword[0].value) == UserSession.shared.currentUser?.password else {
-            
-            let alert = UIAlertController(
-                title: "Incorrect Password",
-                message: "The current password you entered is incorrect.",
-                preferredStyle: .alert
-            )
-            let okAction = UIAlertAction(title: "OK", style: .default)
-            alert.addAction(okAction)
-            self.present(alert, animated: true, completion: nil)
-            return
-        }
-        
-        guard !newPassword[0].value.isEmpty else //|| newPassword[0].value.count < 6 else
-        {
-            let alert = UIAlertController(
-                title: "Missing Input",
-                message: "The password fields cannot be empty. Please fill in both.",
-                preferredStyle: .alert
-            )
-            let okAction = UIAlertAction(title: "OK", style: .default)
-            alert.addAction(okAction)
-            self.present(alert, animated: true, completion: nil)
-            return
-        }
-        
-        guard newPassword[0].value == newPassword[1].value, !newPassword[0].value.isEmpty else
-        {
-            let alert = UIAlertController(
-                title: "Password Mismatch",
-                message: "The new password and confirm password do not match. Please try again.",
-                preferredStyle: .alert
-            )
-            let okAction = UIAlertAction(title: "OK", style: .default)
-            alert.addAction(okAction)
-            self.present(alert, animated: true, completion: nil)
-            return
-        }
-        
-
-        
-        viewModel.changePassword(currentPassword[0].value, newPassword[0].value)
-        
-        print(currentPassword[0].value,newPassword[0].value,newPassword[1].value)
-        navigationController?.popViewController(animated: true)
-        
-    }
+//    @objc func didTapDonee() {
+//        
+//        guard PasswordHashing.hashFuntion(password: currentPassword[0].value) == UserSession.shared.currentUser?.password else {
+//            
+//            let alert = UIAlertController(
+//                title: "Incorrect Password",
+//                message: "The current password you entered is incorrect.",
+//                preferredStyle: .alert
+//            )
+//            let okAction = UIAlertAction(title: "OK", style: .default)
+//            alert.addAction(okAction)
+//            self.present(alert, animated: true, completion: nil)
+//            return
+//        }
+//        
+//        guard !newPassword[0].value.isEmpty else //|| newPassword[0].value.count < 6 else
+//        {
+//            let alert = UIAlertController(
+//                title: "Missing Input",
+//                message: "The password fields cannot be empty. Please fill in both.",
+//                preferredStyle: .alert
+//            )
+//            let okAction = UIAlertAction(title: "OK", style: .default)
+//            alert.addAction(okAction)
+//            self.present(alert, animated: true, completion: nil)
+//            return
+//        }
+//        
+//        guard newPassword[0].value == newPassword[1].value, !newPassword[0].value.isEmpty else
+//        {
+//            let alert = UIAlertController(
+//                title: "Password Mismatch",
+//                message: "The new password and confirm password do not match. Please try again.",
+//                preferredStyle: .alert
+//            )
+//            let okAction = UIAlertAction(title: "OK", style: .default)
+//            alert.addAction(okAction)
+//            self.present(alert, animated: true, completion: nil)
+//            return
+//        }
+//        
+//
+//        
+//        viewModel.changePassword(currentPassword[0].value, newPassword[0].value)
+//        
+//        print(currentPassword[0].value,newPassword[0].value,newPassword[1].value)
+//        navigationController?.popViewController(animated: true)
+//        
+//    }
     
     func prefersLargeTitles(_ bool: Bool){
         if #available(iOS 17.0, *) {

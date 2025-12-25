@@ -95,7 +95,7 @@ class ViewReviewViewController: UIViewController, UICollectionViewDataSource, UI
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = AppColors.background
-        title = "Reviews"
+        title = "Review"
         setUpReviewCollectionView()
         setUpNavBarItem()
     }
@@ -128,20 +128,6 @@ class ViewReviewViewController: UIViewController, UICollectionViewDataSource, UI
         return cell
     }
     
-//    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-//            
-//            let cellWidth = collectionView.bounds.width - 32
-//            let textPaddingInternal: CGFloat = 32
-//            let availableTextWidth = cellWidth - textPaddingInternal
-//
-//            let text = review.reviewText ?? ""
-//            
-//            let font = UIFont.systemFont(ofSize: 16)
-//            
-//            let textHeight = text.height(withConstrainedWidth: availableTextWidth, font: font) + 10
-//            
-//            return CGSize(width: cellWidth, height: textHeight + staticCellHeight)
-//        }
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
                 
             let cellWidth = collectionView.bounds.width - 32

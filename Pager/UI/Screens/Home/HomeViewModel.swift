@@ -37,14 +37,11 @@ class HomeViewModel {
     private let service: HomeService
     
     var isLoading: Bool = false {
-            // We use a didSet to automatically notify the VC on change
             didSet {
-                // Note: If you were using Combine/ObservableObject, this would be @Published
                 onLoadingStateChanged?(isLoading)
             }
         }
         
-        // This new closure tells the VC when to update the spinner
         var onLoadingStateChanged: ((Bool) -> Void)?
     
     init(service: HomeService = HomeService()) {
@@ -67,7 +64,6 @@ class HomeViewModel {
 //    }
     
     func loadData() {
-            
         Task {
             
             do {
@@ -84,6 +80,31 @@ class HomeViewModel {
                 self.onDataUpdated?()
                 
                 self.isLoading = false
+            } catch {
+                print("Error loading home data: \(error)")
+                self.onError?(error.localizedDescription)
+            }
+            
+        }
+    }
+    
+    func updateData() {
+        Task {
+            
+            do {
+//                self.isLoading = true
+                let payload = try await service.fetchHomeDashboardData()
+                try await Task.sleep(nanoseconds: 500000000)
+//                self.currentBook = payload.currentBook
+//                self.recentBooks = payload.recentBooks
+                self.wantToReadBooks = payload.wantToReadBooks
+                self.categories = payload.categories
+                
+                
+                self.configureSections()
+                self.onDataUpdated?()
+                
+//                self.isLoading = false
             } catch {
                 print("Error loading home data: \(error)")
                 self.onError?(error.localizedDescription)
@@ -121,18 +142,60 @@ class HomeViewModel {
         guard index < displayedSections.count else { return .currently }
         return displayedSections[index]
     }
-    func addBookToDefault(book: Book) -> Result<Void, CollectionError> {
+    
+    func addBookToWantToRead(book: Book) -> Result<Void, CollectionError> {
         guard let collections = UserSession.shared.currentUser?.collections?.allObjects as? [BookCollection] else {
             return .failure(.notFound)
         }
-        guard let defaultCollection = collections.first(where: { $0.isDefault == true }) else {
+        guard let wantToReadCollection = collections.first(
+            where: { $0.isDefault && $0.name == DefaultsName.wantToRead }
+        ) else {
             return .failure(.notFound)
         }
-        return addBook(book, to: defaultCollection)
+
+        return addBook(book, to: wantToReadCollection)
     }
+    
     func addBook(_ book: Book, to collection: BookCollection) -> Result<Void, CollectionError> {
         return collectionRepository.addBook(book, to: collection)
     }
+    
+    func isBookInCollection(_ book: Book, collectionName: String) -> Bool {
+        guard let user = UserSession.shared.currentUser else { return false }
+        
+        let wantToReadCollection = (user.collections?.allObjects as? [BookCollection])?.first(where: {
+            $0.isDefault == true && $0.name == collectionName
+        })
+        if let collection = wantToReadCollection, let books = collection.books as? Set<Book> {
+            return books.contains(book)
+        }
+        
+        return false
+    }
+    
+    func deleteFromCollection(collection: BookCollection, book: Book) -> Result<Void, CollectionError> {
+        let result = collectionRepository.removeBook(book, from: collection, for: UserSession.shared.currentUser)
+        switch result {
+        case .success:
+            return .success(())
+        case .failure(let error):
+            return .failure(error)
+        }
+    }
+    
+    func removeBookFromWantToRead(book: Book) -> Result<Void, CollectionError> {
+        guard let user = UserSession.shared.currentUser else {
+            return .failure(.notFound)
+        }
+        
+        let wantToReadCollection = (user.collections?.allObjects as? [BookCollection])?.first(where: {
+            $0.isDefault == true && $0.name == DefaultsName.wantToRead})
+        guard let wantToReadCollection = wantToReadCollection else {
+            return .failure(.notFound)
+        }
+        return deleteFromCollection(collection: wantToReadCollection, book: book)
+    }
+    
 }
 
 //remove after bug fix driver
@@ -171,5 +234,5 @@ class Test {
     func fetchDataFromAPI(completion: (String) -> Void) {
         completion("Hello")
     }
-    
+
 }

@@ -157,3 +157,7 @@ extension UIViewController {
 }
 
 
+class DefaultsName {
+    static let wantToRead: String = "Want to Read"
+    static let finiahed: String = "Finished"
+}
