@@ -7878,7 +7878,7 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
     
     init(book: Book) {
         self.bookTitle = book.title ?? ""
-        self.fullBookText = newbook//book.contentText ?? "" //driver
+        self.fullBookText = book.contentText ?? "" //driver
         self.viewModel = ReadBookViewModel(book: book)
         self.currentIndex = self.viewModel.loadProgress()
         super.init(nibName: nil, bundle: nil)

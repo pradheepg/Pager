@@ -75,9 +75,9 @@ struct UserBookRecordDTO: Decodable {
 
 // MARK: - 2. The Importer Class
 
-class DataLoader {
+class DataLoadder {
     
-    static let shared = DataLoader()
+    static let shared = DataLoadder()
     private init() {}
     
     func loadSeedData(context: NSManagedObjectContext) {

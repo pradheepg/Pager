@@ -40,7 +40,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         do {
             let count = try context.count(for: fetchRequest)
             if count == 0 {
-                DataLoader.shared.loadSeedData(context: context)
+                DataLoader.shared.preloadData(context: context)
             } else {
                 print("Database already contains data. Skipping seed.")
             }
