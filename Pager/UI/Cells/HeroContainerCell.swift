@@ -10,7 +10,6 @@ import UIKit
 class HeroContainerCell: UICollectionViewCell {
     static let reuseID = "HeroContainerCell"
     
-    // We use your existing NewReleaseHeroView
     private let heroView = NewReleaseHeroView()
     
     override init(frame: CGRect) {

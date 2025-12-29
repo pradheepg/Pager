@@ -12,6 +12,7 @@ class SearchViewModel {
     var books: [Book] = []
     
     private let bookRepository = BookRepository()
+    private let collectionRepository = CollectionRepository()
     
     func searchBooks(searchText: String, token: [UISearchToken]) -> Result<Bool, BookError> {
         var tokentext: String = ""
@@ -48,5 +49,50 @@ class SearchViewModel {
         self.books = results.filter { resultBook in
             !self.myBooks.contains(resultBook)
         }
+    }
+    
+    func isBookInDefaultCollection(_ book: Book, name: String) -> Bool {
+        guard let user = UserSession.shared.currentUser else { return false }
+        
+        let targetCollection = (user.collections?.allObjects as? [BookCollection])?.first(where: {
+            $0.isDefault == true && $0.name == name
+        })
+        
+        if let collection = targetCollection, let books = collection.books as? Set<Book> {
+            return books.contains(book)
+        }
+        return false
+    }
+    
+    func toggleDefaultCollection(book: Book, collectionName: String) -> Result<Void, CollectionError> {
+        guard let user = UserSession.shared.currentUser else {
+            return .failure(.notFound)
+        }
+        let exists = isBookInDefaultCollection(book, name: collectionName)
+        
+        guard let collection = (user.collections?.allObjects as? [BookCollection])?.first(where: {
+            $0.isDefault == true && $0.name == collectionName
+        }) else {
+            return .failure(.noMatches)
+        }
+        if exists {
+            return deleteFromCollection(collection: collection, book: book)
+        } else {
+            return addBook(book, to: collection)
+        }
+    }
+    
+    func deleteFromCollection(collection: BookCollection, book: Book) -> Result<Void, CollectionError> {
+        let result = collectionRepository.removeBook(book, from: collection, for: UserSession.shared.currentUser)
+        switch result {
+        case .success:
+            return .success(())
+        case .failure(let error):
+            return .failure(error)
+        }
+    }
+    
+    func addBook(_ book: Book, to collection: BookCollection) -> Result<Void, CollectionError> {
+        return collectionRepository.addBook(book, to: collection)
     }
 }

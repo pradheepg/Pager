@@ -81,7 +81,7 @@ class BookStoreViewController: UIViewController, UICollectionViewDataSource, UIC
     private func setupCollectionView() {
         collectionView = UICollectionView(frame: .zero, collectionViewLayout: createCompositionalLayout())
         collectionView.translatesAutoresizingMaskIntoConstraints = false
-        collectionView.backgroundColor = .clear // AppColors.background
+        collectionView.backgroundColor = AppColors.gridViewBGColor
 
         collectionView.register(HeroContainerCell.self, forCellWithReuseIdentifier: HeroContainerCell.reuseID)
         collectionView.register(CategoryPillCell.self, forCellWithReuseIdentifier: CategoryPillCell.reuseID)
@@ -96,7 +96,7 @@ class BookStoreViewController: UIViewController, UICollectionViewDataSource, UIC
         view.addSubview(collectionView)
         
         NSLayoutConstraint.activate([
-            collectionView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            collectionView.topAnchor.constraint(equalTo: view.topAnchor),
             collectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             collectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
@@ -104,7 +104,7 @@ class BookStoreViewController: UIViewController, UICollectionViewDataSource, UIC
     }
     
     private func createCompositionalLayout() -> UICollectionViewLayout {
-        return UICollectionViewCompositionalLayout { [weak self] sectionIndex, _ in
+        let layout = UICollectionViewCompositionalLayout { [weak self] sectionIndex, _ in
             guard let self = self else { return nil }
             
             if sectionIndex == 0 {
@@ -147,12 +147,19 @@ class BookStoreViewController: UIViewController, UICollectionViewDataSource, UIC
                 let headerSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .absolute(40))
                 let header = NSCollectionLayoutBoundarySupplementaryItem(layoutSize: headerSize, elementKind: UICollectionView.elementKindSectionHeader, alignment: .top)
                 section.boundarySupplementaryItems = [header]
+                let backgroundItem = NSCollectionLayoutDecorationItem.background(
+                    elementKind: GradientDecorationView.elementKind
+                )
+                backgroundItem.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 10, trailing: 0)
                 
+                section.decorationItems = [backgroundItem]
                 return section
             }
         }
+        layout.register(GradientDecorationView.self, forDecorationViewOfKind: GradientDecorationView.elementKind)
+        return layout
     }
-
+    
     
     func numberOfSections(in collectionView: UICollectionView) -> Int {
         return 2 + viewModel.categories.count

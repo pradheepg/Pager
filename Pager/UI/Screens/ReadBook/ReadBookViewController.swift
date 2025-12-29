@@ -7744,7 +7744,7 @@ class BookPaginator {
             pages.append(pageString)
             if pageRange.length == 0 {
                 print("Error: Page frame is too small to fit any text.")
-                break 
+                break
             }
             textPos += pageRange.length
         }
@@ -7764,9 +7764,9 @@ class PageContentViewController: UIViewController {
         }
     }
     
-//    deinit {
-//        print("deinit PageContentViewController")
-//    }
+    //    deinit {
+    //        print("deinit PageContentViewController")
+    //    }
     
     let bookTitle: UILabel = {
         let lable = UILabel()
@@ -7830,6 +7830,7 @@ class PageContentViewController: UIViewController {
         pageNumber.text = String(pageIndex + 1)
         bookTitle.text = bookTitleString
         textView.text = pageText
+        
     }
 }
 
@@ -7849,7 +7850,7 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
     override var preferredStatusBarUpdateAnimation: UIStatusBarAnimation {
         return .fade
     }
-
+    
     
     var pages: [String] = []
     var currentIndex: Int = 0
@@ -7862,6 +7863,7 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
     var themeBackGroung:UIColor = .white
     var transitionStyle: UIPageViewController.TransitionStyle = .scroll
     var navigationOrientation: UIPageViewController.NavigationOrientation = .horizontal
+    var startTime: Date? = Date()
     private let loadingSpinner: UIActivityIndicatorView = {
         let spinner = UIActivityIndicatorView(style: .large)
         spinner.translatesAutoresizingMaskIntoConstraints = false
@@ -7869,12 +7871,14 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
         spinner.color = .gray // Or use your theme color
         return spinner
     }()
+    var onDismiss: (() -> Void)?
     private lazy var pageController: UIPageViewController = createPageController(transitionStyle: transitionStyle, navigationOrientation: navigationOrientation)
     private let viewModel: ReadBookViewModel
+    private let readGoalService: ReadGoalService = ReadGoalService()
     
     init(book: Book) {
         self.bookTitle = book.title ?? ""
-        self.fullBookText = newbook//book.contentText ?? ""\
+        self.fullBookText = newbook//book.contentText ?? "" //driver
         self.viewModel = ReadBookViewModel(book: book)
         self.currentIndex = self.viewModel.loadProgress()
         super.init(nibName: nil, bundle: nil)
@@ -7886,6 +7890,7 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        startSession()
         setUpNavBarItem()
     }
     override func viewDidLoad() {
@@ -7902,7 +7907,7 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
         didChangeNavigationOrientation(to: viewModel.isSwipe ? .horizontal : .vertical)
         didChangePageStyle(to: viewModel.isSide ? .scroll : .pageCurl)
         viewModel.loadSetting()
-
+        
         let screenWidth = view.bounds.width > 0 ? view.bounds.width : UIScreen.main.bounds.width
         let screenHeight = view.bounds.height > 0 ? view.bounds.height : UIScreen.main.bounds.height
         
@@ -7911,15 +7916,15 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
             height: screenHeight - 60 // Adjusted based on previous discussion
         )
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-                guard let self = self else { return }
-                
-                let calculatedPages = BookPaginator.splitTextIntoPages(
-                    text: self.fullBookText,
-                    size: textAreaSize,
-                    font: .systemFont(ofSize: 20)
-                )
-                // ---------------------------------------
-                
+            guard let self = self else { return }
+            
+            let calculatedPages = BookPaginator.splitTextIntoPages(
+                text: self.fullBookText,
+                size: textAreaSize,
+                font: .systemFont(ofSize: 20)
+            )
+            // ---------------------------------------
+            
             DispatchQueue.main.async {
                 self.loadingSpinner.stopAnimating()
                 
@@ -7934,8 +7939,13 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
                 self.setupPageNumberLabel()
                 self.updatePageLabel(currentIndex: currentIndex)
             }
-            }
-
+        }
+        
+        let notificationCenter = NotificationCenter.default
+        
+        notificationCenter.addObserver(self, selector: #selector(appWillEnterForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
+        
+        notificationCenter.addObserver(self, selector: #selector(appDidEnterBackground), name: UIApplication.didEnterBackgroundNotification, object: nil)
     }
     
     private func setupPageNumberLabel() {
@@ -8120,19 +8130,15 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
     @objc func showSlider() {
         isFullScreen = !isFullScreen
         pageNumberContainer.isHidden = !pageNumberContainer.isHidden
-//                mainSettingButton.isHidden = !mainSettingButton.isHidden
+        //                mainSettingButton.isHidden = !mainSettingButton.isHidden
     }
     
-    // MARK: - Setup Methods
     
     private func setupPageController() {
-        // 1. Add child to parent
         addChild(pageController)
         
-        // 2. Add child's view to hierarchy
         view.addSubview(pageController.view)
         
-        // 3. Layout the child view (Full Screen)
         pageController.view.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             pageController.view.topAnchor.constraint(equalTo: view.topAnchor, constant: 60),
@@ -8141,18 +8147,13 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
             pageController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor)
         ])
         
-        // 4. Notify child it moved
         pageController.didMove(toParent: self)
     }
     private func reSetupPageController() {
-        // 1. Add child to parent
         addChild(pageController)
         
-        // 2. Insert view at Index 0 (The Bottom Layer)
-        // This ensures it goes BEHIND your slider and settings buttons.
         view.insertSubview(pageController.view, at: 0)
         
-        // 3. Layout the child view (Full Screen)
         pageController.view.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             pageController.view.topAnchor.constraint(equalTo: view.topAnchor, constant: 60),
@@ -8161,23 +8162,8 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
             pageController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor)
         ])
         
-        // 4. Notify child it moved
         pageController.didMove(toParent: self)
     }
-    
-    //    private func setUpMainSettingButton() {
-    //        view.addSubview(mainSettingButton)
-    ////        mainSettingButton.addTarget(self, action: #selector(showHideSettingView), for: .touchUpInside)
-    //        mainSettingButton.translatesAutoresizingMaskIntoConstraints = false
-    //        NSLayoutConstraint.activate([
-    //            mainSettingButton.heightAnchor.constraint(equalToConstant: 30),
-    //            mainSettingButton.widthAnchor.constraint(equalTo: mainSettingButton.heightAnchor),
-    //            mainSettingButton.leadingAnchor.constraint(equalTo: view.leadingAnchor,constant: 10),
-    //            mainSettingButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
-    ////            mainSettingButton.centerXAnchor.constraint(equalTo: view.centerXAnchor, constant: 5),
-    ////            mainSettingButton.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: 5),
-    //        ])
-    //    }
     
     func presentSettings() {
         settingsVC.delegate = self
@@ -8207,7 +8193,6 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
         NSLayoutConstraint.activate([
             pageSlider.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             pageSlider.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            // Pin to bottom safe area
             pageSlider.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -1),
             pageSlider.heightAnchor.constraint(equalToConstant: 30)
         ])
@@ -8220,7 +8205,6 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
         let direction: UIPageViewController.NavigationDirection = targetIndex > currentIndex ? .forward : .reverse
         
         if let targetVC = viewControllerAtIndex(targetIndex) {
-            // Updated to use pageController instance
             pageController.setViewControllers([targetVC], direction: direction, animated: false)
             currentIndex = targetIndex
         }
@@ -8240,10 +8224,47 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
         return vc
     }
     
-    deinit {
+    private func startSession() {
+        if startTime == nil {
+            startTime = Date()
+        }
+    }
+
+    private func saveAndResetSession() {
+        guard let start = startTime else { return }
+        
+        let endTime = Date()
+        readGoalService.updateTodayReading(startTime: start, endTime: endTime)
+        startTime = nil
+    }
+    
+    @objc func appWillEnterForeground() {
+        startSession()
+     }
+
+     @objc func appDidEnterBackground() {
+         saveAndResetSession()
+     }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
         viewModel.saveProgress(progressValue: currentIndex)
         viewModel.saveSetting()
+        saveAndResetSession()
     }
+    
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        if isMovingFromParent || isBeingDismissed {
+            onDismiss?()
+        }
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+   
+    
 }
 
 extension MainBookReaderViewController: UIPageViewControllerDataSource, UIPageViewControllerDelegate{
@@ -8268,7 +8289,7 @@ extension MainBookReaderViewController: UIPageViewControllerDataSource, UIPageVi
     }
     
     func setUpNavBarItem() {
-//        navigationItem.title = bookTitle
+        //        navigationItem.title = bookTitle
         let appearance = UINavigationBarAppearance()
         appearance.titleTextAttributes = [.foregroundColor: themeTitle]
         
@@ -8333,7 +8354,7 @@ class SettingsViewController: UIViewController {
             SegmentItem(title: "Swipe", iconName: "hand.draw.fill"),
             SegmentItem(title: "Scroll", iconName: "scroll.fill")
         ]
-
+        
         let segment = GenericSegmentedTile(items: items, defaultIndex: 0)
         
         segment.onSelectionChanged = { [weak self] index in
@@ -8349,7 +8370,7 @@ class SettingsViewController: UIViewController {
             SegmentItem(title: "Light", iconName: "sun.max.fill"),
             SegmentItem(title: "Dark", iconName: "moon.fill")
         ]
-//        let isDarkNow = UITraitCollection.current.userInterfaceStyle == .dark
+        //        let isDarkNow = UITraitCollection.current.userInterfaceStyle == .dark
         let segment = GenericSegmentedTile(items: items, defaultIndex: 0)
         
         segment.onSelectionChanged = { [weak self] index in
@@ -8511,10 +8532,10 @@ class GenericSegmentedTile: UIView {
     }
     
     func setSelectedIndex(_ index: Int) {
-            guard index >= 0 && index < buttons.count else { return }
-            self.selectedIndex = index
-            updateSelectionState()
-        }
+        guard index >= 0 && index < buttons.count else { return }
+        self.selectedIndex = index
+        updateSelectionState()
+    }
     
     // MARK: - Actions & Logic
     @objc private func buttonTapped(_ sender: UIButton) {

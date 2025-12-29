@@ -124,28 +124,35 @@ class ViewReviewViewController: UIViewController, UICollectionViewDataSource, UI
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ReviewCell", for: indexPath) as! ReviewCell
-        cell.configure(with: review)
+        cell.configure(with: review, isDetailView: true)
         return cell
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-                
-            let cellWidth = collectionView.bounds.width - 32
-            let textPaddingInternal: CGFloat = 32
-            let availableTextWidth = cellWidth - textPaddingInternal
-
-            let titleText = review.reviewTitle ?? ""
-            let titleFont = UIFont.systemFont(ofSize: 20, weight: .semibold)
-            let titleHeight = titleText.height(withConstrainedWidth: availableTextWidth, font: titleFont)
-            
-            let bodyText = review.reviewText ?? ""
-            let bodyFont = UIFont.systemFont(ofSize: 16)
-            let bodyHeight = bodyText.height(withConstrainedWidth: availableTextWidth, font: bodyFont)
-            
-            let totalHeight = titleHeight + bodyHeight + staticCellHeight + 10
-            
-            return CGSize(width: cellWidth, height: totalHeight)
-        }
+        
+        let cellWidth = collectionView.bounds.width - 32
+        let textPaddingInternal: CGFloat = 32
+        let availableTextWidth = cellWidth - textPaddingInternal
+        
+        let titleText = review.reviewTitle ?? ""
+        let titleFont = UIFont.systemFont(ofSize: 20, weight: .semibold)
+        let titleHeight = titleText.height(withConstrainedWidth: availableTextWidth, font: titleFont)
+        
+        let bodyText = review.reviewText ?? ""
+        let bodyFont = UIFont.systemFont(ofSize: 16)
+        let bodyHeight = bodyText.height(withConstrainedWidth: availableTextWidth, font: bodyFont)
+        
+        let writtenByText = review.postedBy?.profileName ?? ""
+        let writtenByFont = UIFont.systemFont(ofSize: 14, weight: .regular)
+        let writtenByHeight = writtenByText.height(
+            withConstrainedWidth: availableTextWidth / 0.5 ,
+            font: writtenByFont
+        )
+        
+        let totalHeight = titleHeight + bodyHeight + writtenByHeight + staticCellHeight + 10
+        
+        return CGSize(width: cellWidth, height: totalHeight)
+    }
     
     func setUpNavBarItem() {
         if isModal {

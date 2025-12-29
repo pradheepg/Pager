@@ -98,7 +98,7 @@ extension Book : Identifiable {
         let rawAverage = Float(totalRating) / Float(reviews.count)
         
         let roundedAverage = (rawAverage * 10).rounded() / 10
-        
+        print(roundedAverage)
         self.averageRating = roundedAverage
     }
 }

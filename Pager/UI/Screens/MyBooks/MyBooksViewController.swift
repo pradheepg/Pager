@@ -170,6 +170,7 @@ class MyBooksViewController: UIViewController, UICollectionViewDataSource, UICol
             sortStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             sortStack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10)
         ])
+        
         updateSortButtonMenu()
     }
     
@@ -202,9 +203,9 @@ class MyBooksViewController: UIViewController, UICollectionViewDataSource, UICol
         let descending = UIAction(title: SortOrder.descending.displayTitle, image: UIImage(systemName: SortOrder.descending.iconName), state: sortOrder == .descending ? .on : .off) { [weak self] _ in
             self?.handleOrderChange(sortOrder: .descending)
         }
-        
         let viewSection = UIMenu(title: "Order", options: .displayInline, children: [ascending, descending])
-        
+        let actions = [lastOpened, title, author, dateAdded, ascending, descending]
+        actions.forEach { $0.attributes = .keepsMenuPresented }
         sortButton.menu = UIMenu(title: "", children: [sortSection, viewSection])
     }
     
@@ -297,16 +298,14 @@ class MyBooksViewController: UIViewController, UICollectionViewDataSource, UICol
         let isWantToRead = viewModel.isBookInDefaultCollection(book, name: DefaultsName.wantToRead)
         
         let wantToReadAction = UIAction(
-            title: isWantToRead ? "Remove from Want to Read" : "Add to Want to Read",
+            title: DefaultsName.wantToRead,
             image: UIImage(systemName: isWantToRead ? "bookmark.fill" : "bookmark"),
             attributes: []//isWantToRead ? .destructive : []
         ) { [weak self] _ in
-            // You can reuse the toggle logic here
-            self?.viewModel.toggleDefaultCollection(book: book, collectionName: DefaultsName.wantToRead)
+            self?.showToast(result: self?.viewModel.toggleDefaultCollection(book: book, collectionName: DefaultsName.wantToRead), collectionName: DefaultsName.wantToRead, isAdded: !isWantToRead)
         }
+//        wantToReadAction.attributes = .keepsMenuPresented
 
-        // --- 3. Toggle "Mark as Completed" (Finished) ---
-        // (Checks if book is in "Finished" collection)
         let isFinished = viewModel.isBookInDefaultCollection(book, name: DefaultsName.finiahed)
         
         let finishedAction = UIAction(
@@ -314,21 +313,18 @@ class MyBooksViewController: UIViewController, UICollectionViewDataSource, UICol
             image: UIImage(systemName: isFinished ? "checkmark.circle.fill" : "checkmark.circle"),
             attributes: []
         ) { [weak self] _ in
-            self?.viewModel.toggleDefaultCollection(book: book, collectionName: DefaultsName.finiahed)
+            self?.showToast(result: self?.viewModel.toggleDefaultCollection(book: book, collectionName: DefaultsName.finiahed), collectionName: DefaultsName.finiahed, isAdded: !isFinished)
         }
+//        finishedAction.attributes = .keepsMenuPresented
 
-        // --- 4. Add to Custom Collection (Submenu) ---
-        // Get all collections except defaults ("Want to Read", "Finished") and the current one
         let allCollections = UserSession.shared.currentUser?.collections?.allObjects as? [BookCollection] ?? []
         
-        // Optimization: Get IDs of collections this book is ALREADY in
         let containingCollectionIDs = (book.collections as? Set<BookCollection>)?.map { $0.objectID } ?? []
         let containingSet = Set(containingCollectionIDs)
 
         let customCollectionActions = allCollections
             .filter { collection in
                 let name = collection.name ?? ""
-                // Filter out defaults and current view
                 return name !=  DefaultsName.wantToRead && name != DefaultsName.finiahed //&& collection != viewModel.currentCollection
             }
             .map { collection in
@@ -336,13 +332,13 @@ class MyBooksViewController: UIViewController, UICollectionViewDataSource, UICol
                 
                 return UIAction(
                     title: collection.name ?? "Untitled",
-                    image: UIImage(systemName: "folder"),//isPresent ? "checkmark.square.fill" : "square"),
-                    state: isPresent ? .on : .off
+                    image: UIImage(systemName: isPresent ? "folder.fill" : "folder"),
+//                    attributes: .keepsMenuPresented
                 ) { [weak self] _ in
                     if isPresent {
-                        _ = self?.viewModel.deleteFromCollection(collection: collection, book: book)
+                        self?.showToast(result: self?.viewModel.deleteFromCollection(collection: collection, book: book), collectionName: collection.name, isAdded: false)
                     } else {
-                        _ = self?.viewModel.addToCollection(collection: collection, book: book)
+                        self?.showToast(result: self?.viewModel.addToCollection(collection: collection, book: book), collectionName: collection.name, isAdded: true)
                     }
                 }
             }
@@ -361,7 +357,11 @@ class MyBooksViewController: UIViewController, UICollectionViewDataSource, UICol
             let result = self?.viewModel.unpurchaseBook(book)
             switch result {
             case .success():
+                if let self = self {
+                    Toast.show(message: "Book Removed from Library ", in: view)
+                }
                 self?.didFinishTask?()
+
                 self?.collectionView.reloadData()
             case .failure(let error):
                 print(error.localizedDescription)
@@ -381,7 +381,17 @@ class MyBooksViewController: UIViewController, UICollectionViewDataSource, UICol
         )
     }
     
-
+    func showToast(result: Result<Void,CollectionError>?, collectionName: String?, isAdded: Bool) {
+        guard let result = result, let collectionName = collectionName else {
+            return
+        }
+        switch result {
+        case .success():
+            Toast.show(message: "\(isAdded ? "Added to ":"Removed from ") \(collectionName)", in: self.view)
+        case .failure(let error):
+            print(error)
+        }
+    }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")

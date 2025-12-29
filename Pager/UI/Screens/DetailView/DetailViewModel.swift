@@ -136,6 +136,7 @@ class DetailViewModel {
             return .failure(error)
         }
     }
+    
     func removeBookFromLastOpened(book: Book) {
         guard let user = UserSession.shared.currentUser else {
             return
@@ -155,6 +156,38 @@ class DetailViewModel {
                 
                 user.lastOpenedBookId = nextBook?.userBookRecordId
             }
+        }
+    }
+    
+    func isBookInDefaultCollection(_ book: Book, name: String) -> Bool {
+        guard let user = UserSession.shared.currentUser else { return false }
+        
+        let targetCollection = (user.collections?.allObjects as? [BookCollection])?.first(where: {
+            $0.isDefault == true && $0.name == name
+        })
+        
+        if let collection = targetCollection, let books = collection.books as? Set<Book> {
+            return books.contains(book)
+        }
+        return false
+    }
+    
+    func toggleDefaultCollection(book: Book, collectionName: String) -> Result<Void, CollectionError> {
+        guard let user = UserSession.shared.currentUser else {
+            return .failure(.notFound)
+        }
+        let exists = isBookInDefaultCollection(book, name: collectionName)
+        
+        guard let collection = (user.collections?.allObjects as? [BookCollection])?.first(where: {
+            $0.isDefault == true && $0.name == collectionName
+        }) else {
+            return .failure(.noMatches)
+        }
+        print(exists)
+        if exists {
+            return deleteFromCollection(collection: collection, book: book)
+        } else {
+            return addBook(book, to: collection)
         }
     }
 }

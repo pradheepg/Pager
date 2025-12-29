@@ -113,6 +113,26 @@ class HomeViewModel {
         }
     }
     
+//    func configureSections() {
+//        var sections: [HomeSection] = [.currently]
+//        
+//        if !recentBooks.isEmpty {
+//            sections.append(.recent)
+//        }
+//        
+//        if !wantToReadBooks.isEmpty {
+//            sections.append(.wantToRead)
+//        }
+//        
+//        for category in categories {
+//            if !category.books.isEmpty {
+//                sections.append(.category(category.name, category.books))
+//            }
+//        }
+//        
+//        self.displayedSections = sections
+//    }
+    
     func configureSections() {
         var sections: [HomeSection] = [.currently]
         
@@ -130,9 +150,10 @@ class HomeViewModel {
             }
         }
         
+        sections.append(.readingGoal)
+        
         self.displayedSections = sections
     }
-
     
     func numberOfSections() -> Int {
         return displayedSections.count

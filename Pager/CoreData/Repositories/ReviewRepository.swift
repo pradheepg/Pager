@@ -77,10 +77,11 @@ final class ReviewRepository {
     }
 
     func deleteReview(_ review: Review) -> Result<Void, ReviewError> {
+        let book = review.book
         context.delete(review)
-
         do {
             try CoreDataManager.shared.saveContext()
+            book?.updateAverageRating()
             return .success(())
         } catch {
             return .failure(.deleteFailed)

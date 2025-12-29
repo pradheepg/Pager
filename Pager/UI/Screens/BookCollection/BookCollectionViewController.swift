@@ -125,26 +125,25 @@ class BookCollectionViewController: UIViewController, UITableViewDataSource, UIT
         
         switch result {
         case .success(let newCollection):
-            showToast(message: "Collection created successfully") {
-                let newRowIndex = self.items.count
-                self.items.append(newCollection)
-                
-                let newIndexPath = IndexPath(row: newRowIndex, section: 0)
-                
-                self.tableView.beginUpdates()
-                self.tableView.insertRows(at: [newIndexPath], with: .automatic)
-                self.tableView.endUpdates()
-                
-                self.tableView.scrollToRow(at: newIndexPath, at: .middle, animated: true)
-            }
-
             
+            Toast.show(message: "Collection created successfully", in: self.view)
+            
+            let newRowIndex = self.items.count
+            self.items.append(newCollection)
+            
+            let newIndexPath = IndexPath(row: newRowIndex, section: 0)
+            
+            self.tableView.beginUpdates()
+            self.tableView.insertRows(at: [newIndexPath], with: .automatic)
+            self.tableView.endUpdates()
+            
+            self.tableView.scrollToRow(at: newIndexPath, at: .middle, animated: true)
         case .failure(let error):
-
+            
             if case .alreadyExists = error as? CollectionError {
-                 showNameExistsAlert(name: name)
+                showNameExistsAlert(name: name)
             } else {
-                 print("Generic creation error: \(error)")
+                print("Generic creation error: \(error)")
             }
         }
     }
@@ -220,7 +219,7 @@ class BookCollectionViewController: UIViewController, UITableViewDataSource, UIT
         switch result {
         case .success:
             items.remove(at: indexPath.row)
-            
+            Toast.show(message: "Collection \(collectionToDelete.name ?? "") is deleted", in: self.view)
             tableView.beginUpdates()
             tableView.deleteRows(at: [indexPath], with: .left)
             tableView.endUpdates()
@@ -330,7 +329,7 @@ class BookCollectionViewController: UIViewController, UITableViewDataSource, UIT
         switch result {
         case .success:
             tableView.reloadRows(at: [indexPath], with: .automatic)
-            
+            Toast.show(message: "Collection Renamed", in: self.view)
         case .failure(let error):
             print("Failed to rename: \(error.localizedDescription)")
             

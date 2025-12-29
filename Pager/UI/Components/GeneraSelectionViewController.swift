@@ -66,9 +66,7 @@ class GeneraSelectionViewController: UIViewController, UITableViewDelegate, UITa
     }
     
     @objc private func didTapDone() {
-        for i in selectedRows {
-            genreString += CategoryEnum.allCases[i].rawValue + ", "
-        }
+        let genreString = selectedRows.map { CategoryEnum.allCases[$0].rawValue }.joined(separator: ", ")
         OnDone?(genreString)
         dismiss(animated: true)
         

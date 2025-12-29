@@ -29,7 +29,7 @@ class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayo
         self.collectionView.dataSource = self
         self.collectionView.delegate = self
         self.collectionView.register(BookGridCell.self, forCellWithReuseIdentifier: BookGridCell.reuseID)
-        self.collectionView.backgroundColor = AppColors.background
+        self.collectionView.backgroundColor = AppColors.gridViewBGColor
         
     }
     
@@ -54,7 +54,8 @@ class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayo
         let _ = viewModel.searchBook(searchText: "")
         
         hideEmptyState()
-        
+        searchBar.setShowsCancelButton(false, animated: true)
+
         collectionView.reloadData()
     }
     private func setUpSearchBar() {
@@ -64,7 +65,7 @@ class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayo
         searchBar.searchTextField.backgroundColor = .clear//AppColors.secondaryBackground
         searchBar.translatesAutoresizingMaskIntoConstraints = false
         searchBar.delegate = self
-        searchBar.showsCancelButton = true
+//        searchBar.showsCancelButton = true
         searchBar.searchTextField.enablesReturnKeyAutomatically = false
         NSLayoutConstraint.activate([
             searchBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
@@ -75,7 +76,7 @@ class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayo
     }
     
     private func setupUI() {
-        view.backgroundColor = AppColors.background
+        view.backgroundColor = AppColors.gridViewBGColor
         view.addSubview(collectionView)
         self.title = viewModel.categoryTitle
         collectionView.translatesAutoresizingMaskIntoConstraints = false
@@ -128,31 +129,10 @@ class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayo
 //                self.present(vc, animated: true, completion: .none)
             }
             
-//            let wantToReadAction = UIAction(title: "Add to Want to Read", image: UIImage(systemName: "bookmark")) { _ in
-//                let result = self.viewModel.addBookToDefault(book: book)
-//                switch result {
-//                case .success:
-//                    print("Success")
-//                    //                            self.viewModel.getUpdatedBookList()
-//                    //                            self.collectionView.reloadData()
-//                    //                            self.updateEmptyState()
-//                case .failure(let error):
-//                    if error == .bookAlreadyInCollection {
-//                        let alert = UIAlertController(
-//                            title: "Already Added",
-//                            message: "This book is already in the selected collection.",
-//                            preferredStyle: .alert
-//                        )
-//                        alert.addAction(UIAlertAction(title: "OK", style: .default))
-//                        self.present(alert, animated: true)
-//                    }
-//                    print("Error: \(error)")
-//                }
-//            }
             let isAlreadyInWantToRead = self.viewModel.isBookInDefaultCollection(book)
 
             let wantToReadAction = UIAction(
-                title: isAlreadyInWantToRead ? "Remove from Want to Read" : "Add to Want to Read",
+                title: "Want to Read", //isAlreadyInWantToRead ? "Remove from Want to Read" : "Add to Want to Read",
                 image: UIImage(systemName: isAlreadyInWantToRead ? "bookmark.fill" : "bookmark"),
                 attributes: []//isAlreadyInWantToRead ? .destructive : []
             ) { [weak self] _ in
@@ -163,8 +143,7 @@ class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayo
                     
                     switch result {
                     case .success:
-                        print("Removed successfully")
-                        
+                        Toast.show(message: "Removed successfully", in: self.view)
                         if self.viewModel.currentCollection?.name == DefaultsName.wantToRead {
                             self.viewModel.getUpdatedBookList()
                             self.collectionView.reloadData()
@@ -180,7 +159,7 @@ class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayo
                     
                     switch result {
                     case .success:
-                        print("Added successfully")
+                        Toast.show(message: "Added successfully", in: self.view)
                         if self.viewModel.currentCollection?.name == DefaultsName.wantToRead {
                             self.viewModel.getUpdatedBookList()
                             self.collectionView.reloadData()
@@ -244,9 +223,9 @@ class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayo
                     
                     let action = UIAction(
                         title: collection.name ?? "Untitled",
-                        image: UIImage(systemName: "folder"), //isAlreadyAdded ? "checkmark.circle.fill" : "folder"),
+                        image: UIImage(systemName: isAlreadyAdded ? "folder.fill" : "folder"),
                         attributes: [],
-                        state: isAlreadyAdded ? .on : .off
+//                        state: isAlreadyAdded ? .on : .off
                     ) { [weak self] _ in
                         guard let self = self else { return }
                         
@@ -367,7 +346,7 @@ extension BookGridViewController: UICollectionViewDataSource, UICollectionViewDe
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: BookGridCell.reuseID, for: indexPath) as! BookGridCell
-        cell.contentView.backgroundColor = AppColors.secondaryBackground
+        cell.contentView.backgroundColor = AppColors.gridViewSecondaryColor
         cell.layer.cornerRadius = 12
         cell.layer.masksToBounds = true
         cell.configure(with: viewModel.resultBooks[indexPath.row])
@@ -397,4 +376,9 @@ extension BookGridViewController: UICollectionViewDataSource, UICollectionViewDe
             }
         }
     }
+    
+    func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
+        searchBar.setShowsCancelButton(true, animated: true)
+    }
+    
 }

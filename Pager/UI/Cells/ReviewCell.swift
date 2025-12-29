@@ -44,7 +44,7 @@ final class ReviewCell: UICollectionViewCell {
         ])
         
 //        container.addSubview(reviewTitleLable)
-        reviewTitleLable.numberOfLines = 0
+        reviewTitleLable.numberOfLines = 2
         reviewTitleLable.font = .systemFont(ofSize: 20, weight: .semibold)
         reviewTitleLable.textAlignment = .left
         reviewTitleLable.textColor = AppColors.title
@@ -121,10 +121,12 @@ final class ReviewCell: UICollectionViewCell {
         return img
     }
 
-    func configure(with review: Review) {
+    func configure(with review: Review, isDetailView: Bool = false) {
         reviewTitleLable.text = review.reviewTitle
         reviewContentLable.text = review.reviewText
-        
+        if isDetailView {
+            reviewTitleLable.numberOfLines = 0
+        }
         if let date = review.dateEdited ?? review.dateCreated{
             metaLable.text = "\(formatter.string(from: date)), \(review.postedBy?.profileName ?? "guest user")"
         }

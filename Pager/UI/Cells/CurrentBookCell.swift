@@ -153,7 +153,6 @@ class CurrentBookCell: UICollectionViewCell {
         if let userBookRecords = UserSession.shared.currentUser?.owned as? Set<UserBookRecord> {
             for record in userBookRecords {
                 if record.book == book {
-                    print("this this this his",record.progressValue, record.totalPages)
                     if record.progressValue > 0 && record.totalPages > 0 {
                         progress = Float(record.progressValue + 1) / Float(record.totalPages) * 100
                         print(progress)

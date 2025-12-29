@@ -14,12 +14,18 @@ class CategoryPillCell: UICollectionViewCell {
     override init(frame: CGRect) {
         super.init(frame: frame)
 
-        contentView.backgroundColor = UIColor.systemGray6
+        contentView.backgroundColor = AppColors.gridViewSecondaryColor
         contentView.layer.cornerRadius = 16
         contentView.layer.masksToBounds = true
 
         iconView.tintColor = .label
         titleLabel.font = .systemFont(ofSize: 15, weight: .medium)
+        
+        layer.shadowColor = UIColor.lightGray.cgColor
+        layer.shadowOpacity = 0.12
+        layer.shadowRadius = 10
+        layer.shadowOffset = CGSize(width: 2, height: 6)
+        layer.masksToBounds = false
 
         let stack = UIStackView(arrangedSubviews: [iconView, titleLabel])
         stack.axis = .horizontal

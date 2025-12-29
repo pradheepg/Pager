@@ -5,6 +5,7 @@
 //  Created by Pradheep G on 25/11/25.
 //
 import UIKit
+internal import CoreData
 
 class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchControllerDelegate, UICollectionViewDataSource, UICollectionViewDelegate {
         
@@ -183,6 +184,7 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
         updateSearchResults(for: searchController)
     }
     func updateSearchResults(for searchController: UISearchController) {
+        print(searchController.searchBar.showsCancelButton)
         let searchText = searchController.searchBar.text ?? ""
         let tokens = searchController.searchBar.searchTextField.tokens
         
@@ -343,6 +345,111 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
         }
         return UICollectionReusableView()
     }
+    
+    func makeContextMenu(for book: Book, isOwned: Bool) -> UIContextMenuConfiguration? {
+        return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
+            guard let self = self else {
+                return nil
+            }
+            let isWantToRead = viewModel.isBookInDefaultCollection(book, name: DefaultsName.wantToRead)
+            
+            let wantToReadAction = UIAction(
+                title: DefaultsName.wantToRead,
+                image: UIImage(systemName: isWantToRead ? "bookmark.fill" : "bookmark")
+            ) { [weak self] _ in
+                guard let self = self else { return }
+                let result = self.viewModel.toggleDefaultCollection(book: book, collectionName: DefaultsName.wantToRead)
+                self.showToast(result: result, collectionName: DefaultsName.wantToRead, isAdded: !isWantToRead)
+                //            self.setupMoreMenu()
+            }
+            //
+            //        let reviewAction = UIAction(title: "View Reviews", image: UIImage(systemName: "text.bubble")) { [weak self] _ in
+            //            self?.reviewsSeeallButtonTapped()
+            //        }
+            //
+            var menuItems: [UIMenuElement] = [
+                UIMenu(options: .displayInline, children: [wantToReadAction]),
+                
+            ]
+            if isOwned {
+                let isFinished = viewModel.isBookInDefaultCollection(book, name: DefaultsName.finiahed)
+                let finishedAction = UIAction(
+                    title: isFinished ? "Mark as Unread" : "Mark as Completed",
+
+                    image: UIImage(systemName: isFinished ? "checkmark.circle.fill" : "checkmark.circle")
+                ) { [weak self] _ in
+                    guard let self = self else { return }
+                    let result = self.viewModel.toggleDefaultCollection(book: book, collectionName: DefaultsName.finiahed)
+                    self.showToast(result: result, collectionName: DefaultsName.finiahed, isAdded: !isFinished)
+                    //                self.setupMoreMenu()
+                    
+                }
+                menuItems.append(UIMenu(options: .displayInline, children: [finishedAction]))
+                
+            }
+            
+            let allCollections = UserSession.shared.currentUser?.collections?.allObjects as? [BookCollection] ?? []
+            
+            let containingCollectionIDs = (book.collections as? Set<BookCollection>)?.map { $0.objectID } ?? []
+            let containingSet = Set(containingCollectionIDs)
+            
+            let customCollectionActions = allCollections
+                .filter { collection in
+                    let name = collection.name ?? ""
+                    return name != DefaultsName.wantToRead && name != DefaultsName.finiahed
+                }
+                .map { collection in
+                    let isPresent = containingSet.contains(collection.objectID)
+                    let collectionName = collection.name ?? "Untitled"
+                    
+                    return UIAction(
+                        title: collectionName,
+                        image: UIImage(systemName: isPresent ? "folder.fill" : "folder")
+                    ) { [weak self] _ in
+                        guard let self = self else { return }
+                        
+                        if isPresent {
+                            let result = self.viewModel.deleteFromCollection(collection: collection, book: book)
+                            self.showToast(result: result, collectionName: collectionName, isAdded: false)
+                        } else {
+                            let result = self.viewModel.addBook(book, to: collection)
+                            self.showToast(result: result, collectionName: collectionName, isAdded: true)
+                        }
+                        //                    self.setupMoreMenu()
+                    }
+                }
+            
+            let addToCollectionMenu = UIMenu(
+                title: "Add to Collection",
+                image: UIImage(systemName: "folder.badge.plus"),
+                children: customCollectionActions
+            )
+            menuItems.append(UIMenu(options: .displayInline, children: [addToCollectionMenu]))
+            
+            return UIMenu(title: "", children: menuItems)
+        }
+    }
+    
+    func showToast(result: Result<Void,CollectionError>?, collectionName: String?, isAdded: Bool) {
+        guard let result = result, let collectionName = collectionName else {
+            return
+        }
+        switch result {
+        case .success():
+            Toast.show(message: "\(isAdded ? "Added to ":"Removed from ") \(collectionName)", in: self.view)
+        case .failure(let error):
+            print(error)
+        }
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, contextMenuConfigurationForItemAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
+        if indexPath.section == 0 {
+            return makeContextMenu(for: viewModel.myBooks[indexPath.row], isOwned: true)
+        } else {
+            return makeContextMenu(for: viewModel.books[indexPath.row], isOwned: false)
+        }
+    }
+    
 }
 
 class LeftAlignedFlowLayout: UICollectionViewFlowLayout {

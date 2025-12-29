@@ -13,6 +13,7 @@ enum HomeSection {
     case recent
     case wantToRead
     case category(String, [Book])
+    case readingGoal
 }
 
 class HomeViewController: UIViewController, UICollectionViewDelegate {
@@ -20,6 +21,7 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
     private var collectionView: UICollectionView!
     private let activityIndicator = UIActivityIndicatorView(style: .large)
     private let viewModel = HomeViewModel()
+    private let readGoalService: ReadGoalService = ReadGoalService()
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
@@ -27,6 +29,8 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
         setupCollectionView()
         setupLoadingIndicator()
         setupBindings()
+//        edgesForExtendedLayout = [.top]
+//        extendedLayoutIncludesOpaqueBars = true
 //        viewModel.loadData()
         //        loadDemoData()
     }
@@ -76,7 +80,19 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
         profileButton.translatesAutoresizingMaskIntoConstraints = false
         profileButton.addTarget(self, action: #selector(profileButtonTapped), for: .touchUpInside)
         navigationItem.title = "Home"
-        navigationController?.navigationBar.prefersLargeTitles = true
+//        navigationController?.navigationBar.prefersLargeTitles = true
+        
+//        let appearance = UINavigationBarAppearance()
+//        appearance.configureWithTransparentBackground()
+//        appearance.backgroundColor = .clear
+//        appearance.shadowColor = .clear
+//
+//        appearance.titleTextAttributes = [.foregroundColor: AppColors.title]
+//        appearance.largeTitleTextAttributes = [.foregroundColor: AppColors.title]
+//
+//        navigationController?.navigationBar.standardAppearance = appearance
+//        navigationController?.navigationBar.scrollEdgeAppearance = appearance
+//        navigationController?.navigationBar.compactAppearance = appearance
         if #available(iOS 17.0, *) {
             navigationItem.largeTitleDisplayMode = .inline
         }
@@ -87,20 +103,21 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
     private func setupCollectionView() {
         collectionView = UICollectionView(frame: .zero, collectionViewLayout: createCompositionalLayout())
         collectionView.translatesAutoresizingMaskIntoConstraints = false
-        collectionView.backgroundColor = .clear
+        collectionView.backgroundColor = AppColors.gridViewBGColor
         collectionView.dataSource = self
         collectionView.delegate = self
         
         collectionView.register(BookCell.self, forCellWithReuseIdentifier: "BookCell")
         collectionView.register(CurrentBookCell.self, forCellWithReuseIdentifier: "CurrentBookCell")
         collectionView.register(EmptyCurrentCell.self, forCellWithReuseIdentifier: "EmptyCurrentCell")
+        collectionView.register(ReadingGoalCell.self, forCellWithReuseIdentifier: ReadingGoalCell.reuseIdentifier)
         collectionView.register(SectionHeaderView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: "SectionHeaderView")
         collectionView.register(UICollectionReusableView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: "EmptyHeader")
         
         
         view.addSubview(collectionView)
         NSLayoutConstraint.activate([
-            collectionView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            collectionView.topAnchor.constraint(equalTo: view.topAnchor),
             collectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             collectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -108,8 +125,10 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
     }
     
     private func createCompositionalLayout() -> UICollectionViewLayout {
-        return UICollectionViewCompositionalLayout { section, environment in
-            if section == 0 {
+        let layout = UICollectionViewCompositionalLayout { section, environment in
+            let section = self.viewModel.displayedSections[section]
+            switch section {
+            case .currently:
                 let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1), heightDimension: .fractionalHeight(1))
                 let item = NSCollectionLayoutItem(layoutSize: itemSize)
                 item.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16)
@@ -125,15 +144,41 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
                 
                 let sectionLayout = NSCollectionLayoutSection(group: group)
                 sectionLayout.orthogonalScrollingBehavior = .continuous
-                
+                sectionLayout.contentInsets = NSDirectionalEdgeInsets(top: 20, leading: 0, bottom: 40, trailing: 0)
+
                 let headerSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .absolute(40))
                 let header = NSCollectionLayoutBoundarySupplementaryItem(
                     layoutSize: headerSize,
                     elementKind: UICollectionView.elementKindSectionHeader,
                     alignment: .top)
+                let backgroundItem = NSCollectionLayoutDecorationItem.background(
+                    elementKind: GradientDecorationView.elementKind
+                )
+//                backgroundItem.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 10, bottom: 10, trailing: 10)
+                
+                sectionLayout.decorationItems = [backgroundItem]
                 sectionLayout.boundarySupplementaryItems = [header]
                 return sectionLayout
-            } else {
+            case .readingGoal:
+                let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1), heightDimension: .fractionalHeight(1))
+                let item = NSCollectionLayoutItem(layoutSize: itemSize)
+                
+                item.contentInsets = NSDirectionalEdgeInsets(top: 10, leading: 16, bottom: 20, trailing: 16)
+                
+                let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .estimated(280))
+                
+                let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
+                
+                let section = NSCollectionLayoutSection(group: group)
+//                section.contentInsets = NSDirectionalEdgeInsets(top: 10, leading: 10, bottom: 60, trailing: 10)
+                let backgroundItem = NSCollectionLayoutDecorationItem.background(
+                    elementKind: GradientDecorationView.elementKind
+                )
+                backgroundItem.contentInsets = NSDirectionalEdgeInsets(top: 10, leading: 0, bottom: 0, trailing: 0)
+                
+                section.decorationItems = [backgroundItem]
+                return section
+            default:
                 let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1), heightDimension: .fractionalHeight(1))
                 let item = NSCollectionLayoutItem(layoutSize: itemSize)
                 item.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 5, bottom: 0, trailing: 5)
@@ -142,16 +187,22 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
                 
                 let section = NSCollectionLayoutSection(group: group)
                 section.orthogonalScrollingBehavior = .continuousGroupLeadingBoundary
-                section.contentInsets = NSDirectionalEdgeInsets(top: 10, leading: 10, bottom: 30, trailing: 10)
+                section.contentInsets = NSDirectionalEdgeInsets(top: 30, leading: 0, bottom: 30, trailing: 0)
                 
                 let headerSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .absolute(40))
                 let header = NSCollectionLayoutBoundarySupplementaryItem(layoutSize: headerSize, elementKind: UICollectionView.elementKindSectionHeader, alignment: .top)
                 section.boundarySupplementaryItems = [header]
+                let backgroundItem = NSCollectionLayoutDecorationItem.background(
+                    elementKind: GradientDecorationView.elementKind
+                )
+                backgroundItem.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 10, trailing: 0)
                 
+                section.decorationItems = [backgroundItem]
                 return section
-                
             }
         }
+        layout.register(GradientDecorationView.self, forDecorationViewOfKind: GradientDecorationView.elementKind)
+        return layout
     }
     
     private func loadDemoData() {
@@ -221,6 +272,7 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
     }
     
     func handleDismissal() {
+        print("handelDismissal")
         if let _ = viewModel.onDataUpdated {
             viewModel.loadData()
         }
@@ -229,6 +281,25 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         viewModel.loadData()
+    }
+    
+    func presentAdjustGoalScreen() {
+        guard let user = UserSession.shared.currentUser else {
+            return
+        }
+        let adjustVC = AdjustGoalViewController()
+        
+        adjustVC.currentGoalMinutes = Int(user.dailyReadingGoal)
+        
+        adjustVC.onGoalSelected = { [weak self] newMinutes in
+            self?.readGoalService.updateDailyGoal(newGoal: newMinutes)
+            self?.collectionView.reloadData()
+        }
+        
+        if let sheet = adjustVC.sheetPresentationController {
+            sheet.detents = [.medium()]
+        }
+        present(adjustVC, animated: true)
     }
 }
 
@@ -248,6 +319,8 @@ extension HomeViewController: UICollectionViewDataSource {
             return viewModel.wantToReadBooks.count
         case .category(_, let books):
             return books.count
+        case .readingGoal:
+            return 1
         }
     }
     
@@ -262,7 +335,46 @@ extension HomeViewController: UICollectionViewDataSource {
             return configureWantToReadCell(collectionView, indexPath: indexPath)
         case .category(_, _):
             return configureCategoryCell(collectionView, indexPath: indexPath)
+        case .readingGoal:
+            return configureReadingGoalCell(collectionView, indexPath: indexPath)
         }
+    }
+    
+    func configureReadingGoalCell(_ collectionView: UICollectionView, indexPath: IndexPath) -> UICollectionViewCell {
+        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ReadingGoalCell.reuseIdentifier, for: indexPath) as? ReadingGoalCell else {
+            return UICollectionViewCell()
+        }
+        guard let user = UserSession.shared.currentUser else {
+            return UICollectionViewCell()
+        }
+        
+        let currentRead = readGoalService.getTodayReading()
+        let currentGoal = user.dailyReadingGoal
+        cell.configure(currentMinutes: currentRead, goalMinutes: Int(currentGoal), bookName: viewModel.currentBook?.title)
+        
+        cell.onAdjustGoalTapped = { [weak self] in
+            self?.presentAdjustGoalScreen()
+        }
+        
+        cell.onContinueReadingTapped = { [weak self] in
+            guard let self = self else {
+                return
+            }//driver
+            if let book = viewModel.currentBook {
+                let vc = MainBookReaderViewController(book: book)
+                vc.onDismiss = { [weak self] in
+                    self?.handleDismissal()
+                }
+                let nav = UINavigationController(rootViewController: vc)
+                nav.modalPresentationStyle = .fullScreen
+                present(nav, animated: true)
+                
+            } else {
+                emptyStateButtonTapped()
+            }
+        }
+        
+        return cell
     }
     
     func configureCurrentCell(_ collectionView: UICollectionView, indexPath: IndexPath) -> UICollectionViewCell {
@@ -347,6 +459,12 @@ extension HomeViewController: UICollectionViewDataSource {
                 
                 title = name
                 books = bookList
+            case .readingGoal:
+//                title = Reading Goal
+                header.sectionIndex = indexPath.section
+                header.title = "zczxcvzxvz"
+                
+                return header
             }
             header.titleLabel.text = title
             header.sectionIndex = indexPath.section
@@ -359,98 +477,12 @@ extension HomeViewController: UICollectionViewDataSource {
             
             return header
         } else {
+//            if             viewModel.displayedSections[indexPath.section]
+
             return UICollectionReusableView()
         }
     }
-    
-//    func collectionView(_ collectionView: UICollectionView, contextMenuConfigurationForItemAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
-//        
-//        return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
-//            guard let self = self else { return nil }
-//            
-//            let section = self.viewModel.displayedSections[indexPath.section]
-//            var selectedBook: Book?
-//            
-//            switch section {
-//            case .currently:
-//                guard let book = self.viewModel.currentBook else { return nil }
-//                selectedBook = book
-//                
-//            case .recent:
-//                selectedBook = self.viewModel.recentBooks[indexPath.item]
-//                
-//            case .wantToRead:
-//                selectedBook = self.viewModel.wantToReadBooks[indexPath.item]
-//                
-//            case .category(_, let books):
-//                selectedBook = books[indexPath.item]
-//            }
-//            
-//            guard let book = selectedBook else { return nil }
-//            
-//            let detailsAction = UIAction(title: "View Details", image: UIImage(systemName: "info.circle")) { _ in
-//                let vc = DetailViewController(book: book)
-//                let nav = UINavigationController(rootViewController: vc)
-//                nav.modalPresentationStyle = .fullScreen
-//                self.present(nav, animated: true)
-////                self.present(vc, animated: true, completion: nil)
-//            }
-//            
-//            let wantToReadAction = UIAction(title: "Add to Want to Read", image: UIImage(systemName: "bookmark")) { _ in
-//                switch self.viewModel.addBookToDefault(book: book)  {
-//                case .success():
-//                    self.viewModel.loadData()
-//                case .failure(let error):
-//                    if error == .bookAlreadyInCollection {
-//                        let alert = UIAlertController(
-//                            title: "Already Added",
-//                            message: "This book is already in the selected collection.",
-//                            preferredStyle: .alert
-//                        )
-//                        alert.addAction(UIAlertAction(title: "OK", style: .default))
-//                        self.present(alert, animated: true)
-//                    }
-//                    print("Error: \(error)")
-//                }
-//                
-//            }
-//            
-//            let allCollections = UserSession.shared.currentUser?.collections?.allObjects as? [BookCollection] ?? []
-//            
-//            let collectionItems = allCollections.map { collection in
-//                UIAction(title: collection.name ?? "Untitled", image: UIImage(systemName: "folder")) { _ in
-//                    switch self.viewModel.addBook(book, to: collection) {
-//                    case .success():
-//                        if collection.isDefault {
-//                            self.viewModel.loadData()
-//                        }
-//                    case .failure(let error):
-//                        if error == .bookAlreadyInCollection {
-//                            let alert = UIAlertController(
-//                                title: "Already Added",
-//                                message: "This book is already in the selected collection.",
-//                                preferredStyle: .alert
-//                            )
-//                            alert.addAction(UIAlertAction(title: "OK", style: .default))
-//                            self.present(alert, animated: true)
-//                        }
-//                        print("Error: \(error)")
-//                    }
-//                }
-//            }
-//            
-//            let addToCollectionMenu = UIMenu(
-//                title: "Add to Collection",
-//                image: UIImage(systemName: "folder.badge.plus"),
-//                children: collectionItems
-//            )
-//            
-//            return UIMenu(title: "", children: [
-//                UIMenu(options: .displayInline, children: [detailsAction]),
-//                UIMenu(options: .displayInline, children: [wantToReadAction, addToCollectionMenu])
-//            ])
-//        }
-//    }
+ 
     func collectionView(_ collectionView: UICollectionView, contextMenuConfigurationForItemAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
         
         return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
@@ -468,6 +500,8 @@ extension HomeViewController: UICollectionViewDataSource {
                 selectedBook = self.viewModel.wantToReadBooks[indexPath.item]
             case .category(_, let books):
                 selectedBook = books[indexPath.item]
+            case .readingGoal:
+                return nil
             }
             
             guard let book = selectedBook else { return nil }
@@ -541,8 +575,8 @@ class SectionHeaderView: UICollectionReusableView {
     
     override init(frame: CGRect) {
         super.init(frame: frame)
-        
         separatorView.backgroundColor = .systemGray4
+        separatorView.isHidden = true
         addSubview(separatorView)
         separatorView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
@@ -552,14 +586,14 @@ class SectionHeaderView: UICollectionReusableView {
             separatorView.heightAnchor.constraint(equalToConstant: 1)
         ])
         
-        titleLabel.font = .boldSystemFont(ofSize: 20)
+        titleLabel.font = .boldSystemFont(ofSize: 24)
         titleLabel.textAlignment = .left
         addSubview(titleLabel)
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         
         seeAllButton.setTitle("See All", for: .normal)
         seeAllButton.setTitleColor(.systemBlue, for: .normal)
-        seeAllButton.titleLabel?.font = .systemFont(ofSize: 15, weight: .regular)
+        seeAllButton.titleLabel?.font = .systemFont(ofSize: 16, weight: .regular)
         addSubview(seeAllButton)
         seeAllButton.translatesAutoresizingMaskIntoConstraints = false
         seeAllButton.addTarget(self, action: #selector(didTapSeeAll), for: .touchUpInside)
@@ -567,11 +601,11 @@ class SectionHeaderView: UICollectionReusableView {
         // Layout: horizontal, padded
         NSLayoutConstraint.activate([
             titleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
-            titleLabel.centerYAnchor.constraint(equalTo: centerYAnchor),
+            titleLabel.centerYAnchor.constraint(equalTo: centerYAnchor, constant: 10),
             titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: seeAllButton.leadingAnchor, constant: -8),
             
             seeAllButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
-            seeAllButton.centerYAnchor.constraint(equalTo: centerYAnchor)
+            seeAllButton.centerYAnchor.constraint(equalTo: centerYAnchor, constant: 10)
         ])
     }
     required init?(coder: NSCoder) { fatalError() }
@@ -603,6 +637,9 @@ extension HomeViewController {
             // FIX: No more (section - 3)
             let book = books[indexPath.item]
             bookCellTapped(book: book)
+            
+        case .readingGoal:
+            return
         }
     }
 }

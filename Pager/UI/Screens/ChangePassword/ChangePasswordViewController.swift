@@ -51,12 +51,6 @@ class ChangePasswordViewController: UIViewController, UITableViewDataSource, UIT
             return newPassword.count
         }
     }
-    func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
-        if section == 1 {
-            return "Password must be at least 6 characters long"
-        }
-        return nil
-    }
 
     func tableView(_ tableView: UITableView, willDisplayFooterView view: UIView, forSection section: Int) {
         if let footer = view as? UITableViewHeaderFooterView {
@@ -146,7 +140,37 @@ class ChangePasswordViewController: UIViewController, UITableViewDataSource, UIT
         navigationController?.popViewController(animated: true)
         
     }
-    
+//    
+//    @objc func didTapDone() {
+//        let currentInput = currentPassword[0].value
+//        let newInput = newPassword[0].value
+//        let confirmInput = newPassword[1].value
+//
+//        guard !currentInput.isEmpty, !newInput.isEmpty, !confirmInput.isEmpty else {
+//            showAlert(title: "Missing Input", message: "Please fill in all password fields.")
+//            return
+//        }
+//
+//        guard newInput.count >= 6 else {
+//            showAlert(title: "Weak Password", message: "New password must be at least 6 characters long.")
+//            return
+//        }
+//
+//        guard newInput == confirmInput else {
+//            showAlert(title: "Password Mismatch", message: "The new password and confirmation do not match.")
+//            return
+//        }
+//        
+//        guard PasswordHashing.hashFuntion(password: currentInput) == UserSession.shared.currentUser?.password else {
+//            showAlert(title: "Incorrect Password", message: "The current password you entered is incorrect.")
+//            return
+//        }
+////        self.resignFirstResponder()
+//        viewModel.changePassword(currentInput, newInput)
+//        showToast(title: "Success", message: "Password Changed!") {
+//            self.navigationController?.popViewController(animated: true)
+//        }
+//    }
     @objc func didTapDone() {
         let currentInput = currentPassword[0].value
         let newInput = newPassword[0].value
@@ -157,8 +181,8 @@ class ChangePasswordViewController: UIViewController, UITableViewDataSource, UIT
             return
         }
 
-        guard newInput.count >= 6 else {
-            showAlert(title: "Weak Password", message: "New password must be at least 6 characters long.")
+        guard newInput.count >= ContentLimits.passwordMinLength else {
+            showAlert(title: "Weak Password", message: "New password must be at least \(ContentLimits.passwordMinLength) characters long.")
             return
         }
 
@@ -171,13 +195,12 @@ class ChangePasswordViewController: UIViewController, UITableViewDataSource, UIT
             showAlert(title: "Incorrect Password", message: "The current password you entered is incorrect.")
             return
         }
-//        self.resignFirstResponder()
+
         viewModel.changePassword(currentInput, newInput)
         showToast(title: "Success", message: "Password Changed!") {
             self.navigationController?.popViewController(animated: true)
         }
     }
-
     private func showAlert(title: String, message: String) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default))
@@ -248,6 +271,13 @@ class ChangePasswordViewController: UIViewController, UITableViewDataSource, UIT
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         prefersLargeTitles(true)
+    }
+    
+    func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
+        if section == 1 {
+            return "Password must be at least \(ContentLimits.passwordMinLength) characters long"
+        }
+        return nil
     }
     
 }

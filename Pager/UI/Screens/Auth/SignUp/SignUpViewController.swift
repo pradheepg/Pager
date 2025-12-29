@@ -221,25 +221,53 @@ class SignUpViewController: UIViewController, UITextFieldDelegate, UITextViewDel
         scrollView.contentInset.bottom = 0
         scrollView.verticalScrollIndicatorInsets.bottom = 0
     }
-
-    @objc private func signUpTapped() {
-        guard let name = nameField.text, !name.isEmpty else {
-            showAlert("Name cannot be empty"); return
-        }
-        guard let email = emailField.text, isValidEmail(email) else {
-            showAlert("Enter a valid email address"); return
-        }
-        guard let password = passwordField.text, password.count >= 6 else {
-            showAlert("Password must be 6+ characters"); return
-        }
-        guard let confirmPassword = confirmPasswordField.text, confirmPassword == password else {
-            showAlert("Passwords do not match"); return
-        }
-//        guard let genre = genreTextView.text, !genre.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-//            showAlert("Please enter your favorite genre"); return
+//
+//    @objc private func signUpTapped() {
+//        guard let name = nameField.text, !name.isEmpty else {
+//            showAlert("Name cannot be empty"); return
 //        }
+//        guard let email = emailField.text, isValidEmail(email) else {
+//            showAlert("Enter a valid email address"); return
+//        }
+//        guard let password = passwordField.text, password.count >= 6 else {
+//            showAlert("Password must be 6+ characters"); return
+//        }
+//        guard let confirmPassword = confirmPasswordField.text, confirmPassword == password else {
+//            showAlert("Passwords do not match"); return
+//        }
+////        guard let genre = genreTextView.text, !genre.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+////            showAlert("Please enter your favorite genre"); return
+////        }
+//        viewModel.signUp(name: name, email: email, password: password, confirmPassword: confirmPassword, genre: nil)
+//    }
+    
+    @objc private func signUpTapped() {
+        guard let name = nameField.text,
+              name.count >= ContentLimits.userMinNameLength,
+              name.count <= ContentLimits.userMaxNameLength else {
+            showAlert("Name must be between \(ContentLimits.userMinNameLength) and \(ContentLimits.userMaxNameLength) characters.")
+            return
+        }
+        
+        guard let email = emailField.text, isValidEmail(email) else {
+            showAlert("Please enter a valid email address.")
+            return
+        }
+        
+        guard let password = passwordField.text,
+              password.count >= ContentLimits.passwordMinLength else {
+            showAlert("Password must be at least \(ContentLimits.passwordMinLength) characters long.")
+            return
+        }
+        
+        guard let confirmPassword = confirmPasswordField.text, confirmPassword == password else {
+            showAlert("Passwords do not match.")
+            return
+        }
+
         viewModel.signUp(name: name, email: email, password: password, confirmPassword: confirmPassword, genre: nil)
     }
+    
     
     @objc private func validateTextField() {
         let isValid = !(emailField.text?.isEmpty ?? true) &&
@@ -299,6 +327,22 @@ class SignUpViewController: UIViewController, UITextFieldDelegate, UITextViewDel
     
     func textViewDidChange(_ textView: UITextView) {
         validateTextField()
+    }
+    
+    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+        let currentText = textField.text ?? ""
+        guard let stringRange = Range(range, in: currentText) else { return false }
+        let updatedText = currentText.replacingCharacters(in: stringRange, with: string)
+        
+        if textField == nameField {
+            return updatedText.count <=  ContentLimits.userMaxNameLength
+        }
+        
+        if textField == emailField {
+            return updatedText.count <= ContentLimits.userMaxEmailLength
+        }
+        
+        return true
     }
     
     private func bindViewModel() {

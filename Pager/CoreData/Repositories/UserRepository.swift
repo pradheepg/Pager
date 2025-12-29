@@ -7,6 +7,7 @@
 
 import Foundation
 import CoreData
+import UIKit
 
 enum UserError: Error {
     case emailAlreadyExists
@@ -68,6 +69,11 @@ final class UserRepository {
         finishedCollection.isDefault = true
         finishedCollection.owner = user
         
+        let name = user.profileName ?? "?"
+        let firstLetter = String(name.prefix(1)).uppercased()
+        if let avatarImage = UIImage.createImageWithLabel(text: firstLetter) {
+            user.profileImage = avatarImage.pngData()
+        }
         do {
             try CoreDataManager.shared.saveContext()
             return .success(user)

@@ -45,7 +45,7 @@
         <attribute name="password" attributeType="String"/>
         <attribute name="profileImage" optional="YES" attributeType="Binary"/>
         <attribute name="profileName" attributeType="String"/>
-        <attribute name="todayReadingMinutes" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="todayReadingMinutes" optional="YES" attributeType="Double" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="userId" attributeType="UUID" usesScalarValueType="NO"/>
         <relationship name="collections" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="BookCollection" inverseName="owner" inverseEntity="BookCollection"/>
         <relationship name="owned" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="UserBookRecord" inverseName="ownedBy" inverseEntity="UserBookRecord"/>

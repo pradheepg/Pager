@@ -6,6 +6,7 @@
 //
 
 import UIKit
+internal import CoreData
 
 class DetailViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate {
 
@@ -427,97 +428,126 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
     //    }
     
     private func setupMoreMenu() {
+        moreButton.menu = makeContextMenu(for: viewModel.book)
+        moreButton.showsMenuAsPrimaryAction = true
+    }
+
+    func makeContextMenu(for book: Book) -> UIMenu {
+        let isWantToRead = viewModel.isBookInDefaultCollection(book, name: DefaultsName.wantToRead)
         
-        let collectionsMenu = UIDeferredMenuElement.uncached { [weak self] completion in
+        let wantToReadAction = UIAction(
+            title: DefaultsName.wantToRead,
+            image: UIImage(systemName: isWantToRead ? "bookmark.fill" : "bookmark")
+        ) { [weak self] _ in
             guard let self = self else { return }
-            
-            let allCollections = UserSession.shared.currentUser?.collections?.allObjects as? [BookCollection] ?? []
-            
-            let collectionItems = allCollections.map { collection in
-                UIAction(title: collection.name ?? "Untitled", image: UIImage(systemName: "folder")) { action in
-                    switch self.viewModel.addBook(self.viewModel.book, to: collection) {
-                    case .success():
-                        print("Adding to \(collection.name ?? "")")
-                    case .failure(let error):
-                        if error == .bookAlreadyInCollection {
-                            let alert = UIAlertController(
-                                title: "Already Added",
-                                message: "This book is already in the selected collection.",
-                                preferredStyle: .alert
-                            )
-                            alert.addAction(UIAlertAction(title: "OK", style: .default))
-                            self.present(alert, animated: true)
-                        }
-                        print("Error: \(error)")
-                    }
-                }
-            }
-            
-            let menu = UIMenu(title: "Add to Collection", image: UIImage(systemName: "folder.badge.plus"), children: collectionItems)
-            completion([menu])
+            let result = self.viewModel.toggleDefaultCollection(book: book, collectionName: DefaultsName.wantToRead)
+            self.showToast(result: result, collectionName: DefaultsName.wantToRead, isAdded: !isWantToRead)
+            self.setupMoreMenu()
         }
         
         let reviewAction = UIAction(title: "View Reviews", image: UIImage(systemName: "text.bubble")) { [weak self] _ in
             self?.reviewsSeeallButtonTapped()
         }
         
-        let wantToReadAction = UIAction(title: DefaultsName.wantToRead, image: UIImage(systemName: "bookmark")) { [weak self] _ in
-            guard let self = self else { return }
+        var menuItems: [UIMenuElement] = [
+            UIMenu(options: .displayInline, children: [reviewAction, wantToReadAction]),
             
-            switch self.viewModel.addBookToDefault(book: self.viewModel.book) {
-            case .success():
-                print("Adding")
-            case .failure(let error):
-                if error == .bookAlreadyInCollection {
-                    let alert = UIAlertController(
-                        title: "Already Added",
-                        message: "This book is already in the selected collection.",
-                        preferredStyle: .alert
-                    )
-                    alert.addAction(UIAlertAction(title: "OK", style: .default))
-                    self.present(alert, animated: true)
-                }
-                print("Error: \(error)")
+        ]
+        if isOwned {
+            let isFinished = viewModel.isBookInDefaultCollection(book, name: DefaultsName.finiahed)
+            let finishedAction = UIAction(
+                title: isFinished ? "Mark as Unread" : "Mark as Completed",
+                image: UIImage(systemName: isFinished ? "checkmark.circle.fill" : "checkmark.circle")
+            ) { [weak self] _ in
+                guard let self = self else { return }
+                let result = self.viewModel.toggleDefaultCollection(book: book, collectionName: DefaultsName.finiahed)
+                self.showToast(result: result, collectionName: DefaultsName.finiahed, isAdded: !isFinished)
+                self.setupMoreMenu()
+                
             }
-            print("Want to read tapped")
+            menuItems.append(UIMenu(options: .displayInline, children: [finishedAction]))
+
         }
         
-        var menuItems: [UIMenuElement] = [
-            UIMenu(options: .displayInline, children: [wantToReadAction, reviewAction]),
-            collectionsMenu
-        ]
+        let allCollections = UserSession.shared.currentUser?.collections?.allObjects as? [BookCollection] ?? []
+        
+        let containingCollectionIDs = (book.collections as? Set<BookCollection>)?.map { $0.objectID } ?? []
+        let containingSet = Set(containingCollectionIDs)
+
+        let customCollectionActions = allCollections
+            .filter { collection in
+                let name = collection.name ?? ""
+                return name != DefaultsName.wantToRead && name != DefaultsName.finiahed
+            }
+            .map { collection in
+                let isPresent = containingSet.contains(collection.objectID)
+                let collectionName = collection.name ?? "Untitled"
+                
+                return UIAction(
+                    title: collectionName,
+                    image: UIImage(systemName: isPresent ? "folder.fill" : "folder")
+                ) { [weak self] _ in
+                    guard let self = self else { return }
+                    
+                    if isPresent {
+                        let result = self.viewModel.deleteFromCollection(collection: collection, book: book)
+                        self.showToast(result: result, collectionName: collectionName, isAdded: false)
+                    } else {
+                        let result = self.viewModel.addBook(book, to: collection)
+                        self.showToast(result: result, collectionName: collectionName, isAdded: true)
+                    }
+                    self.setupMoreMenu()
+                }
+            }
+        
+        let addToCollectionMenu = UIMenu(
+            title: "Add to Collection",
+            image: UIImage(systemName: "folder.badge.plus"),
+            children: customCollectionActions
+        )
+        menuItems.append(UIMenu(options: .displayInline, children: [addToCollectionMenu]))
+        
+        
         
         if isOwned {
-            let removeAction = UIAction(title: "Remove book", image: UIImage(systemName: "minus.circle.fill"), attributes: .destructive) { [weak self] _ in
+            let removeAction = UIAction(
+                title: "Remove from Library",
+                image: UIImage(systemName: "trash"),
+                attributes: .destructive
+            ) { [weak self] _ in
                 guard let self = self else { return }
-                let result = self.viewModel.unpurchaseBook(self.viewModel.book)
+                
+                let result = self.viewModel.unpurchaseBook(book)
+                
                 switch result {
                 case .success:
+                    Toast.show(message: "Removed from Library", icon: "trash", in: self.view)
+                    
                     self.isOwned = false
                     
-                    let alert = UIAlertController(
-                        title: "Removed",
-                        message: "This book has been removed from your library.",
-                        preferredStyle: .alert
-                    )
-                    alert.addAction(UIAlertAction(title: "OK", style: .default))
-                    self.present(alert, animated: true)
-                    
                 case .failure(let error):
-                    let alert = UIAlertController(
-                        title: "Remove Failed",
-                        message: "Could not remove book: \(error.localizedDescription)",
-                        preferredStyle: .alert
-                    )
+                    let alert = UIAlertController(title: "Error", message: error.localizedDescription, preferredStyle: .alert)
                     alert.addAction(UIAlertAction(title: "OK", style: .default))
                     self.present(alert, animated: true)
                 }
             }
+            
             menuItems.append(UIMenu(options: .displayInline, children: [removeAction]))
         }
-        let menu = UIMenu(title: "Options", children: menuItems)
-        moreButton.menu = menu
-        moreButton.showsMenuAsPrimaryAction = true
+
+        return UIMenu(title: "", children: menuItems)
+    }
+    
+    func showToast(result: Result<Void,CollectionError>?, collectionName: String?, isAdded: Bool) {
+        guard let result = result, let collectionName = collectionName else {
+            return
+        }
+        switch result {
+        case .success():
+            Toast.show(message: "\(isAdded ? "Added to ":"Removed from ") \(collectionName)", in: self.view)
+        case .failure(let error):
+            print(error)
+        }
     }
     
     func setRatingStackView() {

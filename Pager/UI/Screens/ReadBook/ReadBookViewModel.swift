@@ -98,7 +98,6 @@ class ReadBookViewModel {
         
         do {
             try bookRecord?.managedObjectContext?.save()
-            print("Saved total pages: \(count)")
         } catch {
             print("Failed to save total pages: \(error)")
         }

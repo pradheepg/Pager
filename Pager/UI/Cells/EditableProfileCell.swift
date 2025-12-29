@@ -64,12 +64,12 @@ class EditableProfileCell: UITableViewCell, UITextViewDelegate {
             inputTextView.heightAnchor.constraint(greaterThanOrEqualToConstant: 20)
         ])
     }
-
     
     func textViewDidChange(_ textView: UITextView) {
         onTextChange?(textView.text)
         onResize?()
     }
+    
     func setEditingMode(_ isEditing: Bool, onlyChangeColor: Bool = false) {
         if onlyChangeColor {
             if isEditing {
@@ -90,11 +90,18 @@ class EditableProfileCell: UITableViewCell, UITextViewDelegate {
     }
     
     func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
-        print(text)
         if text == "\n" {
-            print(text)
             textView.resignFirstResponder()
             return false
+        }
+        let currentText = textView.text ?? ""
+        guard let stringRange = Range(range, in: currentText) else { return false }
+        let updatedText = currentText.replacingCharacters(in: stringRange, with: text)
+        
+        if textView.tag == 0 {
+            return updatedText.count <= ContentLimits.userMaxNameLength
+        } else if textView.tag == 1 {
+            return updatedText.count <= ContentLimits.userMaxEmailLength
         }
         return true
     }

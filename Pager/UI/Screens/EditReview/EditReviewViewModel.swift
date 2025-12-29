@@ -32,4 +32,15 @@ class EditReviewViewModel {
         let userReviews = currentUser.reviews?.allObjects as? [Review] ?? []
         return userReviews.first(where: { $0.book == self.book })
     }
+    
+    func removeReview() -> Result<Void, ReviewError> {
+        guard let user = UserSession.shared.currentUser else { return .failure(.notFound) }
+        let result: Result<Void,ReviewError>
+        if let currentReview = self.getCurrentUserReview() {
+            result = reviewRepository.deleteReview(currentReview)
+        } else {
+            result = .failure(.deleteFailed)
+        }
+        return result
+    }
 }

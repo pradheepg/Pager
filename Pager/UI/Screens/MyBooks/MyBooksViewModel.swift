@@ -38,7 +38,6 @@ class MyBooksViewModel {
     }
     
     func applySort() {
-        print(currentSortOrder)
         books.sort { [weak self] (book1: Book, book2: Book) in
             guard let self = self else { return false }
 
@@ -55,7 +54,7 @@ class MyBooksViewModel {
                 isOrderedBefore = a1.localizedCaseInsensitiveCompare(a2) == .orderedAscending
             case .dateAdded:
                 let d1 = getDateAdded(for: book1) ?? Date.distantPast
-                let d2 = getDateAdded(for: book1) ?? Date.distantPast
+                let d2 = getDateAdded(for: book2) ?? Date.distantPast
                 isOrderedBefore = d1 < d2
             case .lastOpened:
                 let d1 = getLastOpened(for: book1) ?? Date.distantPast
@@ -161,23 +160,22 @@ class MyBooksViewModel {
         
         return false
     }
-    func toggleDefaultCollection(book: Book, collectionName: String) {
+    func toggleDefaultCollection(book: Book, collectionName: String) -> Result<Void, CollectionError> {
         guard let user = UserSession.shared.currentUser else {
-            return
+            return .failure(.notFound)
         }
         let exists = isBookInDefaultCollection(book, name: collectionName)
         
         guard let collection = (user.collections?.allObjects as? [BookCollection])?.first(where: {
             $0.isDefault == true && $0.name == collectionName
         }) else {
-            return
+            return .failure(.noMatches)
         }
+        print(exists)
         if exists {
-            _ = deleteFromCollection(collection: collection, book: book)
-            print("Removed from \(collectionName)")
+            return deleteFromCollection(collection: collection, book: book)
         } else {
-            _ = addToCollection(collection: collection, book: book)
-            print("Added to \(collectionName)")
+            return addToCollection(collection: collection, book: book)
         }
     }
     

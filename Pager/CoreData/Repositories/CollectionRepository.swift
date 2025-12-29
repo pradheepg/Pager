@@ -236,7 +236,6 @@ final class CollectionRepository {
             return .failure(.bookAlreadyInCollection)
         }
 
-        // Add to the to-many relationship set safely
         var currentSet = collection.books as? Set<Book> ?? Set<Book>()
         currentSet.insert(book)
         collection.books = currentSet as NSSet

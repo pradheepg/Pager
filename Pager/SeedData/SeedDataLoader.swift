@@ -112,7 +112,7 @@ class DataLoader {
                 user.password = dto.password
                 user.createDate = dto.createDate
                 user.dailyReadingGoal = dto.dailyReadingGoal
-                user.todayReadingMinutes = dto.todayReadingMinutes
+//                user.todayReadingMinutes = dto.todayReadingMinutes
                 user.favoriteGenres = dto.favoriteGenres
                 
                 // Convert Image Name to Binary Data
