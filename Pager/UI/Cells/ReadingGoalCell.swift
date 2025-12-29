@@ -188,6 +188,7 @@ class ReadingGoalCell: UICollectionViewCell {
         
         let currentFormatted = format(currentMinutes)
         let goalFormatted = format(goalMinutes)
+        print(goalMinutes)
         
         if currentMinutes >= goalMinutes && goalMinutes > 0 {
             totalGoalLabel.text = "Goal Completed!"

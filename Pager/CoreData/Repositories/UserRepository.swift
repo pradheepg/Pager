@@ -53,6 +53,7 @@ final class UserRepository {
         user.profileImage = profileImage
         user.createDate = createDate
         user.favoriteGenres = genre
+        user.dailyReadingGoal = 5
         
         if let goal = dailyReadingGoalMinutes {
             user.dailyReadingGoal = Int16(goal)
