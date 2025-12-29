@@ -29,7 +29,7 @@ class CurrentBookCell: UICollectionViewCell {
         contentView.addSubview(titleLabel)
         contentView.addSubview(authorLablel)
         contentView.addSubview(progressLabel)
-//        contentView.addSubview(moreButton)
+        //        contentView.addSubview(moreButton)
         backgroundImageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.translatesAutoresizingMaskIntoConstraints = false
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -46,17 +46,17 @@ class CurrentBookCell: UICollectionViewCell {
         authorLablel.textColor = .white
         progressLabel.font = .systemFont(ofSize: 14)
         progressLabel.textColor = .white
-//        moreButton.setTitle("...", for: .normal)
-//        moreButton.contentHorizontalAlignment = .left
-//        moreButton.addTarget(self, action: #selector(moreTapped), for: .touchUpInside)
+        //        moreButton.setTitle("...", for: .normal)
+        //        moreButton.contentHorizontalAlignment = .left
+        //        moreButton.addTarget(self, action: #selector(moreTapped), for: .touchUpInside)
         let config = UIImage.SymbolConfiguration(pointSize: 20, weight: .bold) // Bigger size
-                moreButton.setImage(UIImage(systemName: "ellipsis", withConfiguration: config), for: .normal)
-                moreButton.tintColor = .white
-                
-                // 2. Remove text alignment, images center by default which is good
-                 moreButton.contentHorizontalAlignment = .left
-                
-                moreButton.addTarget(self, action: #selector(moreTapped), for: .touchUpInside)
+        moreButton.setImage(UIImage(systemName: "ellipsis", withConfiguration: config), for: .normal)
+        moreButton.tintColor = .white
+        
+        // 2. Remove text alignment, images center by default which is good
+        moreButton.contentHorizontalAlignment = .left
+        
+        moreButton.addTarget(self, action: #selector(moreTapped), for: .touchUpInside)
         setupMoreMenu()
         contentView.layer.cornerRadius = 12
         contentView.layer.masksToBounds = true
@@ -132,11 +132,9 @@ class CurrentBookCell: UICollectionViewCell {
             print("Report tapped")
         }
         
-        // 3. Assemble the Final Menu
-        // We group them: Main actions first, then the dynamic collection list, then feedback/report
         let menu = UIMenu(title: "Options", children: [
             UIMenu(options: .displayInline, children: [wantToReadAction, reviewAction]),
-            collectionsMenu, // This is our dynamic list
+            collectionsMenu,
             UIMenu(options: .displayInline, children: [removeAction])
         ])
         
@@ -153,9 +151,10 @@ class CurrentBookCell: UICollectionViewCell {
         if let userBookRecords = UserSession.shared.currentUser?.owned as? Set<UserBookRecord> {
             for record in userBookRecords {
                 if record.book == book {
-                    if record.progressValue > 0 && record.totalPages > 0 {
+                    if record.percentageRead > 0 {
+                        progress = Float(record.percentageRead)
+                    } else if record.progressValue > 0 && record.totalPages > 0 {
                         progress = Float(record.progressValue + 1) / Float(record.totalPages) * 100
-                        print(progress)
                     }
                 }
             }

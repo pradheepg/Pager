@@ -106,7 +106,7 @@ enum AppColors {
             : UIColor.white
         }
     }()
-
+    
     static let gradientBottomColor: UIColor = {
         return UIColor { trait in
             trait.userInterfaceStyle == .dark
@@ -147,12 +147,95 @@ enum AppColors {
         }
     }()
     
-}
+    static let systemBlue: UIColor = {
+        return UIColor { trait in
+            trait.userInterfaceStyle == .dark
+            ? UIColor(hex: "#B150E2")
+            : UIColor(hex: "#B150E2")
+        }
+    }()
+    
+    static let text: UIColor = {
+            return UIColor { trait in
+                return trait.userInterfaceStyle == .dark ? .white : .black
+            }
+        }()
+        
+        static let secondaryText: UIColor = {
+            return UIColor { trait in
+                return trait.userInterfaceStyle == .dark ? .lightGray : .darkGray
+            }
+        }()
+        
+        // Tile Background (Dark Gray vs Secondary System Background)
+        static let tileBackground: UIColor = {
+            return UIColor { trait in
+                return trait.userInterfaceStyle == .dark
+                ? UIColor(white: 0.12, alpha: 1.0) // Custom Dark Gray
+                : UIColor(red: 0.95, green: 0.95, blue: 0.97, alpha: 1.0) // Soft Gray
+            }
+        }()
+    
+    
+    static let readBookBgDark: UIColor = {
+        return UIColor.black
+    }()
+    
+    static let readBookBgLight: UIColor = {
+        return UIColor(hex: "#F2F2F7")
+    }()
+    
+    static let readBookFgDark: UIColor = {
+        return UIColor.white
+    }()
+    
+    static let readBookFgWhite: UIColor = {
+        return UIColor.black //(hex: "#8A8A8E")
+    }()
+    
+    static let readBookSecondaryDark: UIColor = {
+        return UIColor(red: 0.15, green: 0.15, blue: 0.16, alpha: 1.0)
+    }()
+    
+    static let readBookSecondaryWhite: UIColor = {
+        return UIColor(red: 0.15, green: 0.15, blue: 0.16, alpha: 1.0)// UIColor(hex: "#767680")
+    }()
+        
+    static let readBookButtonActiveDark: UIColor = {
+        return UIColor(red: 0.39, green: 0.39, blue: 0.40, alpha: 1.0)
+    }()
+
+    static let readBookButtonActiveLight: UIColor = {
+        return UIColor.white
+    }()
+
+    static let readBookButtonDeActiveDark: UIColor = {
+        return UIColor.clear
+    }()
+
+    static let readBookButtonDeActiveLight: UIColor = {
+        return UIColor.clear
+    }()
+
+    static let readBookButtonLabelActiveDark: UIColor = {
+        return UIColor.white
+    }()
+
+    static let readBookButtonLabelActiveLight: UIColor = {
+        return UIColor.black
+    }()
+
+    static let readBookButtonLabelDeActiveDark: UIColor = {
+        return UIColor.systemGray2
+    }()
+
+    static let readBookButtonLabelDeActiveLight: UIColor = {
+        return UIColor.systemGray
+    }()}
 
 enum KeychainKeys {
     static let serviceAuth = "com.pager.auth"
     static let accountUserID = "loggedInUserId"
-//    static let accountAuthToken = "authToken"
 }
 
 enum CategoryEnum: String, CaseIterable {
@@ -228,4 +311,19 @@ enum ContentLimits {
     static let collectionMaxNameLength = 50
     
     
+}
+extension UIColor {
+    convenience init(hex: String) {
+        var hexSanitized = hex.trimmingCharacters(in: .whitespacesAndNewlines)
+        hexSanitized = hexSanitized.replacingOccurrences(of: "#", with: "")
+
+        var rgb: UInt64 = 0
+        Scanner(string: hexSanitized).scanHexInt64(&rgb)
+
+        let r = CGFloat((rgb & 0xFF0000) >> 16) / 255.0
+        let g = CGFloat((rgb & 0x00FF00) >> 8) / 255.0
+        let b = CGFloat(rgb & 0x0000FF) / 255.0
+
+        self.init(red: r, green: g, blue: b, alpha: 1.0)
+    }
 }

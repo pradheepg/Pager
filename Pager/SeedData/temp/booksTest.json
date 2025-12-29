@@ -1,0 +1,57 @@
+[
+  {
+    "bookId": "8D1F4C6A-93F1-4C49-9D73-5C40AA43A819",
+    "title": "The Silent Forest",
+    "author": "Evelyn Hart",
+    "genre": "Mystery",
+    "description": "A gripping mystery set in a quiet town where nothing is as it seems.",
+    "coverImageUrl": "silent_forest_cover.jpg",
+    "contentText": "Chapter 1: The forest was quiet, almost too quiet...",
+    "price": 199.0,
+    "publicationDate": "2021-04-12T00:00:00Z"
+  },
+  {
+    "bookId": "F6E7C77E-A4B4-47D2-891A-3A26B756AA28",
+    "title": "A Journey Through Time",
+    "author": "Leonard Marsh",
+    "genre": "Science Fiction",
+    "description": "A thrilling sci-fi adventure exploring time travel and human destiny.",
+    "coverImageUrl": "journey_time_cover.jpg",
+    "contentText": "Time is not a straight line. That's what I learned the day everything changed...",
+    "price": 249.0,
+    "publicationDate": "2020-11-01T00:00:00Z"
+  },
+  {
+    "bookId": "2CB78F34-6E10-4A8E-B1A1-569C2EAD97B3",
+    "title": "The Art of Focus",
+    "author": "Mira Collins",
+    "genre": "Self-Improvement",
+    "description": "A practical guide to building focus and productivity in a distracted world.",
+    "coverImageUrl": "art_focus_cover.jpg",
+    "contentText": "To focus is to choose your reality. The first step is awareness...",
+    "price": 149.0,
+    "publicationDate": "2019-09-15T00:00:00Z"
+  },
+  {
+    "bookId": "C455523A-83E0-4D22-9F51-1AAB4A395764",
+    "title": "Beneath the Waves",
+    "author": "Jonas Reed",
+    "genre": "Adventure",
+    "description": "A deep-sea exploration tale filled with danger, mystery, and discovery.",
+    "coverImageUrl": "beneath_waves_cover.jpg",
+    "contentText": "The submarine hummed as we descended into the unknown...",
+    "price": 299.0,
+    "publicationDate": "2022-02-20T00:00:00Z"
+  },
+  {
+    "bookId": "A0C62D85-A3A4-447C-9F39-5E91E9E8E32B",
+    "title": "When Stars Whisper",
+    "author": "Clara Wynn",
+    "genre": "Romance",
+    "description": "A heartfelt romance about love, timing, and the beauty of second chances.",
+    "coverImageUrl": "stars_whisper_cover.jpg",
+    "contentText": "She always said the stars had a voice. I never believed her until...",
+    "price": 179.0,
+    "publicationDate": "2023-06-30T00:00:00Z"
+  }
+]

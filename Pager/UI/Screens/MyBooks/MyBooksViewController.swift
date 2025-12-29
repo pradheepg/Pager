@@ -304,7 +304,6 @@ class MyBooksViewController: UIViewController, UICollectionViewDataSource, UICol
         ) { [weak self] _ in
             self?.showToast(result: self?.viewModel.toggleDefaultCollection(book: book, collectionName: DefaultsName.wantToRead), collectionName: DefaultsName.wantToRead, isAdded: !isWantToRead)
         }
-//        wantToReadAction.attributes = .keepsMenuPresented
 
         let isFinished = viewModel.isBookInDefaultCollection(book, name: DefaultsName.finiahed)
         
@@ -315,14 +314,13 @@ class MyBooksViewController: UIViewController, UICollectionViewDataSource, UICol
         ) { [weak self] _ in
             self?.showToast(result: self?.viewModel.toggleDefaultCollection(book: book, collectionName: DefaultsName.finiahed), collectionName: DefaultsName.finiahed, isAdded: !isFinished)
         }
-//        finishedAction.attributes = .keepsMenuPresented
 
         let allCollections = UserSession.shared.currentUser?.collections?.allObjects as? [BookCollection] ?? []
         
         let containingCollectionIDs = (book.collections as? Set<BookCollection>)?.map { $0.objectID } ?? []
         let containingSet = Set(containingCollectionIDs)
 
-        let customCollectionActions = allCollections
+        var customCollectionActions = allCollections
             .filter { collection in
                 let name = collection.name ?? ""
                 return name !=  DefaultsName.wantToRead && name != DefaultsName.finiahed //&& collection != viewModel.currentCollection
@@ -342,6 +340,10 @@ class MyBooksViewController: UIViewController, UICollectionViewDataSource, UICol
                     }
                 }
             }
+        let addCollection = UIAction(title: "Add New", image: UIImage(systemName: "plus")) {  _ in
+            self.showAddItemAlert(book: book)
+        }
+        customCollectionActions.append(addCollection)
         
         let addToCollectionMenu = UIMenu(
             title: "Add to Collection",
@@ -379,6 +381,77 @@ class MyBooksViewController: UIViewController, UICollectionViewDataSource, UICol
                 UIMenu(options: .displayInline, children: [removeAction])
             ]
         )
+    }
+    
+    func showAddItemAlert(book: Book) {
+        let alertController = UIAlertController(
+            title: "Add New Collection",
+            message: "Enter the name for the new Collection.",
+            preferredStyle: .alert
+        )
+        
+        alertController.addTextField { textField in
+            textField.placeholder = "Collection name"
+        }
+        
+        let addAction = UIAlertAction(title: "Add", style: .default) { [weak self] _ in
+            guard let self = self,
+                  let text = alertController.textFields?.first?.text,
+                  !text.isEmpty else {
+                return
+            }
+            
+            self.addNewItem(name: text, book: book)
+        }
+        
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+        
+        alertController.addAction(addAction)
+        alertController.addAction(cancelAction)
+        
+        DispatchQueue.main.async {
+            self.present(alertController, animated: true)
+        }
+    }
+    
+    func addNewItem(name: String, book: Book) {
+        guard let _ = UserSession.shared.currentUser else { return }
+        
+        let result = viewModel.addNewCollection(as: name)
+        
+        switch result {
+        case .success(let newCollection):
+            
+            switch viewModel.addToCollection(collection: newCollection, book: book) {
+            case .success(_):
+                Toast.show(message: "Collection created and book added successfully ", in: self.view)
+            case .failure(let error):
+                print("error: \(error)")
+
+            }
+
+        case .failure(let error):
+            
+            if case .alreadyExists = error as? CollectionError {
+                showNameExistsAlert(name: name)
+            } else {
+                print("Generic creation error: \(error)")
+            }
+        }
+    }
+    
+    func showNameExistsAlert(name: String) {
+        let alertController = UIAlertController(
+            title: "Collection Already Exists!",
+            message: "The Collection '\(name)' is already in your list. Please enter a different collection name.",
+            preferredStyle: .alert
+        )
+        
+        let dismissAction = UIAlertAction(title: "OK", style: .default)
+        
+        alertController.addAction(dismissAction)
+        
+        present(alertController, animated: true, completion: nil)
     }
     
     func showToast(result: Result<Void,CollectionError>?, collectionName: String?, isAdded: Bool) {

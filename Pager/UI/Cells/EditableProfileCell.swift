@@ -21,7 +21,7 @@ class EditableProfileCell: UITableViewCell, UITextViewDelegate {
     lazy var inputTextView: UITextView = {
             let tv = UITextView()
             tv.font = .systemFont(ofSize: 16)
-            tv.textColor = .systemBlue
+            tv.textColor = AppColors.systemBlue
             tv.textAlignment = .right
             tv.isScrollEnabled = false
             tv.backgroundColor = .clear
@@ -73,7 +73,7 @@ class EditableProfileCell: UITableViewCell, UITextViewDelegate {
     func setEditingMode(_ isEditing: Bool, onlyChangeColor: Bool = false) {
         if onlyChangeColor {
             if isEditing {
-                inputTextView.textColor = .systemBlue
+                inputTextView.textColor = AppColors.systemBlue
             } else {
                 inputTextView.textColor = .label
             }
@@ -83,7 +83,7 @@ class EditableProfileCell: UITableViewCell, UITextViewDelegate {
         inputTextView.isUserInteractionEnabled = isEditing
         
         if isEditing {
-            inputTextView.textColor = .systemBlue
+            inputTextView.textColor = AppColors.systemBlue
         } else {
             inputTextView.textColor = .label
         }

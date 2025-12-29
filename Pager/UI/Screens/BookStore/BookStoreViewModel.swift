@@ -15,7 +15,6 @@ class BookStoreViewModel {
     var isLoading: Bool = false
     var service: BookStoreService = BookStoreService()
     
-    
     var onLoadingStateChanged: ((Bool) -> Void)?
     var onDataUpdated: (() -> Void)?
     var onError: ((String) -> Void)?
@@ -106,5 +105,16 @@ class BookStoreViewModel {
 
         return addBook(book, to: wantToReadCollection)
     }
-
+    
+    func addNewCollection(as name: String,description: String? = nil) -> Result<BookCollection, Error> {
+        guard let user = UserSession.shared.currentUser else {
+            return .failure(UserError.userNotFound)
+        }
+        switch collectionRepository.createCollection(name: name, description: nil, owner: user) {
+        case .success(let bookCollection):
+            return .success(bookCollection)
+        case .failure(let error):
+            return .failure(error)
+        }
+    }
 }

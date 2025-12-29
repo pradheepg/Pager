@@ -270,6 +270,8 @@ class BookCollectionViewController: UIViewController, UITableViewDataSource, UIT
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.navigationBar.prefersLargeTitles = false
+        loadData()
+        tableView.reloadData()
     }
     
 
@@ -341,6 +343,6 @@ class BookCollectionViewController: UIViewController, UITableViewDataSource, UIT
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        tableView.reloadData()
+        print("this is the viewdidapoear")
     }
 }

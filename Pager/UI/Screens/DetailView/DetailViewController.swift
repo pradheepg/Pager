@@ -76,6 +76,8 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
     override func viewDidLoad() {
         super.viewDidLoad()
         title = viewModel.book.title
+        view.backgroundColor = AppColors.gridViewBGColor
+
         navigationItem.titleView = UIView()
         //        loadSameData()
         viewModel.loadData()
@@ -112,7 +114,6 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
     private func setUpScrollView() {
 
         
-        view.backgroundColor = AppColors.background
         mainScrollView.translatesAutoresizingMaskIntoConstraints = false
         
         view.addSubview(mainScrollView)
@@ -178,7 +179,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         
         
         coverImageView.translatesAutoresizingMaskIntoConstraints = false
-        coverImageView.backgroundColor = AppColors.background
+        coverImageView.backgroundColor = AppColors.gridViewBGColor
         coverImage.contentMode = .scaleToFill
         coverImage.layer.masksToBounds = true
         coverImage.image = ViewHelper.getCoverImage(of: viewModel.book)
@@ -229,7 +230,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         
         
         descriptionView.translatesAutoresizingMaskIntoConstraints = false
-        descriptionView.backgroundColor = AppColors.background
+        descriptionView.backgroundColor = AppColors.gridViewBGColor
         
         descriptionTitleLable.text = "Publisher Description"
         descriptionTitleLable.textAlignment = .left
@@ -474,7 +475,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         let containingCollectionIDs = (book.collections as? Set<BookCollection>)?.map { $0.objectID } ?? []
         let containingSet = Set(containingCollectionIDs)
 
-        let customCollectionActions = allCollections
+        var customCollectionActions = allCollections
             .filter { collection in
                 let name = collection.name ?? ""
                 return name != DefaultsName.wantToRead && name != DefaultsName.finiahed
@@ -499,6 +500,12 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
                     self.setupMoreMenu()
                 }
             }
+        
+        let addCollection = UIAction(title: "Add New", image: UIImage(systemName: "plus")) {  _ in
+            self.showAddItemAlert(book: book)
+        }
+        
+        customCollectionActions.append(addCollection)
         
         let addToCollectionMenu = UIMenu(
             title: "Add to Collection",
@@ -536,6 +543,78 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         }
 
         return UIMenu(title: "", children: menuItems)
+    }
+    
+    func showAddItemAlert(book: Book) {
+        let alertController = UIAlertController(
+            title: "Add New Collection",
+            message: "Enter the name for the new Collection.",
+            preferredStyle: .alert
+        )
+        
+        alertController.addTextField { textField in
+            textField.placeholder = "Collection name"
+        }
+        
+        let addAction = UIAlertAction(title: "Add", style: .default) { [weak self] _ in
+            guard let self = self,
+                  let text = alertController.textFields?.first?.text,
+                  !text.isEmpty else {
+                return
+            }
+            
+            self.addNewItem(name: text, book: book)
+        }
+        
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+        
+        alertController.addAction(addAction)
+        alertController.addAction(cancelAction)
+        
+        DispatchQueue.main.async {
+            self.present(alertController, animated: true)
+        }
+    }
+    
+    func addNewItem(name: String, book: Book) {
+        guard let _ = UserSession.shared.currentUser else { return }
+        
+        let result = viewModel.addNewCollection(as: name)
+        
+        switch result {
+        case .success(let newCollection):
+            
+            switch viewModel.addBook(book, to: newCollection) {
+            case .success(_):
+                Toast.show(message: "Collection created and book added successfully ", in: self.view)
+                self.setupMoreMenu()
+            case .failure(let error):
+                print("error: \(error)")
+
+            }
+
+        case .failure(let error):
+            
+            if case .alreadyExists = error as? CollectionError {
+                showNameExistsAlert(name: name)
+            } else {
+                print("Generic creation error: \(error)")
+            }
+        }
+    }
+    
+    func showNameExistsAlert(name: String) {
+        let alertController = UIAlertController(
+            title: "Collection Already Exists!",
+            message: "The Collection '\(name)' is already in your list. Please enter a different collection name.",
+            preferredStyle: .alert
+        )
+        
+        let dismissAction = UIAlertAction(title: "OK", style: .default)
+        
+        alertController.addAction(dismissAction)
+        
+        present(alertController, animated: true, completion: nil)
     }
     
     func showToast(result: Result<Void,CollectionError>?, collectionName: String?, isAdded: Bool) {
@@ -578,7 +657,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
             starButtonStack.addArrangedSubview(starButton)
             starButton.setImage(UIImage(systemName: "star", withConfiguration: largeConfig), for: .normal)
             starButton.setImage(UIImage(systemName: "star.fill", withConfiguration: largeConfig), for: .selected)
-            starButton.tintColor = .systemYellow
+            starButton.tintColor = AppColors.systemBlue
             starButton.tag = i
             starButton.addTarget(self, action: #selector(starTapped(_: )), for: .touchUpInside)
             starButton.translatesAutoresizingMaskIntoConstraints = false
@@ -622,7 +701,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         seeAllButton.setTitle("SeeAll", for: .normal)
         seeAllButton.titleLabel?.font = .systemFont(ofSize: 15, weight: .semibold)
         seeAllButton.addTarget(self, action: #selector(reviewsSeeallButtonTapped), for: .touchUpInside)
-        seeAllButton.setTitleColor(AppColors.title, for: .normal)
+        seeAllButton.setTitleColor(AppColors.systemBlue, for: .normal)
         seeAllButton.translatesAutoresizingMaskIntoConstraints = false
         
         let summaryRowStackView: UIStackView = UIStackView()
@@ -776,24 +855,125 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         otherInfoStack.spacing = 0
         otherInfoStack.translatesAutoresizingMaskIntoConstraints = false
         
-        let genreView    = makeInfoColumn(title: "Genre",    main: "", subtitle: viewModel.book.genre, icon: true)
-        let releasedView = makeInfoColumn(title: "Released", main: "2014", subtitle: "31 December")
-        let languageView = makeInfoColumn(title: "Language", main: "EN",   subtitle: "English")
-        let lengthView   = makeInfoColumn(title: "Length", main: "218",  subtitle: "Pages", divider: false)
+        let genreEnum = getCategoryEnum(from: viewModel.book.genre)
+        let genreView = makeInfoColumn(title: "Genre",
+                                       main: "",
+                                       subtitle: genreEnum.rawValue,
+                                       icon: true, genre: genreEnum)
+        
+        // 2. Released Date
+        let dateData = getReleasedDateStrings()
+        let releasedView = makeInfoColumn(title: "Released",
+                                          main: dateData.year,
+                                          subtitle: dateData.date)
+        
+        // 3. Language
+        let langData = getLanguageStrings()
+        let languageView = makeInfoColumn(title: "Language",
+                                          main: langData.code,
+                                          subtitle: langData.name)
+        
+        // 4. Reading Stats (Length & Time)
+        let stats = getReadingStats()
+        
+        let lengthView = makeInfoColumn(title: "Length",
+                                        main: stats.pages,
+                                        subtitle: "Pages",
+                                        divider: true)
+        
+        let readingTimeView = makeInfoColumn(title: "Reading time",
+                                             main: stats.timeMain,
+                                             subtitle: stats.timeSub,
+                                             divider: false)
         
         otherInfoStack.addArrangedSubview(genreView)
         otherInfoStack.addArrangedSubview(releasedView)
         otherInfoStack.addArrangedSubview(languageView)
-        otherInfoStack.addArrangedSubview(lengthView)
+        //        otherInfoStack.addArrangedSubview(lengthView)
+        otherInfoStack.addArrangedSubview(readingTimeView)
     }
     
-    func makeInfoColumn(title: String, main: String, subtitle: String?,divider: Bool = true,icon: Bool = false) -> UIView {
+    func getReleasedDateStrings() -> (year: String, date: String) {
+        guard let date = viewModel.book.publicationDate else { return ("-", "-") }
+        
+        let yearFormatter = DateFormatter()
+        yearFormatter.dateFormat = "yyyy"
+        
+        let dayMonthFormatter = DateFormatter()
+        dayMonthFormatter.dateFormat = "d MMMM"
+        
+        return (yearFormatter.string(from: date), dayMonthFormatter.string(from: date))
+    }
+    
+    func getLanguageStrings() -> (code: String, name: String) {
+        let code = viewModel.book.language ?? "en"
+        let name = Locale.current.localizedString(forLanguageCode: code) ?? "Unknown"
+        return (code.uppercased(), name.capitalized)
+    }
+    
+    func getReadingStats() -> (pages: String, timeMain: String, timeSub: String) {
+        guard let fileName = viewModel.book.contentText,
+              !fileName.isEmpty else {
+            return ("-", "-", "-")
+        }
+        
+        let fullText = ViewHelper.loadBookContent(fileName: viewModel.book.contentText ?? "")
+        let charCount = fullText.count
+        if charCount == 0 { return ("0", "0", "Min") }
+        
+        let pages = max(1, charCount / 1500)
+        
+        let totalMinutes = max(1, charCount / 1000)
+        if totalMinutes < 60 {
+            return ("\(pages)", "\(totalMinutes)", "Min")
+        } else {
+            let hours = totalMinutes / 60
+            return ("\(pages)", "\(hours)", "Hours")
+        }
+    }
+    
+    func getCategoryEnum(from genreString: String?) -> CategoryEnum {
+        guard let rawString = genreString?.lowercased() else {
+            return .novels // Default fallback
+        }
+        
+        if rawString.contains("thriller") || rawString.contains("mystery") ||
+           rawString.contains("horror")   || rawString.contains("crime") ||
+           rawString.contains("gothic") {
+            return .thriller
+        }
+        
+        if rawString.contains("fantasy") || rawString.contains("sci-fi") ||
+           rawString.contains("science") || rawString.contains("magic") {
+            return .fantasy
+        }
+        
+        if rawString.contains("biography") || rawString.contains("memoir") ||
+           rawString.contains("autobiography") {
+            return .biography
+        }
+        
+        if rawString.contains("business") || rawString.contains("finance") ||
+           rawString.contains("economics") || rawString.contains("money") {
+            return .business
+        }
+        
+        if rawString.contains("kid") || rawString.contains("children") ||
+           rawString.contains("juvenile") {
+            return .kids
+        }
+        
+        return .novels
+    }
+    
+    func makeInfoColumn(title: String, main: String, subtitle: String?,divider: Bool = true,icon: Bool = false, genre: CategoryEnum = .thriller) -> UIView {
         let container = UIView()
         container.translatesAutoresizingMaskIntoConstraints = false
         
         let v = UIStackView()
         v.axis = .vertical
         v.alignment = .center
+        v.distribution = .equalSpacing
         v.spacing = 2
         v.translatesAutoresizingMaskIntoConstraints = false
         container.addSubview(v)
@@ -801,14 +981,16 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         NSLayoutConstraint.activate([
             v.topAnchor.constraint(equalTo: container.topAnchor, constant: 16),
             v.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -16),
-            v.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
-            v.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+            v.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 4),
+            v.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -4),
         ])
         
         let titleLabel = UILabel()
         titleLabel.text = title.uppercased()
         titleLabel.font = .systemFont(ofSize: 10, weight: .semibold)
         titleLabel.textColor = AppColors.subtitle
+        titleLabel.adjustsFontSizeToFitWidth = true
+        titleLabel.minimumScaleFactor = 0.8
         v.addArrangedSubview(titleLabel)
         
         
@@ -817,17 +999,22 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
             mainLabel.text = main
             mainLabel.font = .systemFont(ofSize: 20, weight: .bold)
             mainLabel.textColor = .label
+            mainLabel.adjustsFontSizeToFitWidth = true
+            mainLabel.minimumScaleFactor = 0.5
+            mainLabel.numberOfLines = 1
             v.addArrangedSubview(mainLabel)
         }
         else {
-            let imageView = UIImageView(image: UIImage(systemName: "book.fill"))
+            let imageView = UIImageView(image: UIImage(systemName: genre.systemImageName))
             imageView.tintColor = .label
             imageView.contentMode = .scaleAspectFit
             imageView.translatesAutoresizingMaskIntoConstraints = false
-            NSLayoutConstraint.activate([
-                imageView.heightAnchor.constraint(equalToConstant: 32),
-                imageView.widthAnchor.constraint(equalToConstant: 32)
-            ])
+            let hConst = imageView.heightAnchor.constraint(equalToConstant: 32)
+            let wConst = imageView.widthAnchor.constraint(equalToConstant: 32)
+            hConst.priority = .defaultHigh
+            wConst.priority = .defaultHigh
+            
+            NSLayoutConstraint.activate([hConst, wConst])
             v.addArrangedSubview(imageView)
         }
         
@@ -838,6 +1025,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
             sub.text = subtitle
             sub.font = .systemFont(ofSize: 10)
             sub.textColor = .label
+            sub.adjustsFontSizeToFitWidth = true
             v.addArrangedSubview(sub)
         }
         
@@ -861,8 +1049,8 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
 
         closeButton.tintColor = AppColors.title
         
-        navigationItem.rightBarButtonItem = closeButton
-        // OR: navigationItem.leftBarButtonItem = closeButton
+//        navigationItem.rightBarButtonItem = closeButton
+         navigationItem.leftBarButtonItem = closeButton
     }
 
     @objc private func didTapClose() {

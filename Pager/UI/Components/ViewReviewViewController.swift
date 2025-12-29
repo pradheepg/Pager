@@ -94,7 +94,7 @@ class ViewReviewViewController: UIViewController, UICollectionViewDataSource, UI
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = AppColors.background
+        view.backgroundColor = AppColors.gridViewBGColor
         title = "Review"
         setUpReviewCollectionView()
         setUpNavBarItem()

@@ -11,6 +11,7 @@ import CoreData
 
 class ReadGoalService {
     
+    static let shared = ReadGoalService()
     private let calendar = Calendar.current
     private let context = CoreDataManager.shared.context
     
@@ -26,7 +27,7 @@ class ReadGoalService {
         return Int(user.todayReadingMinutes)
     }
     
-    private func addMinutesToDailyTotal(_ minutesToAdd: Double) {
+    func addMinutesToDailyTotal(_ minutesToAdd: Double) {
         guard let user = UserSession.shared.currentUser else { return }
         
         let now = Date()
@@ -47,12 +48,12 @@ class ReadGoalService {
     
     
     func updateTodayReading(startTime: Date, endTime: Date) {
-        let differenceSeconds = endTime.timeIntervalSince(startTime)
-        
+        let calendar = Calendar.current
+        let startOfToday = calendar.startOfDay(for: endTime)
+        let effectiveStartTime = max(startTime, startOfToday)
+        let differenceSeconds = endTime.timeIntervalSince(effectiveStartTime)
         let minutesRead = differenceSeconds / 60.0
-        
         guard minutesRead > 0 else { return }
-        
         addMinutesToDailyTotal(minutesRead)
     }
     

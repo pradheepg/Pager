@@ -258,4 +258,16 @@ final class UserRepository {
             return .failure(.saveFailed)
         }
     }
+    
+    func updateLastOpened(bookId: UUID, _ user: User) -> Result<Void, UserError> {
+        
+        user.lastOpenedBookId = bookId
+        
+        do {
+            try CoreDataManager.shared.saveContext()
+            return .success(())
+        } catch {
+            return .failure(.saveFailed)
+        }
+    }
 }

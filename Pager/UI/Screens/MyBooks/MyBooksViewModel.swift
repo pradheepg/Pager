@@ -72,6 +72,18 @@ class MyBooksViewModel {
         onDataUpdated?()
     }
     
+    func addNewCollection(as name: String,description: String? = nil) -> Result<BookCollection, Error> {
+        guard let user = UserSession.shared.currentUser else {
+            return .failure(UserError.userNotFound)
+        }
+        switch collectionRepository.createCollection(name: name, description: nil, owner: user) {
+        case .success(let bookCollection):
+            return .success(bookCollection)
+        case .failure(let error):
+            return .failure(error)
+        }
+    }
+    
     private func getDateAdded(for book: Book) -> Date? {
         return getRecord(for: book)?.pruchaseDate
 

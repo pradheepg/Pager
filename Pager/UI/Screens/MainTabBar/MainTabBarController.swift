@@ -18,7 +18,7 @@ class MainTabBarController: UITabBarController {
 //        tabBar.backgroundColor = UIColor(red: 0.0, green: 0.0, blue: 0.15, alpha: 0.3)
         let homeVC = HomeViewController()
         let homeNav = UINavigationController(rootViewController: homeVC)
-        homeNav.tabBarItem = UITabBarItem(title: "Home", image: UIImage(systemName: "house"), tag: 0)
+        homeNav.tabBarItem = UITabBarItem(title: "Home", image: UIImage(systemName: "house.fill"), tag: 0)
         
         let libraryVC = LibraryViewController()
         let libraryNav = UINavigationController(rootViewController: libraryVC)

@@ -1,0 +1,50 @@
+[
+  {
+    "reviewId": "11112222-3333-4444-5555-666677778888",
+    "bookId": "REPLACE_WITH_REAL_BOOK_UUID_1",
+    "userId": "A1B2C3D4-E5F6-4789-8012-111111111111",
+    "rating": 5,
+    "comment": "Absolutely loved this! A masterpiece.",
+    "date": "2024-02-15"
+  },
+  {
+    "reviewId": "22223333-4444-5555-6666-777788889999",
+    "bookId": "REPLACE_WITH_REAL_BOOK_UUID_1",
+    "userId": "B2C3D4E5-F6A7-4890-9123-222222222222",
+    "rating": 4,
+    "comment": "Great read, but the ending was a bit rushed.",
+    "date": "2024-03-10"
+  },
+  {
+    "reviewId": "33334444-5555-6666-7777-888899990000",
+    "bookId": "REPLACE_WITH_REAL_BOOK_UUID_2",
+    "userId": "C3D4E5F6-A7B8-4901-0234-333333333333",
+    "rating": 5,
+    "comment": "One of the best books I've read this year. Highly recommend.",
+    "date": "2024-01-05"
+  },
+  {
+    "reviewId": "44445555-6666-7777-8888-999900001111",
+    "bookId": "REPLACE_WITH_REAL_BOOK_UUID_2",
+    "userId": "D4E5F6A7-B8C9-5012-1345-444444444444",
+    "rating": 3,
+    "comment": "It was okay. Good concepts but slow pacing.",
+    "date": "2024-04-20"
+  },
+  {
+    "reviewId": "55556666-7777-8888-9999-000011112222",
+    "bookId": "REPLACE_WITH_REAL_BOOK_UUID_3",
+    "userId": "E5F6A7B8-C9D0-6123-2456-555555555555",
+    "rating": 5,
+    "comment": "Life changing. I couldn't put it down.",
+    "date": "2024-05-12"
+  },
+  {
+    "reviewId": "66667777-8888-9999-0000-111122223333",
+    "bookId": "REPLACE_WITH_REAL_BOOK_UUID_3",
+    "userId": "F6A7B8C9-D0E1-7234-3567-666666666666",
+    "rating": 4,
+    "comment": "Very well written. The characters felt so real.",
+    "date": "2024-02-28"
+  }
+]

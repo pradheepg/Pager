@@ -22,7 +22,7 @@ class ChangePasswordCell: UITableViewCell {
     lazy var inputTextField: UITextField = {
         let tf = UITextField()
         tf.font = .systemFont(ofSize: 16)
-        tf.textColor = .systemBlue
+        tf.textColor = AppColors.systemBlue
         tf.textAlignment = .right
         tf.addTarget(self, action: #selector(textDidChange), for: .editingChanged)
         return tf

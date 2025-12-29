@@ -54,7 +54,7 @@ class EditReviewViewController: UIViewController, UITextFieldDelegate, UITextVie
     private let titleTextField: UITextField = {
         let tf = UITextField()
         tf.placeholder = "Review Title"
-        tf.backgroundColor = AppColors.textFieldBackground
+        tf.backgroundColor = AppColors.gridViewSecondaryColor
         tf.textColor = AppColors.title
         tf.layer.cornerRadius = 8
         tf.layer.masksToBounds = true
@@ -65,7 +65,7 @@ class EditReviewViewController: UIViewController, UITextFieldDelegate, UITextVie
     
     private let bodyTextView: UITextView = {
         let tv = UITextView()
-        tv.backgroundColor = AppColors.textFieldBackground
+        tv.backgroundColor = AppColors.gridViewSecondaryColor
         tv.font = UIFont.systemFont(ofSize: 17)
         tv.layer.cornerRadius = 8
         tv.layer.masksToBounds = true
@@ -76,18 +76,38 @@ class EditReviewViewController: UIViewController, UITextFieldDelegate, UITextVie
     
     private let deleteButton: UIButton = {
         let btn = UIButton(type: .system)
-        btn.setTitle("Delete Review", for: .normal)
-        btn.setTitleColor(.systemRed, for: .normal)
-        btn.titleLabel?.font = UIFont.systemFont(ofSize: 17, weight: .semibold)
-        btn.backgroundColor = .systemRed.withAlphaComponent(0.1)
+        
+        btn.backgroundColor = AppColors.gridViewSecondaryColor
         btn.layer.cornerRadius = 8
         btn.heightAnchor.constraint(equalToConstant: 50).isActive = true
+        
+        let label = UILabel()
+        label.text = "Remove Rating"
+        label.textColor = .systemRed
+        label.font = .systemFont(ofSize: 17, weight: .semibold)
+        label.translatesAutoresizingMaskIntoConstraints = false
+        btn.addSubview(label)
+        
+        let icon = UIImageView(image: UIImage(systemName: "trash"))
+        icon.tintColor = .systemRed
+        icon.contentMode = .scaleAspectFit
+        icon.translatesAutoresizingMaskIntoConstraints = false
+        btn.addSubview(icon)
+        
+        NSLayoutConstraint.activate([
+            label.leadingAnchor.constraint(equalTo: btn.leadingAnchor, constant: 16),
+            label.centerYAnchor.constraint(equalTo: btn.centerYAnchor),
+            icon.trailingAnchor.constraint(equalTo: btn.trailingAnchor, constant: -16),
+            icon.centerYAnchor.constraint(equalTo: btn.centerYAnchor),
+            icon.heightAnchor.constraint(equalToConstant: 20),
+            icon.widthAnchor.constraint(equalToConstant: 20)
+        ])
+        
         return btn
     }()
     
     private var viewModel: EditReviewViewModel
     
-    // MARK: - Initializers
     init(book: Book) {
         self.viewModel = EditReviewViewModel(book: book)
         super.init(nibName: nil, bundle: nil)
@@ -97,7 +117,6 @@ class EditReviewViewController: UIViewController, UITextFieldDelegate, UITextVie
         fatalError("init(coder:) has not been implemented")
     }
     
-    // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         titleTextField.delegate = self
@@ -112,31 +131,25 @@ class EditReviewViewController: UIViewController, UITextFieldDelegate, UITextVie
         NotificationCenter.default.removeObserver(self)
     }
     
-    // MARK: - UI Setup
     private func setupUI() {
-        view.backgroundColor = AppColors.background
+        view.backgroundColor = AppColors.gridViewBGColor
         title = "Write a review"
         
-        // Add ScrollView
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
         contentView.addSubview(rootStackView)
         
-        // Configure Sub-stacks
         setupRatingStars()
         
-        // Add elements to Root Stack
         rootStackView.addArrangedSubview(ratingStackView)
         rootStackView.addArrangedSubview(makeHorizontalSeparator())
         rootStackView.addArrangedSubview(titleTextField)
         rootStackView.addArrangedSubview(bodyTextView)
         
-        // Spacer to push delete button down slightly if needed, or just padding
         rootStackView.addArrangedSubview(makeHorizontalSeparator(color: .clear))
         
         rootStackView.addArrangedSubview(deleteButton)
         
-        // Delegates & Targets
         bodyTextView.delegate = self
         deleteButton.addTarget(self, action: #selector(deleteButtonTapped), for: .touchUpInside)
         
@@ -145,26 +158,22 @@ class EditReviewViewController: UIViewController, UITextFieldDelegate, UITextVie
     
     private func setupConstraints() {
         NSLayoutConstraint.activate([
-            // ScrollView -> View
             scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
             
-            // ContentView -> ScrollView
             contentView.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor),
             contentView.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor),
             contentView.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor),
             contentView.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor),
             contentView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor),
             
-            // RootStack -> ContentView
             rootStackView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
             rootStackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             rootStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             rootStackView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20),
             
-            // Fixed Heights
             titleTextField.heightAnchor.constraint(equalToConstant: 50),
             bodyTextView.heightAnchor.constraint(greaterThanOrEqualToConstant: 150)
         ])
@@ -177,7 +186,7 @@ class EditReviewViewController: UIViewController, UITextFieldDelegate, UITextVie
             let starButton = UIButton()
             starButton.setImage(UIImage(systemName: "star", withConfiguration: largeConfig), for: .normal)
             starButton.setImage(UIImage(systemName: "star.fill", withConfiguration: largeConfig), for: .selected)
-            starButton.tintColor = .systemYellow
+            starButton.tintColor = AppColors.systemBlue
             starButton.tag = i
             starButton.addTarget(self, action: #selector(starTapped(_:)), for: .touchUpInside)
             starButton.translatesAutoresizingMaskIntoConstraints = false
@@ -203,14 +212,12 @@ class EditReviewViewController: UIViewController, UITextFieldDelegate, UITextVie
         editBarButton.tintColor = AppColors.title
         navigationItem.rightBarButtonItem = editBarButton
         
-        // Dismiss keyboard tap
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboards))
         tapGesture.cancelsTouchesInView = false
         view.addGestureRecognizer(tapGesture)
     }
     
     private func populateExistingData() {
-        // Setup default placeholder state
         bodyTextView.text = placeholderText
         bodyTextView.textColor = .placeholderText
         
@@ -230,7 +237,6 @@ class EditReviewViewController: UIViewController, UITextFieldDelegate, UITextVie
         }
     }
     
-    // MARK: - Actions & Logic
     
     @objc func starTapped(_ sender: UIButton) {
         updateStarUI(rating: sender.tag)
@@ -402,13 +408,13 @@ extension EditReviewViewController {
         }
     }
     
-    func textViewDidChange(_ textView: UITextView) {
-        // Because Scrolling is disabled, the Intrinsic Content Size updates automatically
-        // We just need to tell the View to layout again if inside a stack
-        /*
-         Note: In modern UIStackViews with isScrollEnabled = false on the TextView,
-         resize happens automatically. If you notice jumpiness, you can uncomment the line below:
-         */
-        // UIView.animate(withDuration: 0.1) { self.view.layoutIfNeeded() }
-    }
+//    func textViewDidChange(_ textView: UITextView) {
+//        // Because Scrolling is disabled, the Intrinsic Content Size updates automatically
+//        // We just need to tell the View to layout again if inside a stack
+//        /*
+//         Note: In modern UIStackViews with isScrollEnabled = false on the TextView,
+//         resize happens automatically. If you notice jumpiness, you can uncomment the line below:
+//         */
+//        // UIView.animate(withDuration: 0.1) { self.view.layoutIfNeeded() }
+//    }
 }

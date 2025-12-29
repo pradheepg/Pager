@@ -217,43 +217,15 @@ class HomeViewModel {
         return deleteFromCollection(collection: wantToReadCollection, book: book)
     }
     
-}
-
-//remove after bug fix driver
-class Test {
-    
-    @MainActor var view: String? = nil
-    
-    func updateView() {
-        
-        Task { @MainActor in
-            
-            self.view = await fetchData(isDB: false)
-            
+    func addNewCollection(as name: String,description: String? = nil) -> Result<BookCollection, Error> {
+        guard let user = UserSession.shared.currentUser else {
+            return .failure(UserError.userNotFound)
         }
-        
-    }
-    
-    func fetchData(isDB: Bool) async -> String? {
-        if isDB {
-            await fetchDataFromDB()
-        } else {
-            await withCheckedContinuation { continuation in
-                fetchDataFromAPI { value in
-                    continuation.resume(returning: value)
-                }
-            }
+        switch collectionRepository.createCollection(name: name, description: nil, owner: user) {
+        case .success(let bookCollection):
+            return .success(bookCollection)
+        case .failure(let error):
+            return .failure(error)
         }
     }
-    
-    func fetchDataFromDB() async -> String? {
-        return await Task.detached {
-            return "World"
-        }.value
-    }
-
-    func fetchDataFromAPI(completion: (String) -> Void) {
-        completion("Hello")
-    }
-
 }

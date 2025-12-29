@@ -32,7 +32,7 @@ final class ReviewCell: UICollectionViewCell {
         contentView.backgroundColor = .clear
         
         contentView.addSubview(container)
-        container.backgroundColor = AppColors.secondaryBackground
+        container.backgroundColor = AppColors.gridViewSecondaryColor
         container.layer.cornerRadius = 16
         container.translatesAutoresizingMaskIntoConstraints = false
         

@@ -534,13 +534,13 @@ extension HomeViewController: UICollectionViewDataSource {
                 $0.isDefault == false
             }
             
-            let collectionItems = customCollections.map { collection in
+            var collectionItems = customCollections.map { collection in
                 let isAdded = (collection.books as? Set<Book>)?.contains(book) ?? false
                 
                 return UIAction(
                     title: collection.name ?? "Untitled",
-                    image: UIImage(systemName: "folder"),
-                    state: isAdded ? .on : .off
+                    image: UIImage(systemName: isAdded ? "folder.fill": "folder"),
+//                    state: isAdded ? .on : .off
                 ) { _ in
                     if isAdded {
                         _ = self.viewModel.deleteFromCollection(collection: collection, book: book)
@@ -549,6 +549,10 @@ extension HomeViewController: UICollectionViewDataSource {
                     }
                 }
             }
+            let addCollection = UIAction(title: "Add New", image: UIImage(systemName: "plus")) {  _ in
+                self.showAddItemAlert(book: book)
+            }
+            collectionItems.append(addCollection)
             
             let addToCollectionMenu = UIMenu(
                 title: "Add to Collection",
@@ -562,6 +566,77 @@ extension HomeViewController: UICollectionViewDataSource {
                 addToCollectionMenu
             ])
         }
+    }
+    
+    func showAddItemAlert(book: Book) {
+        let alertController = UIAlertController(
+            title: "Add New Collection",
+            message: "Enter the name for the new Collection.",
+            preferredStyle: .alert
+        )
+        
+        alertController.addTextField { textField in
+            textField.placeholder = "Collection name"
+        }
+        
+        let addAction = UIAlertAction(title: "Add", style: .default) { [weak self] _ in
+            guard let self = self,
+                  let text = alertController.textFields?.first?.text,
+                  !text.isEmpty else {
+                return
+            }
+            
+            self.addNewItem(name: text, book: book)
+        }
+        
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+        
+        alertController.addAction(addAction)
+        alertController.addAction(cancelAction)
+        
+        DispatchQueue.main.async {
+            self.present(alertController, animated: true)
+        }
+    }
+    
+    func addNewItem(name: String, book: Book) {
+        guard let _ = UserSession.shared.currentUser else { return }
+        
+        let result = viewModel.addNewCollection(as: name)
+        
+        switch result {
+        case .success(let newCollection):
+            
+            switch viewModel.addBook(book, to: newCollection) {
+            case .success(_):
+                Toast.show(message: "Collection created and book added successfully ", in: self.view)
+            case .failure(let error):
+                print("error: \(error)")
+
+            }
+
+        case .failure(let error):
+            
+            if case .alreadyExists = error as? CollectionError {
+                showNameExistsAlert(name: name)
+            } else {
+                print("Generic creation error: \(error)")
+            }
+        }
+    }
+    
+    func showNameExistsAlert(name: String) {
+        let alertController = UIAlertController(
+            title: "Collection Already Exists!",
+            message: "The Collection '\(name)' is already in your list. Please enter a different collection name.",
+            preferredStyle: .alert
+        )
+        
+        let dismissAction = UIAlertAction(title: "OK", style: .default)
+        
+        alertController.addAction(dismissAction)
+        
+        present(alertController, animated: true, completion: nil)
     }
 }
 class SectionHeaderView: UICollectionReusableView {
@@ -592,7 +667,7 @@ class SectionHeaderView: UICollectionReusableView {
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         
         seeAllButton.setTitle("See All", for: .normal)
-        seeAllButton.setTitleColor(.systemBlue, for: .normal)
+        seeAllButton.setTitleColor(AppColors.systemBlue, for: .normal)
         seeAllButton.titleLabel?.font = .systemFont(ofSize: 16, weight: .regular)
         addSubview(seeAllButton)
         seeAllButton.translatesAutoresizingMaskIntoConstraints = false

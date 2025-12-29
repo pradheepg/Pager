@@ -26,7 +26,7 @@ class ReadingGoalCell: UICollectionViewCell {
     private let adjustButton: UIButton = {
         var config = UIButton.Configuration.plain()
         config.image = UIImage(systemName: "gearshape")
-        config.baseForegroundColor = .systemBlue
+        config.baseForegroundColor = AppColors.systemBlue
         
         let btn = UIButton(configuration: config)
         btn.translatesAutoresizingMaskIntoConstraints = false
@@ -46,7 +46,7 @@ class ReadingGoalCell: UICollectionViewCell {
     private let progressBar: UIProgressView = {
         let bar = UIProgressView(progressViewStyle: .bar)
         bar.trackTintColor = .systemGray5
-        bar.progressTintColor = .systemBlue
+        bar.progressTintColor = AppColors.systemBlue
         bar.layer.cornerRadius = 4
         bar.clipsToBounds = true
         bar.translatesAutoresizingMaskIntoConstraints = false
@@ -92,7 +92,7 @@ class ReadingGoalCell: UICollectionViewCell {
     
     private let completedIcon: UIImageView = {
         let iv = UIImageView(image: UIImage(systemName: "checkmark.circle.fill"))
-        iv.tintColor = .systemBlue
+        iv.tintColor = AppColors.systemBlue
         iv.contentMode = .scaleAspectFit
         iv.isHidden = true
         iv.translatesAutoresizingMaskIntoConstraints = false
@@ -254,7 +254,7 @@ class AdjustGoalViewController: UIViewController, UIPickerViewDataSource, UIPick
         var title = AttributedString("Update Goal")
         title.font = .systemFont(ofSize: 22, weight: .semibold)
         config.attributedTitle = title
-        config.baseBackgroundColor = .systemBlue
+        config.baseBackgroundColor = AppColors.systemBlue
         config.cornerStyle = .capsule
 
         return UIButton(configuration: config)
@@ -314,7 +314,10 @@ class AdjustGoalViewController: UIViewController, UIPickerViewDataSource, UIPick
     }
     
     @objc private func saveTapped() {
-        let totalMinutes = getCurrentMinutes()
+        var totalMinutes = getCurrentMinutes()
+        print(totalMinutes)
+        totalMinutes = min(1440, max(1, totalMinutes))
+        print(totalMinutes)
         onGoalSelected?(totalMinutes)
         dismiss(animated: true)
     }

@@ -35,19 +35,18 @@ class ReadBookViewModel {
         } else {
             isSwipe = true
         }
-        
         if let savedSide = defaults.object(forKey: isSideKey) as? Bool {
             isSide = savedSide
         } else {
             isSide = true
         }
-        isDark = defaults.bool(forKey: "isDark")
+        isDark = defaults.bool(forKey: isDarkKey)
     }
     
     func saveSetting() {
-        defaults.set(isDark, forKey: "isDark")
-        defaults.set(isSwipe, forKey: "isSwipe")
-        defaults.set(isSide, forKey: "isSide")
+        defaults.set(isDark, forKey: isDarkKey)
+        defaults.set(isSwipe, forKey: isSwipeKey)
+        defaults.set(isSide, forKey: isSideKey)
     }
     
     func saveProgress(progressValue: Int = 0) {
@@ -89,6 +88,20 @@ class ReadBookViewModel {
         return Int(bookRecord?.progressValue ?? 0)
     }
 
+    func loadPercentage() -> Double? {
+        guard let user = UserSession.shared.currentUser else {
+            return 0
+        }
+        let bookRecord = (user.owned?.allObjects as? [UserBookRecord])?.first(where: { $0.book == book })
+        if let percentage = bookRecord?.percentageRead, percentage  > 0 {
+            bookRecord?.percentageRead = 0
+            try? bookRecord?.managedObjectContext?.save()
+            return percentage
+        } else {
+            return nil
+        }
+    }
+    
     func saveTotalPages(count: Int) {
         guard let user = UserSession.shared.currentUser else {
             return
@@ -102,4 +115,5 @@ class ReadBookViewModel {
             print("Failed to save total pages: \(error)")
         }
     }
+
 }

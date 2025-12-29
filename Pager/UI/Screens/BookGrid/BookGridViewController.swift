@@ -37,6 +37,7 @@ class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayo
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        collectionView.keyboardDismissMode = .onDrag
         setUpSearchBar()
         setupUI()
         let _ = viewModel.searchBook(searchText: "")
@@ -180,39 +181,10 @@ class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayo
                     }
                 }
             }
-//            let allCollections = UserSession.shared.currentUser?.collections?.allObjects as? [BookCollection] ?? []
-//            
-//
-//            
-//            let collectionItems = allCollections
-//                .filter { $0 != self.viewModel.currentCollection }
-//                .map { collection in
-//                    UIAction(title: collection.name ?? "Untitled", image: UIImage(systemName: "folder")) { _ in
-//                        let result = self.viewModel.addToCollection(collection: collection, book: book)
-//                        switch result {
-//                        case .success:
-//                            print("Success")
-//                            //                            self.viewModel.getUpdatedBookList()
-//                            //                            self.collectionView.reloadData()
-//                            //                            self.updateEmptyState()
-//                            
-//                        case .failure(let error):
-//                            if error == .bookAlreadyInCollection {
-//                                let alert = UIAlertController(
-//                                    title: "Already Added",
-//                                    message: "This book is already in the selected collection.",
-//                                    preferredStyle: .alert
-//                                )
-//                                alert.addAction(UIAlertAction(title: "OK", style: .default))
-//                                self.present(alert, animated: true)
-//                            }
-//                            print("Error: \(error)")
-//                        }
-//                    }
-//                }
+
             let allCollections = UserSession.shared.currentUser?.collections?.allObjects as? [BookCollection] ?? []
 
-            let collectionItems = allCollections
+            var collectionItems = allCollections
                 .filter { collection in
                     let isCurrent = collection == self.viewModel.currentCollection
                     return !isCurrent && !collection.isDefault
@@ -225,7 +197,6 @@ class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayo
                         title: collection.name ?? "Untitled",
                         image: UIImage(systemName: isAlreadyAdded ? "folder.fill" : "folder"),
                         attributes: [],
-//                        state: isAlreadyAdded ? .on : .off
                     ) { [weak self] _ in
                         guard let self = self else { return }
                         
@@ -234,8 +205,7 @@ class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayo
                             
                             switch result {
                             case .success:
-                                print("Successfully removed from \(collection.name ?? "")")
-//                                collectionView.reloadData()
+                                Toast.show(message: "Successfully removed from \(collection.name ?? "")", in: self.view)
                             case .failure(let error):
                                 print("Error removing: \(error)")
                             }
@@ -245,8 +215,7 @@ class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayo
                             
                             switch result {
                             case .success:
-                                print("Successfully added to \(collection.name ?? "")")
-                                
+                                Toast.show(message: "Successfully added to  \(collection.name ?? "")", in: self.view)
                             case .failure(let error):
                                 if error == .bookAlreadyInCollection {
                                     print("Already in collection")
@@ -259,6 +228,11 @@ class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayo
                     
                     return action
                 }
+            
+            let addCollection = UIAction(title: "Add New", image: UIImage(systemName: "plus")) {  _ in
+                self.showAddItemAlert(book: book)
+            }
+            collectionItems.append(addCollection)
             
             let addToCollectionMenu = UIMenu(
                 title: "Add to Collection",
@@ -291,6 +265,77 @@ class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayo
             }
             return UIMenu(title: "", children: menuItems)
         }
+    }
+    
+    func showAddItemAlert(book: Book) {
+        let alertController = UIAlertController(
+            title: "Add New Collection",
+            message: "Enter the name for the new Collection.",
+            preferredStyle: .alert
+        )
+        
+        alertController.addTextField { textField in
+            textField.placeholder = "Collection name"
+        }
+        
+        let addAction = UIAlertAction(title: "Add", style: .default) { [weak self] _ in
+            guard let self = self,
+                  let text = alertController.textFields?.first?.text,
+                  !text.isEmpty else {
+                return
+            }
+            
+            self.addNewItem(name: text, book: book)
+        }
+        
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+        
+        alertController.addAction(addAction)
+        alertController.addAction(cancelAction)
+        
+        DispatchQueue.main.async {
+            self.present(alertController, animated: true)
+        }
+    }
+    
+    func addNewItem(name: String, book: Book) {
+        guard let _ = UserSession.shared.currentUser else { return }
+        
+        let result = viewModel.addNewCollection(as: name)
+        
+        switch result {
+        case .success(let newCollection):
+            
+            switch viewModel.addToCollection(collection: newCollection, book: book) {
+            case .success(_):
+                Toast.show(message: "Collection created and book added successfully ", in: self.view)
+            case .failure(let error):
+                print("error: \(error)")
+
+            }
+
+        case .failure(let error):
+            
+            if case .alreadyExists = error as? CollectionError {
+                showNameExistsAlert(name: name)
+            } else {
+                print("Generic creation error: \(error)")
+            }
+        }
+    }
+    
+    func showNameExistsAlert(name: String) {
+        let alertController = UIAlertController(
+            title: "Collection Already Exists!",
+            message: "The Collection '\(name)' is already in your list. Please enter a different collection name.",
+            preferredStyle: .alert
+        )
+        
+        let dismissAction = UIAlertAction(title: "OK", style: .default)
+        
+        alertController.addAction(dismissAction)
+        
+        present(alertController, animated: true, completion: nil)
     }
     
     func updateEmptyState() {

@@ -44,6 +44,18 @@ class ViewHelper {
             
         }
     }
+    
+    static func loadBookContent(fileName: String) -> String {
+        let fileManager = FileManager.default
+        guard let documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first else { return "Error" }
+        
+        let fileURL = documentsDirectory.appendingPathComponent(fileName)
+        do {
+            return try String(contentsOf: fileURL, encoding: .utf8)
+        } catch {
+            return "Error loading book content."
+        }
+    }
 }
 extension UIImage {
     static func createImageWithLabel(text: String) -> UIImage? {

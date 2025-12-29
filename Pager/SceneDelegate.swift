@@ -20,7 +20,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         guard let windowScene = (scene as? UIWindowScene) else { return }
         window = UIWindow(windowScene: windowScene)
         seedDatabaseIfEmpty()
-        
+        window?.tintColor = AppColors.systemBlue
         if checkForLogin() {
             window?.rootViewController = MainTabBarController()
         }
@@ -32,20 +32,47 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window?.makeKeyAndVisible()
     }
 
+//    func seedDatabaseIfEmpty() {
+//        let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+//        
+//        let fetchRequest: NSFetchRequest<User> = User.fetchRequest()
+//        
+//        do {
+//            let count = try context.count(for: fetchRequest)
+//            if count == 0 {
+//                DataLoader.shared.preloadData(context: context)
+//
+//            } else {
+//                print("Database already contains data. Skipping seed.")
+//            }
+//        } catch {
+//            print("Error checking database: \(error)")
+//        }
+//    }
+    
     func seedDatabaseIfEmpty() {
-        let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+        guard let appDelegate = UIApplication.shared.delegate as? AppDelegate else { return }
+        let container = appDelegate.persistentContainer
         
-        let fetchRequest: NSFetchRequest<User> = User.fetchRequest()
-        
-        do {
-            let count = try context.count(for: fetchRequest)
-            if count == 0 {
-                DataLoader.shared.preloadData(context: context)
-            } else {
-                print("Database already contains data. Skipping seed.")
+        container.performBackgroundTask { backgroundContext in
+            
+            let fetchRequest: NSFetchRequest<User> = User.fetchRequest()
+            
+            do {
+                let count = try backgroundContext.count(for: fetchRequest)
+                
+                if count == 0 {
+                    DataLoader.shared.preloadData(context: backgroundContext)
+                    if backgroundContext.hasChanges {
+                        try backgroundContext.save()
+                        print("Background seed completed and saved.")
+                    }
+                } else {
+                    print("Database already contains data. Skipping seed.")
+                }
+            } catch {
+                print("Error checking/seeding database: \(error)")
             }
-        } catch {
-            print("Error checking database: \(error)")
         }
     }
     

@@ -281,98 +281,7 @@ class BookStoreViewController: UIViewController, UICollectionViewDataSource, UIC
         present(nav, animated: true)
 //        present(vc, animated: true, completion: nil)
     }
-    
-//    func collectionView(_ collectionView: UICollectionView, contextMenuConfigurationForItemAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
-//        
-//        return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
-//            guard let self = self else { return nil }
-//            
-//            var selectedBook: Book?
-//            
-//            switch indexPath.section {
-//            case 0:
-//                selectedBook = self.viewModel.featuredBook
-//                
-//            case 1:
-//                return nil
-//                
-//            default:
-//                let categoryIndex = indexPath.section - 2
-//                if categoryIndex < self.viewModel.categories.count {
-//                    let books = self.viewModel.categories[categoryIndex].books
-//                    if indexPath.item < books.count {
-//                        selectedBook = books[indexPath.item]
-//                    }
-//                }
-//            }
-//            
-//            guard let book = selectedBook else { return nil }
-//            
-//            let detailsAction = UIAction(title: "View Details", image: UIImage(systemName: "info.circle")) { _ in
-//                let vc = DetailViewController(book: book)
-//                let nav = UINavigationController(rootViewController: vc)
-//                nav.modalPresentationStyle = .fullScreen
-//                self.present(nav, animated: true)
-////                self.present(vc, animated: true, completion: nil)
-//            }
-//            
-//            let wantToReadAction = UIAction(title: "Add to Want to Read", image: UIImage(systemName: "bookmark")) { _ in
-////                guard let self = self else { return }
-//
-//                switch self.viewModel.addBookToDefault(book: book) {
-//                case .success():
-//                    print("Adding")
-//                case .failure(let error):
-//                    if error == .bookAlreadyInCollection {
-//                        let alert = UIAlertController(
-//                            title: "Already Added",
-//                            message: "This book is already in the selected collection.",
-//                            preferredStyle: .alert
-//                        )
-//                        alert.addAction(UIAlertAction(title: "OK", style: .default))
-//                        self.present(alert, animated: true)
-//                    }
-//                    print("Error: \(error)")
-//                }
-//                print("Added to Want to Read: \(book.title ?? "")")
-//            }
-//
-//            let allCollections = UserSession.shared.currentUser?.collections?.allObjects as? [BookCollection] ?? []
-//            
-//            let collectionItems = allCollections.map { collection in
-//                UIAction(title: collection.name ?? "Untitled", image: UIImage(systemName: "folder")) { _ in
-//                    // Add your logic here
-//                    print("Adding \(book.title ?? "") to collection: \(collection.name ?? "")")
-//                     switch self.viewModel.addBook(book, to: collection)  {
-//                     case .success():
-//                         print("Adding")
-//                     case .failure(let error):
-//                         if error == .bookAlreadyInCollection {
-//                             let alert = UIAlertController(
-//                                 title: "Already Added",
-//                                 message: "This book is already in the selected collection.",
-//                                 preferredStyle: .alert
-//                             )
-//                             alert.addAction(UIAlertAction(title: "OK", style: .default))
-//                             self.present(alert, animated: true)
-//                         }
-//                         print("Error: \(error)")
-//                     }
-//                }
-//            }
-//            
-//            let addToCollectionMenu = UIMenu(
-//                title: "Add to Collection",
-//                image: UIImage(systemName: "folder.badge.plus"),
-//                children: collectionItems
-//            )
-//            
-//            return UIMenu(title: "", children: [
-    //                UIMenu(options: .displayInline, children: [detailsAction]),
-    //                UIMenu(options: .displayInline, children: [wantToReadAction, addToCollectionMenu])
-    //            ])
-    //        }
-    //    }
+ 
     func collectionView(_ collectionView: UICollectionView, contextMenuConfigurationForItemAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
         
         return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
@@ -427,13 +336,13 @@ class BookStoreViewController: UIViewController, UICollectionViewDataSource, UIC
                 $0.isDefault == false
             }
             
-            let collectionItems = customCollections.map { collection in
+            var collectionItems = customCollections.map { collection in
                 let isAdded = (collection.books as? Set<Book>)?.contains(book) ?? false
                 
                 return UIAction(
                     title: collection.name ?? "Untitled",
-                    image: UIImage(systemName: "folder"),
-                    state: isAdded ? .on : .off
+                    image: UIImage(systemName: isAdded ? "folder.fill" : "folder"),
+//                    state: isAdded ? .on : .off
                 ) { _ in
                     if isAdded {
                         _ = self.viewModel.deleteFromCollection(collection: collection, book: book)
@@ -443,6 +352,11 @@ class BookStoreViewController: UIViewController, UICollectionViewDataSource, UIC
                 }
             }
             
+            let addCollection = UIAction(title: "Add New", image: UIImage(systemName: "plus")) {  _ in
+                self.showAddItemAlert(book: book)
+            }
+            collectionItems.append(addCollection)
+
             let addToCollectionMenu = UIMenu(
                 title: "Add to Collection",
                 image: UIImage(systemName: "folder.badge.plus"),
@@ -454,6 +368,89 @@ class BookStoreViewController: UIViewController, UICollectionViewDataSource, UIC
                 UIMenu(options: .displayInline, children: [wantToReadAction]),
                 addToCollectionMenu
             ])
+        }
+    }
+    
+    func showAddItemAlert(book: Book) {
+        let alertController = UIAlertController(
+            title: "Add New Collection",
+            message: "Enter the name for the new Collection.",
+            preferredStyle: .alert
+        )
+        
+        alertController.addTextField { textField in
+            textField.placeholder = "Collection name"
+        }
+        
+        let addAction = UIAlertAction(title: "Add", style: .default) { [weak self] _ in
+            guard let self = self,
+                  let text = alertController.textFields?.first?.text,
+                  !text.isEmpty else {
+                return
+            }
+            
+            self.addNewItem(name: text, book: book)
+        }
+        
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+        
+        alertController.addAction(addAction)
+        alertController.addAction(cancelAction)
+        
+        DispatchQueue.main.async {
+            self.present(alertController, animated: true)
+        }
+    }
+    
+    func addNewItem(name: String, book: Book) {
+        guard let _ = UserSession.shared.currentUser else { return }
+        
+        let result = viewModel.addNewCollection(as: name)
+        
+        switch result {
+        case .success(let newCollection):
+            
+            switch viewModel.addBook(book, to: newCollection) {
+            case .success(_):
+                Toast.show(message: "Collection created and book added successfully ", in: self.view)
+            case .failure(let error):
+                print("error: \(error)")
+
+            }
+
+        case .failure(let error):
+            
+            if case .alreadyExists = error as? CollectionError {
+                showNameExistsAlert(name: name)
+            } else {
+                print("Generic creation error: \(error)")
+            }
+        }
+    }
+    
+    func showNameExistsAlert(name: String) {
+        let alertController = UIAlertController(
+            title: "Collection Already Exists!",
+            message: "The Collection '\(name)' is already in your list. Please enter a different collection name.",
+            preferredStyle: .alert
+        )
+        
+        let dismissAction = UIAlertAction(title: "OK", style: .default)
+        
+        alertController.addAction(dismissAction)
+        
+        present(alertController, animated: true, completion: nil)
+    }
+    
+    func showToast(result: Result<Void,CollectionError>?, collectionName: String?, isAdded: Bool) {
+        guard let result = result, let collectionName = collectionName else {
+            return
+        }
+        switch result {
+        case .success():
+            Toast.show(message: "\(isAdded ? "Added to ":"Removed from ") \(collectionName)", in: self.view)
+        case .failure(let error):
+            print(error)
         }
     }
 }

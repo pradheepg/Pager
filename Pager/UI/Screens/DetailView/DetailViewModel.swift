@@ -190,4 +190,16 @@ class DetailViewModel {
             return addBook(book, to: collection)
         }
     }
+    
+    func addNewCollection(as name: String,description: String? = nil) -> Result<BookCollection, Error> {
+        guard let user = UserSession.shared.currentUser else {
+            return .failure(UserError.userNotFound)
+        }
+        switch collectionRepository.createCollection(name: name, description: nil, owner: user) {
+        case .success(let bookCollection):
+            return .success(bookCollection)
+        case .failure(let error):
+            return .failure(error)
+        }
+    }
 }

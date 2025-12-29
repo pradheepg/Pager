@@ -21,16 +21,17 @@ final class UserBookRecordRepository {
     private let context = CoreDataManager.shared.context
 
 
-    func createRecord(for book: Book, user: User) -> Result<Void, UserBookRecordError> {
+    func createRecord(for book: Book, user: User, date: Date = Date(), percentage: Double = 0) -> Result<Void, UserBookRecordError> {
 
         do {
             let record = UserBookRecord(context: context)
             record.userBookRecordId = UUID()
             record.book = book
             record.ownedBy = user
-            record.pruchaseDate = Date()
+            record.pruchaseDate = date
             record.progressValue = 0
-            record.lastOpened = Date()
+//            record.lastOpened = Date()
+            record.percentageRead = percentage
 
             try context.save()
             return .success(())

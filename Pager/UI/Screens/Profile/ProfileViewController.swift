@@ -123,7 +123,7 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
         
         headerView.addSubview(profileImageView)
         
-        badgeView.backgroundColor = .systemBlue
+        badgeView.backgroundColor = AppColors.systemBlue
         badgeView.layer.cornerRadius = 16
         badgeView.layer.borderColor = UIColor.white.cgColor
         badgeView.layer.borderWidth = 2
@@ -263,7 +263,7 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
             cell.accessoryType = .disclosureIndicator
             if indexPath.row == 0{
                 cell.textLabel?.text = "Change Password"
-                cell.textLabel?.textColor = .systemBlue
+                cell.textLabel?.textColor = AppColors.systemBlue
             } else {
                 cell.textLabel?.text = "Logout"
                 cell.textLabel?.textColor = .systemRed

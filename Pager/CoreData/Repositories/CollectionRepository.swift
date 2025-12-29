@@ -113,6 +113,15 @@ final class CollectionRepository {
         }
     }
     
+    func addBookToWantToReadCollection(book: Book, user: User) async -> Result<Void, CollectionError> {
+        let wantToReadCollection = await fetchWantToReadCollection(for: user)
+        switch wantToReadCollection {
+        case.success(let collection):
+            return addBook(book, to: collection)
+        case .failure(let error):
+            return .failure(error)
+        }
+    }
     
     func fetchFinishedCollection(for user: User) -> Result<BookCollection, CollectionError> {
         

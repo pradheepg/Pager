@@ -44,7 +44,7 @@ class ReviewViewController: UIViewController, UICollectionViewDelegate, UICollec
         super.viewDidLoad()
         title = "Ratings & Reviews"
 //        navigationItem.titleView = UIView()
-        view.backgroundColor = AppColors.background
+        view.backgroundColor = AppColors.gridViewBGColor
         
         viewModel.loadData()
         setUpNavBarItem()
@@ -102,7 +102,7 @@ class ReviewViewController: UIViewController, UICollectionViewDelegate, UICollec
             starButtonStack.addArrangedSubview(starButton)
             starButton.setImage(UIImage(systemName: "star", withConfiguration: largeConfig), for: .normal)
             starButton.setImage(UIImage(systemName: "star.fill", withConfiguration: largeConfig), for: .selected)
-            starButton.tintColor = .systemYellow
+            starButton.tintColor = AppColors.systemBlue
             starButton.tag = i
             starButton.addTarget(self, action: #selector(starTapped(_: )), for: .touchUpInside)
             starButton.translatesAutoresizingMaskIntoConstraints = false
