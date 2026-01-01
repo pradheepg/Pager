@@ -318,7 +318,7 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
 //            }
 //            let appearance = UINavigationBarAppearance()
 //            appearance.titleTextAttributes = [.foregroundColor: themeTitle]
-//
+//            
 //            navigationController?.navigationBar.standardAppearance = appearance
 //            navigationController?.navigationBar.compactAppearance = appearance
 //            navigationController?.navigationBar.scrollEdgeAppearance = appearance
@@ -329,20 +329,20 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
 //            view.backgroundColor = themeBackGroung
 //            for vc in pageContentVCs.allObjects {
 //                vc.textView.textColor = themeTitle
-//
+//                
 //                vc.view.backgroundColor = themeBackGroung
 //            }
 //            let appearance = UINavigationBarAppearance()
 //            appearance.titleTextAttributes = [.foregroundColor: themeTitle]
-//
+//            
 //            navigationController?.navigationBar.standardAppearance = appearance
 //            navigationController?.navigationBar.compactAppearance = appearance
 //            navigationController?.navigationBar.scrollEdgeAppearance = appearance
 //        }
 //        settingsVC.changeTheme(isDark: isDark)
 //        pageNumberLabel.textColor = themeTitle
-//
-//
+//        
+//        
 //    }
     
     func didChangeTheme(isDark: Bool) {
