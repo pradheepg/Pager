@@ -1,0 +1,69 @@
+//
+//  BookCell.swift
+//  Pager
+//
+//  Created by Pradheep G on 26/11/25.
+//
+import UIKit
+import SwiftUI
+
+class BookCell: UICollectionViewCell {
+    let imageView = UIImageView()
+    static let reuseID = "BookCell"
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        contentView.addSubview(imageView)
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        
+        layer.shadowColor = AppColors.title.cgColor
+        layer.shadowOpacity = 0.15
+        layer.shadowRadius = 8
+        layer.shadowOffset = CGSize(width: 0, height: 4)
+        layer.masksToBounds = false
+        
+        let demo = UIView()
+        
+        contentView.addSubview(demo)
+        demo.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate([
+            
+            demo.topAnchor.constraint(equalTo: contentView.topAnchor),
+            demo.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            demo.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            demo.heightAnchor.constraint(greaterThanOrEqualToConstant: 1),
+            
+            imageView.topAnchor.constraint(equalTo: demo.bottomAnchor),
+            imageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            imageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+//            imageView.heightAnchor.constraint(equalTo: imageView.widthAnchor, multiplier: 3.0/2.0),
+            imageView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+        ])
+        
+        imageView.setContentHuggingPriority(.defaultHigh, for: .vertical)
+        imageView.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
+        
+        
+        
+        imageView.contentMode = .scaleToFill
+        imageView.clipsToBounds = true
+    }
+
+    required init?(coder: NSCoder) { fatalError() }
+
+    func configure(with book: Book) {
+        imageView.image = ViewHelper.getCoverImage(of: book)
+    }
+    
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+
+        if traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
+            layer.shadowColor = AppColors.title.cgColor
+        }
+    }
+}
+//
+//#Preview {
+//    BookCell()
+//}

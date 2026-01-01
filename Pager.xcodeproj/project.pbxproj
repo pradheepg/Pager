@@ -6,8 +6,31 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		D10894F22EF28FB40076BA31 /* Book+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10894E92EF28FB40076BA31 /* Book+CoreDataProperties.swift */; };
+		D10894F32EF28FB40076BA31 /* BookCollection+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10894EA2EF28FB40076BA31 /* BookCollection+CoreDataClass.swift */; };
+		D10894F42EF28FB40076BA31 /* Book+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10894E82EF28FB40076BA31 /* Book+CoreDataClass.swift */; };
+		D10894F52EF28FB40076BA31 /* BookCollection+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10894EB2EF28FB40076BA31 /* BookCollection+CoreDataProperties.swift */; };
+		D10894F82EF28FB40076BA31 /* Review+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10894ED2EF28FB40076BA31 /* Review+CoreDataProperties.swift */; };
+		D10894FB2EF28FB40076BA31 /* Review+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10894EC2EF28FB40076BA31 /* Review+CoreDataClass.swift */; };
+		D108951F2EFE76BE0076BA31 /* User+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = D108951D2EFE76BE0076BA31 /* User+CoreDataClass.swift */; };
+		D10895202EFE76BE0076BA31 /* User+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = D108951E2EFE76BE0076BA31 /* User+CoreDataProperties.swift */; };
+		D17E17302F03C86F0055DB5F /* UserBookRecord+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = D17E172F2F03C86F0055DB5F /* UserBookRecord+CoreDataProperties.swift */; };
+		D17E17312F03C86F0055DB5F /* UserBookRecord+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = D17E172E2F03C86F0055DB5F /* UserBookRecord+CoreDataClass.swift */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		D10272312ED02792003FD803 /* Pager.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Pager.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D10894E82EF28FB40076BA31 /* Book+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Book+CoreDataClass.swift"; path = "Pager/CoreData/Entities/Book+CoreDataClass.swift"; sourceTree = "<group>"; };
+		D10894E92EF28FB40076BA31 /* Book+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Book+CoreDataProperties.swift"; path = "Pager/CoreData/Entities/Book+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		D10894EA2EF28FB40076BA31 /* BookCollection+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "BookCollection+CoreDataClass.swift"; path = "Pager/CoreData/Entities/BookCollection+CoreDataClass.swift"; sourceTree = "<group>"; };
+		D10894EB2EF28FB40076BA31 /* BookCollection+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "BookCollection+CoreDataProperties.swift"; path = "Pager/CoreData/Entities/BookCollection+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		D10894EC2EF28FB40076BA31 /* Review+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Review+CoreDataClass.swift"; path = "Pager/CoreData/Entities/Review+CoreDataClass.swift"; sourceTree = "<group>"; };
+		D10894ED2EF28FB40076BA31 /* Review+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Review+CoreDataProperties.swift"; path = "Pager/CoreData/Entities/Review+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		D108951D2EFE76BE0076BA31 /* User+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "User+CoreDataClass.swift"; path = "Pager/CoreData/Entities/User+CoreDataClass.swift"; sourceTree = "<group>"; };
+		D108951E2EFE76BE0076BA31 /* User+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "User+CoreDataProperties.swift"; path = "Pager/CoreData/Entities/User+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		D17E172E2F03C86F0055DB5F /* UserBookRecord+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "UserBookRecord+CoreDataClass.swift"; path = "Pager/CoreData/Entities/UserBookRecord+CoreDataClass.swift"; sourceTree = "<group>"; };
+		D17E172F2F03C86F0055DB5F /* UserBookRecord+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "UserBookRecord+CoreDataProperties.swift"; path = "Pager/CoreData/Entities/UserBookRecord+CoreDataProperties.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -15,16 +38,28 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
+				SeedData/users.json,
 			);
 			target = D10272302ED02792003FD803 /* Pager */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+		D17E17292F03B6350055DB5F /* Exceptions for "Pager" folder in "Compile Sources" phase from "Pager" target */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = D102722D2ED02792003FD803 /* Sources */;
+			membershipExceptions = (
+				SeedData/users.json,
+			);
+		};
+/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		D10272332ED02792003FD803 /* Pager */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				D10272462ED02793003FD803 /* Exceptions for "Pager" folder in "Pager" target */,
+				D17E17292F03B6350055DB5F /* Exceptions for "Pager" folder in "Compile Sources" phase from "Pager" target */,
 			);
 			path = Pager;
 			sourceTree = "<group>";
@@ -45,6 +80,16 @@
 		D10272282ED02792003FD803 = {
 			isa = PBXGroup;
 			children = (
+				D17E172E2F03C86F0055DB5F /* UserBookRecord+CoreDataClass.swift */,
+				D17E172F2F03C86F0055DB5F /* UserBookRecord+CoreDataProperties.swift */,
+				D108951D2EFE76BE0076BA31 /* User+CoreDataClass.swift */,
+				D108951E2EFE76BE0076BA31 /* User+CoreDataProperties.swift */,
+				D10894E82EF28FB40076BA31 /* Book+CoreDataClass.swift */,
+				D10894E92EF28FB40076BA31 /* Book+CoreDataProperties.swift */,
+				D10894EA2EF28FB40076BA31 /* BookCollection+CoreDataClass.swift */,
+				D10894EB2EF28FB40076BA31 /* BookCollection+CoreDataProperties.swift */,
+				D10894EC2EF28FB40076BA31 /* Review+CoreDataClass.swift */,
+				D10894ED2EF28FB40076BA31 /* Review+CoreDataProperties.swift */,
 				D10272332ED02792003FD803 /* Pager */,
 				D10272322ED02792003FD803 /* Products */,
 			);
@@ -132,6 +177,16 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D10894F22EF28FB40076BA31 /* Book+CoreDataProperties.swift in Sources */,
+				D10894F32EF28FB40076BA31 /* BookCollection+CoreDataClass.swift in Sources */,
+				D10894F42EF28FB40076BA31 /* Book+CoreDataClass.swift in Sources */,
+				D10894F52EF28FB40076BA31 /* BookCollection+CoreDataProperties.swift in Sources */,
+				D10894F82EF28FB40076BA31 /* Review+CoreDataProperties.swift in Sources */,
+				D17E17302F03C86F0055DB5F /* UserBookRecord+CoreDataProperties.swift in Sources */,
+				D17E17312F03C86F0055DB5F /* UserBookRecord+CoreDataClass.swift in Sources */,
+				D10894FB2EF28FB40076BA31 /* Review+CoreDataClass.swift in Sources */,
+				D108951F2EFE76BE0076BA31 /* User+CoreDataClass.swift in Sources */,
+				D10895202EFE76BE0076BA31 /* User+CoreDataProperties.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -148,11 +203,11 @@
 				DEVELOPMENT_TEAM = R58W56JTAJ;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Pager/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "We need camera access to take your profile picture.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIMainStoryboardFile = Main;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -180,11 +235,11 @@
 				DEVELOPMENT_TEAM = R58W56JTAJ;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Pager/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "We need camera access to take your profile picture.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIMainStoryboardFile = Main;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

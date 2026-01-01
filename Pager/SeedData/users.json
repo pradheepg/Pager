@@ -1,0 +1,62 @@
+[
+  {
+    "userId": "A1B2C3D4-E5F6-4789-8012-111111111111",
+    "userName": "Vihaan Gupta",
+    "email": "vihaan.gupta.dev99@gmail.com",
+    "joinedDate": "2023-05-15"
+  },
+  {
+    "userId": "B2C3D4E5-F6A7-4890-9123-222222222222",
+    "userName": "Aarav Patel",
+    "email": "aarav_patel_x12@proton.me",
+    "joinedDate": "2023-06-20"
+  },
+  {
+    "userId": "C3D4E5F6-A7B8-4901-0234-333333333333",
+    "userName": "Diya Sharma",
+    "email": "diya.sharma.work@outlook.com",
+    "joinedDate": "2023-02-10"
+  },
+  {
+    "userId": "D4E5F6A7-B8C9-5012-1345-444444444444",
+    "userName": "Aditya Verma",
+    "email": "aditya.v_dev88@yahoo.in",
+    "joinedDate": "2023-08-05"
+  },
+  {
+    "userId": "E5F6A7B8-C9D0-6123-2456-555555555555",
+    "userName": "Ananya Iyer",
+    "email": "ananya.iyer.code@icloud.com",
+    "joinedDate": "2023-04-12"
+  },
+  {
+    "userId": "F6A7B8C9-D0E1-7234-3567-666666666666",
+    "userName": "Rohan Mehta",
+    "email": "rohan_mehta_992@gmail.com",
+    "joinedDate": "2023-01-25"
+  },
+  {
+    "userId": "A7B8C9D0-E1F2-8345-4678-777777777777",
+    "userName": "Saanvi Reddy",
+    "email": "saanvi.reddy.dev@proton.me",
+    "joinedDate": "2023-07-30"
+  },
+  {
+    "userId": "B8C9D0E1-F2A3-9456-5789-888888888888",
+    "userName": "Arjun Nair",
+    "email": "arjun.nair_tech@outlook.com",
+    "joinedDate": "2023-03-18"
+  },
+  {
+    "userId": "C9D0E1F2-A3B4-0567-6890-999999999999",
+    "userName": "Kiara Malhotra",
+    "email": "kiara.malhotra.x@yahoo.in",
+    "joinedDate": "2023-09-11"
+  },
+  {
+    "userId": "D0E1F2A3-B4C5-1678-7901-000000000000",
+    "userName": "Ishaan Joshi",
+    "email": "ishaan.joshi.dev5@gmail.com",
+    "joinedDate": "2023-05-22"
+  }
+]

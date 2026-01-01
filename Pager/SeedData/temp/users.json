@@ -1,0 +1,38 @@
+[
+  {
+    "userId": "9E8BDF5B-5A90-4B39-9BC4-74843524A11A",
+    "profileName": "Default User",
+    "email": "default@example.com",
+    "password": "password123",
+    "favoriteGenres": "Mystery,Adventure,Science Fiction",
+    "dailyReadingGoalMinutes": 30,
+    "todayReadingMinutes": 0,
+    "lastOpenedBookID": null,
+    "lastProgressReset": "2025-01-01T00:00:00Z",
+    "createDate": "2024-12-30T00:00:00Z"
+  },
+  {
+    "userId": "2C3CFA62-940E-4F65-A2BD-7127F21E8545",
+    "profileName": "Nother",
+    "email": "nother@example.com",
+    "password": "123456",
+    "favoriteGenres": "Self-Improvement,Romance",
+    "dailyReadingGoalMinutes": 20,
+    "todayReadingMinutes": 0,
+    "lastOpenedBookID": null,
+    "lastProgressReset": "2025-01-01T00:00:00Z",
+    "createDate": "2024-12-20T00:00:00Z"
+  },
+  {
+    "userId": "36E4278A-78D5-4C1D-8F9B-DF3217364C4F",
+    "profileName": "Guest User",
+    "email": "guest@example.com",
+    "password": "guest123",
+    "favoriteGenres": null,
+    "dailyReadingGoalMinutes": 15,
+    "todayReadingMinutes": 0,
+    "lastOpenedBookID": null,
+    "lastProgressReset": "2025-01-01T00:00:00Z",
+    "createDate": "2025-01-01T00:00:00Z"
+  }
+]
