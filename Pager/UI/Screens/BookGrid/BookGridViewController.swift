@@ -7,7 +7,7 @@
 
 import UIKit
 
-class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayout, UISearchBarDelegate {
+class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayout, UISearchBarDelegate, UITextFieldDelegate {
     private let collectionView: UICollectionView
     private let searchBar: UISearchBar
     
@@ -114,16 +114,19 @@ class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayo
     
     //todo hotfix here
     func collectionView(_ collectionView: UICollectionView, contextMenuConfigurationForItemAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
-        
+        searchBar.resignFirstResponder()
         return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
             guard let self = self else { return nil }
             
             let book = self.viewModel.resultBooks[indexPath.item]
-
+            
             
             let detailsAction = UIAction(title: "View Details", image: UIImage(systemName: "info.circle")) { _ in
                 let book = self.viewModel.resultBooks[indexPath.item]
                 let vc = DetailViewController(book: book)
+                vc.onDismiss = { [weak self] in
+                    self?.refreshData()
+                }
                 let nav = UINavigationController(rootViewController: vc)
                 nav.modalPresentationStyle = .fullScreen
                 self.present(nav, animated: true)
@@ -146,9 +149,7 @@ class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayo
                     case .success:
                         Toast.show(message: "Removed successfully", in: self.view)
                         if self.viewModel.currentCollection?.name == DefaultsName.wantToRead {
-                            self.viewModel.getUpdatedBookList()
-                            self.collectionView.reloadData()
-                            self.updateEmptyState()
+                            self.refreshData()
                         }
                         
                     case .failure(let error):
@@ -162,9 +163,7 @@ class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayo
                     case .success:
                         Toast.show(message: "Added successfully", in: self.view)
                         if self.viewModel.currentCollection?.name == DefaultsName.wantToRead {
-                            self.viewModel.getUpdatedBookList()
-                            self.collectionView.reloadData()
-                            self.updateEmptyState()
+                            self.refreshData()
                         }
                         
                     case .failure(let error):
@@ -183,15 +182,15 @@ class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayo
             }
 
             let allCollections = UserSession.shared.currentUser?.collections?.allObjects as? [BookCollection] ?? []
-
-            var collectionItems = allCollections
-                .filter { collection in
-                    let isCurrent = collection == self.viewModel.currentCollection
-                    return !isCurrent && !collection.isDefault
+            let customCollections = allCollections
+                .filter { $0.isDefault == false }
+                .sorted {
+                    ($0.createdAt ?? Date.distantPast) < ($1.createdAt ?? Date.distantPast)
                 }
+            var collectionItems = customCollections
                 .map { collection in
                     
-                    let isAlreadyAdded = (collection.books as? Set<Book>)?.contains(book) ?? false
+                    let isAlreadyAdded = (collection.books)?.contains(book) ?? false
                     
                     let action = UIAction(
                         title: collection.name ?? "Untitled",
@@ -239,9 +238,14 @@ class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayo
                 image: UIImage(systemName: "folder.badge.plus"),
                 children: collectionItems
             )
+            var childCollection: [UIMenuElement] = []
+            if viewModel.currentCollection?.name != DefaultsName.wantToRead {
+                childCollection.append(wantToReadAction)
+            }
+            childCollection.append(addToCollectionMenu)
             var menuItems: [UIMenuElement] = [
                 UIMenu(title: "", options: .displayInline, children: [detailsAction]),
-                UIMenu(title: "", options: .displayInline, children: [wantToReadAction, addToCollectionMenu])
+                UIMenu(title: "", options: .displayInline, children: childCollection)
             ]
 
             if let collection = self.viewModel.currentCollection {
@@ -250,9 +254,7 @@ class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayo
                     
                     switch result {
                     case .success:
-                        self.viewModel.getUpdatedBookList()
-                        self.collectionView.reloadData()
-                        self.updateEmptyState()
+                        self.refreshData()
                         
                     case .failure(let error):
                         print("Error: \(error)")
@@ -267,6 +269,14 @@ class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayo
         }
     }
     
+    func refreshData() {
+        self.viewModel.getUpdatedBookList()
+        let currentSearch = searchBar.text ?? ""
+        let _ = viewModel.searchBook(searchText: currentSearch)
+        self.collectionView.reloadData()
+        self.updateEmptyState()
+    }
+    
     func showAddItemAlert(book: Book) {
         let alertController = UIAlertController(
             title: "Add New Collection",
@@ -276,6 +286,7 @@ class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayo
         
         alertController.addTextField { textField in
             textField.placeholder = "Collection name"
+            textField.delegate = self
         }
         
         let addAction = UIAlertAction(title: "Add", style: .default) { [weak self] _ in
@@ -401,6 +412,9 @@ extension BookGridViewController: UICollectionViewDataSource, UICollectionViewDe
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         let book = viewModel.resultBooks[indexPath.item]
         let vc = DetailViewController(book: book)
+        vc.onDismiss = { [weak self] in
+            self?.refreshData()
+        }
         let nav = UINavigationController(rootViewController: vc)
         nav.modalPresentationStyle = .fullScreen
         present(nav, animated: true)
@@ -424,6 +438,14 @@ extension BookGridViewController: UICollectionViewDataSource, UICollectionViewDe
     
     func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
         searchBar.setShowsCancelButton(true, animated: true)
+    }
+    
+    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+        let currentString = (textField.text ?? "") as NSString
+        
+        let newString = currentString.replacingCharacters(in: range, with: string)
+        
+        return newString.count <= ContentLimits.collectionMaxNameLength
     }
     
 }

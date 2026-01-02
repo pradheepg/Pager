@@ -11,11 +11,41 @@ import UIKit
 class BookPaginator {
     
     
+//    static func splitTextIntoPages(text: String, size: CGSize, font: UIFont) -> [String] {
+//        let attributedString = NSAttributedString(string: text, attributes: [.font: font])
+//        let framesetter = CTFramesetterCreateWithAttributedString(attributedString)
+//        
+//        var pageRange = CFRange()
+//        var textPos = 0
+//        let totalLength = attributedString.length
+//        var pages = [String]()
+//        
+//        while textPos < totalLength {
+//            let path = CGPath(rect: CGRect(origin: .zero, size: size), transform: nil)
+//            
+//            let frame = CTFramesetterCreateFrame(framesetter, CFRange(location: textPos, length: 0), path, nil)
+//            
+//            pageRange = CTFrameGetVisibleStringRange(frame)
+//            print(text.count,"-=-=-=-",textPos ,"aldjaksdj", pageRange.length)
+//            let pageStart = text.index(text.startIndex, offsetBy: textPos)
+//            let pageEnd = text.index(text.startIndex, offsetBy: textPos + pageRange.length)
+//            let pageString = String(text[pageStart..<pageEnd])
+//            
+//            pages.append(pageString)
+//            if pageRange.length == 0 {
+//                print("Error: Page frame is too small to fit any text.")
+//                break
+//            }
+//            textPos += pageRange.length
+//        }
+//        
+//        return pages
+//    }
+    
     static func splitTextIntoPages(text: String, size: CGSize, font: UIFont) -> [String] {
         let attributedString = NSAttributedString(string: text, attributes: [.font: font])
         let framesetter = CTFramesetterCreateWithAttributedString(attributedString)
         
-        var pageRange = CFRange()
         var textPos = 0
         let totalLength = attributedString.length
         var pages = [String]()
@@ -25,13 +55,18 @@ class BookPaginator {
             
             let frame = CTFramesetterCreateFrame(framesetter, CFRange(location: textPos, length: 0), path, nil)
             
-            pageRange = CTFrameGetVisibleStringRange(frame)
+            let pageRange = CTFrameGetVisibleStringRange(frame)
             
-            let pageStart = text.index(text.startIndex, offsetBy: textPos)
-            let pageEnd = text.index(text.startIndex, offsetBy: textPos + pageRange.length)
-            let pageString = String(text[pageStart..<pageEnd])
+            let nsRange = NSRange(location: textPos, length: pageRange.length)
+            
+            if nsRange.location + nsRange.length > totalLength {
+                 break
+            }
+            
+            let pageString = attributedString.attributedSubstring(from: nsRange).string
             
             pages.append(pageString)
+            
             if pageRange.length == 0 {
                 print("Error: Page frame is too small to fit any text.")
                 break
@@ -53,10 +88,7 @@ class PageContentViewController: UIViewController {
             textView.font = .systemFont(ofSize: fontSize)
         }
     }
-    
-    //    deinit {
-    //        print("deinit PageContentViewController")
-    //    }
+
     
     let bookTitle: UILabel = {
         let lable = UILabel()
@@ -224,7 +256,8 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
         )
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
-            
+            //driver
+            print(fullBookText.count)
             let calculatedPages = BookPaginator.splitTextIntoPages(
                 text: self.fullBookText,
                 size: textAreaSize,
@@ -358,10 +391,12 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
         appearance.titleTextAttributes = [.foregroundColor: AppColors.text]
         appearance.backgroundColor = AppColors.background
         
-        navigationController?.navigationBar.standardAppearance = appearance
-        navigationController?.navigationBar.compactAppearance = appearance
-        navigationController?.navigationBar.scrollEdgeAppearance = appearance
-        setNeedsStatusBarAppearanceUpdate()
+        
+        //driver
+//        navigationController?.navigationBar.standardAppearance = appearance
+//        navigationController?.navigationBar.compactAppearance = appearance
+//        navigationController?.navigationBar.scrollEdgeAppearance = appearance
+//        setNeedsStatusBarAppearanceUpdate()
         pageNumberLabel.textColor = AppColors.text
     }
     
@@ -742,7 +777,7 @@ class SettingsViewController: UIViewController {
     }()
     
     private lazy var transitionTile: SettingsTileView = {
-        let tile = SettingsTileView(title: "Transition", items: ["Scroll", "Curl"])
+        let tile = SettingsTileView(title: "Transition Style", items: ["None", "Curl"])
         
         tile.onSegmentChanged = { [weak self] index in
             let style: UIPageViewController.TransitionStyle = (index == 0) ? .scroll : .pageCurl

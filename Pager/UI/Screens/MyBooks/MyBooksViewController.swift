@@ -34,7 +34,7 @@ enum SortOrder: String, CaseIterable {
     }
 }
 
-class MyBooksViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate {
+class MyBooksViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate, UITextFieldDelegate {
 
     let viewModel: MyBooksViewModel
     private let collectionView: UICollectionView
@@ -108,40 +108,7 @@ class MyBooksViewController: UIViewController, UICollectionViewDataSource, UICol
         collectionView.reloadData()
         viewModel.applySort()
     }
-//    
-//    func setupSortStack() {
-//        let sortOption = viewModel.currentSortOption
-//        let lastOpened = UIAction(title: BookSortOption.lastOpened.displayTitle, state: sortOption == .lastOpened ? .on : .off) { [weak self] _ in
-//            self?.handleSortChange(sortOption: .lastOpened) }
-//        let title = UIAction(title: BookSortOption.title.displayTitle, state: sortOption == .title ? .on : .off) { [weak self] _ in
-//            self?.handleSortChange(sortOption: .title) }
-//        let author = UIAction(title: BookSortOption.author.displayTitle, state: sortOption == .author ? .on : .off) { [weak self] _ in
-//            self?.handleSortChange(sortOption: .author) }
-//        let dateAdded = UIAction(title: BookSortOption.dateAdded.displayTitle, state: sortOption == .dateAdded ? .on : .off) { [weak self] _ in
-//            self?.handleSortChange(sortOption: .dateAdded) }
-//        
-//        let sortSection = UIMenu(title: "Sort By", options: .displayInline, children: [lastOpened, title, author, dateAdded])
-//        
-//        let sortOrder = viewModel.currentSortOrder
-//        
-//        let ascending = UIAction(title: SortOrder.ascending.displayTitle, image: UIImage(systemName: SortOrder.ascending.iconName), state: sortOrder == SortOrder.ascending ? .on : .off) { [weak self]  _ in self?.handleOrderChange(sortOrder: .ascending) }
-//        let descending = UIAction(title: SortOrder.descending.displayTitle, image: UIImage(systemName: SortOrder.descending.iconName), state: sortOrder == SortOrder.descending ? .on : .off) { [weak self]  _ in self?.handleOrderChange(sortOrder: .descending) }
-//        
-//        let viewSection = UIMenu(title: "Order", options: .displayInline, children: [ascending, descending])
-//        
-//        
-//        let mainMenu = UIMenu(title: "", children: [sortSection, viewSection])
-//        sortButton.menu = mainMenu
-//        sortButton.showsMenuAsPrimaryAction = true
-//        sortStack.addArrangedSubview(sortLable)
-//        sortStack.addArrangedSubview(sortButton)
-//        view.addSubview(sortStack)
-//        
-//        NSLayoutConstraint.activate([
-//            sortStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-//            sortStack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10)
-//        ])
-//    }
+
     func handleSortChange(sortOption: BookSortOption) {
         viewModel.didSelectSortOption(sortOption)
 //        currentSortTitle = sortOption
@@ -316,15 +283,15 @@ class MyBooksViewController: UIViewController, UICollectionViewDataSource, UICol
         }
 
         let allCollections = UserSession.shared.currentUser?.collections?.allObjects as? [BookCollection] ?? []
-        
+        let customCollections = allCollections
+            .filter { $0.isDefault == false }
+            .sorted {
+                ($0.createdAt ?? Date.distantPast) < ($1.createdAt ?? Date.distantPast)
+            }
         let containingCollectionIDs = (book.collections as? Set<BookCollection>)?.map { $0.objectID } ?? []
         let containingSet = Set(containingCollectionIDs)
 
-        var customCollectionActions = allCollections
-            .filter { collection in
-                let name = collection.name ?? ""
-                return name !=  DefaultsName.wantToRead && name != DefaultsName.finiahed //&& collection != viewModel.currentCollection
-            }
+        var customCollectionActions = customCollections
             .map { collection in
                 let isPresent = containingSet.contains(collection.objectID)
                 
@@ -392,6 +359,7 @@ class MyBooksViewController: UIViewController, UICollectionViewDataSource, UICol
         
         alertController.addTextField { textField in
             textField.placeholder = "Collection name"
+            textField.delegate = self
         }
         
         let addAction = UIAlertAction(title: "Add", style: .default) { [weak self] _ in
@@ -464,6 +432,14 @@ class MyBooksViewController: UIViewController, UICollectionViewDataSource, UICol
         case .failure(let error):
             print(error)
         }
+    }
+    
+    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+        let currentString = (textField.text ?? "") as NSString
+        
+        let newString = currentString.replacingCharacters(in: range, with: string)
+        
+        return newString.count <= ContentLimits.collectionMaxNameLength
     }
     
     required init?(coder: NSCoder) {

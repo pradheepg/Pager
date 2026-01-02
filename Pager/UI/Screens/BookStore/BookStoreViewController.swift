@@ -7,7 +7,7 @@
 
 import UIKit
 
-class BookStoreViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate {
+class BookStoreViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate, UITextFieldDelegate {
 
      enum SectionType: Int, CaseIterable {
         case hero = 0
@@ -323,21 +323,22 @@ class BookStoreViewController: UIViewController, UICollectionViewDataSource, UIC
                 attributes: []//isWantToRead ? .destructive : []
             ) { _ in
                 if isWantToRead {
-                    _ = self.viewModel.removeBookFromWantToRead(book: book)
+                    self.showToast(result: self.viewModel.removeBookFromWantToRead(book: book),collectionName: DefaultsName.wantToRead,isAdded: !isWantToRead)
                 } else {
-                    _ = self.viewModel.addBookToWantToRead(book: book)
+                    self.showToast(result: self.viewModel.addBookToWantToRead(book: book),collectionName: DefaultsName.wantToRead,isAdded: !isWantToRead)
                 }
 //                self.viewModel.loadData()
             }
             
             let allCollections = UserSession.shared.currentUser?.collections?.allObjects as? [BookCollection] ?? []
             
-            let customCollections = allCollections.filter {
-                $0.isDefault == false
-            }
-            
+            let customCollections = allCollections
+                .filter { $0.isDefault == false }
+                .sorted {
+                    ($0.createdAt ?? Date.distantPast) < ($1.createdAt ?? Date.distantPast)
+                }
             var collectionItems = customCollections.map { collection in
-                let isAdded = (collection.books as? Set<Book>)?.contains(book) ?? false
+                let isAdded = (collection.books)?.contains(book) ?? false
                 
                 return UIAction(
                     title: collection.name ?? "Untitled",
@@ -345,9 +346,9 @@ class BookStoreViewController: UIViewController, UICollectionViewDataSource, UIC
 //                    state: isAdded ? .on : .off
                 ) { _ in
                     if isAdded {
-                        _ = self.viewModel.deleteFromCollection(collection: collection, book: book)
+                        self.showToast(result: self.viewModel.deleteFromCollection(collection: collection, book: book),collectionName: collection.name,isAdded: !isAdded)
                     } else {
-                        _ = self.viewModel.addBook(book, to: collection)
+                        self.showToast(result: self.viewModel.addBook(book, to: collection), collectionName: collection.name, isAdded: !isAdded)
                     }
                 }
             }
@@ -380,6 +381,7 @@ class BookStoreViewController: UIViewController, UICollectionViewDataSource, UIC
         
         alertController.addTextField { textField in
             textField.placeholder = "Collection name"
+            textField.delegate = self
         }
         
         let addAction = UIAlertAction(title: "Add", style: .default) { [weak self] _ in
@@ -453,4 +455,13 @@ class BookStoreViewController: UIViewController, UICollectionViewDataSource, UIC
             print(error)
         }
     }
+    
+    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+        let currentString = (textField.text ?? "") as NSString
+        
+        let newString = currentString.replacingCharacters(in: range, with: string)
+        
+        return newString.count <= ContentLimits.collectionMaxNameLength
+    }
+    
 }

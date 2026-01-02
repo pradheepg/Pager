@@ -331,7 +331,7 @@ class ReviewViewController: UIViewController, UICollectionViewDelegate, UICollec
             updateStarUI(rating: selectedRating)
             refreshHeaderUI()
             reviewCollectionView.reloadData()
-            
+            Toast.show(message: "Rating Added", in: self.view)
         case .failure(let error):
             print("Error: \(error)")
         }

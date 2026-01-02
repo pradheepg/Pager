@@ -52,12 +52,18 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
             DispatchQueue.main.async {
                 if isLoading {
                     self?.activityIndicator.startAnimating()
+                    self?.collectionView.isUserInteractionEnabled = false
                     if self?.viewModel.displayedSections.isEmpty ?? true {
                         self?.collectionView.isHidden = true
+                    } else {
+                        self?.collectionView.alpha = 0.5
                     }
                 } else {
-                    self?.activityIndicator.stopAnimating()
                     self?.collectionView.isHidden = false
+                    self?.collectionView.alpha = 1
+                    self?.collectionView.isUserInteractionEnabled = true
+                    self?.activityIndicator.stopAnimating()
+
                 }
             }
         }
@@ -66,6 +72,13 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
                 self?.collectionView.reloadData()
             }
         }
+        
+//        viewModel.onWantToReadDataUpdated = { [weak self] in
+//            DispatchQueue.main.async {
+//                self?.collectionView.reloadSections(IndexSet(integer: (self?.viewModel.numberOfSections() ?? 1)-1))
+//
+//            }
+//        }
         
         viewModel.onError = { [weak self] errorMessage in
             DispatchQueue.main.async {
@@ -303,7 +316,7 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
     }
 }
 
-extension HomeViewController: UICollectionViewDataSource {
+extension HomeViewController: UICollectionViewDataSource, UITextFieldDelegate {
     func numberOfSections(in collectionView: UICollectionView) -> Int {
         return viewModel.displayedSections.count
     }
@@ -521,21 +534,22 @@ extension HomeViewController: UICollectionViewDataSource {
                 attributes: []//isWantToRead ? .destructive : []
             ) { _ in
                 if isWantToRead {
-                    _ = self.viewModel.removeBookFromWantToRead(book: book)
+                    self.showToast(result: self.viewModel.removeBookFromWantToRead(book: book),collectionName: DefaultsName.wantToRead,isAdded: !isWantToRead)
                 } else {
-                    _ = self.viewModel.addBookToWantToRead(book: book)
+                    self.showToast(result: self.viewModel.addBookToWantToRead(book: book),collectionName: DefaultsName.wantToRead,isAdded: !isWantToRead)
                 }
                 self.viewModel.updateData()//driver
             }
             
             let allCollections = UserSession.shared.currentUser?.collections?.allObjects as? [BookCollection] ?? []
-            
-            let customCollections = allCollections.filter {
-                $0.isDefault == false
-            }
-            
+
+            let customCollections = allCollections
+                .filter { $0.isDefault == false }
+                .sorted {
+                    ($0.createdAt ?? Date.distantPast) < ($1.createdAt ?? Date.distantPast)
+                }
             var collectionItems = customCollections.map { collection in
-                let isAdded = (collection.books as? Set<Book>)?.contains(book) ?? false
+                let isAdded = (collection.books)?.contains(book) ?? false
                 
                 return UIAction(
                     title: collection.name ?? "Untitled",
@@ -543,9 +557,9 @@ extension HomeViewController: UICollectionViewDataSource {
 //                    state: isAdded ? .on : .off
                 ) { _ in
                     if isAdded {
-                        _ = self.viewModel.deleteFromCollection(collection: collection, book: book)
+                        self.showToast(result: self.viewModel.deleteFromCollection(collection: collection, book: book),collectionName: collection.name,isAdded: !isAdded)
                     } else {
-                        _ = self.viewModel.addBook(book, to: collection)
+                        self.showToast(result: self.viewModel.addBook(book, to: collection), collectionName: collection.name, isAdded: !isAdded)
                     }
                 }
             }
@@ -568,6 +582,18 @@ extension HomeViewController: UICollectionViewDataSource {
         }
     }
     
+    func showToast(result: Result<Void,CollectionError>?, collectionName: String?, isAdded: Bool) {
+        guard let result = result, let collectionName = collectionName else {
+            return
+        }
+        switch result {
+        case .success():
+            Toast.show(message: "\(isAdded ? "Added to ":"Removed from ") \(collectionName)", in: self.view)
+        case .failure(let error):
+            print(error)
+        }
+    }
+    
     func showAddItemAlert(book: Book) {
         let alertController = UIAlertController(
             title: "Add New Collection",
@@ -577,6 +603,7 @@ extension HomeViewController: UICollectionViewDataSource {
         
         alertController.addTextField { textField in
             textField.placeholder = "Collection name"
+            textField.delegate = self
         }
         
         let addAction = UIAlertAction(title: "Add", style: .default) { [weak self] _ in
@@ -637,6 +664,14 @@ extension HomeViewController: UICollectionViewDataSource {
         alertController.addAction(dismissAction)
         
         present(alertController, animated: true, completion: nil)
+    }
+    
+    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+        let currentString = (textField.text ?? "") as NSString
+        
+        let newString = currentString.replacingCharacters(in: range, with: string)
+        
+        return newString.count <= ContentLimits.collectionMaxNameLength
     }
 }
 class SectionHeaderView: UICollectionReusableView {

@@ -58,7 +58,7 @@ class SearchViewModel {
             $0.isDefault == true && $0.name == name
         })
         
-        if let collection = targetCollection, let books = collection.books as? Set<Book> {
+        if let collection = targetCollection, let books = collection.books {
             return books.contains(book)
         }
         return false

@@ -8,7 +8,7 @@
 import UIKit
 internal import CoreData
 
-class DetailViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate {
+class DetailViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate, UITextFieldDelegate {
 
     private let mainScrollView = UIScrollView()
     private let contentView = UIView()
@@ -67,6 +67,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         }
         super.init(nibName: nil, bundle: nil)
         modalPresentationStyle = .fullScreen
+        print(book.coverImageUrl)
     }
     
     required init?(coder: NSCoder) {
@@ -474,12 +475,12 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         
         let containingCollectionIDs = (book.collections as? Set<BookCollection>)?.map { $0.objectID } ?? []
         let containingSet = Set(containingCollectionIDs)
-
-        var customCollectionActions = allCollections
-            .filter { collection in
-                let name = collection.name ?? ""
-                return name != DefaultsName.wantToRead && name != DefaultsName.finiahed
+        let customCollections = allCollections
+            .filter { $0.isDefault == false }
+            .sorted {
+                ($0.createdAt ?? Date.distantPast) < ($1.createdAt ?? Date.distantPast)
             }
+        var customCollectionActions = customCollections
             .map { collection in
                 let isPresent = containingSet.contains(collection.objectID)
                 let collectionName = collection.name ?? "Untitled"
@@ -554,6 +555,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         
         alertController.addTextField { textField in
             textField.placeholder = "Collection name"
+            textField.delegate = self
         }
         
         let addAction = UIAlertAction(title: "Add", style: .default) { [weak self] _ in
@@ -1102,6 +1104,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
             updateStarUI(rating: selectedRating)
             refreshHeaderUI()
             reviewCollectionView.reloadData()
+            Toast.show(message: "Rating Added", in: self.view)
             
         case .failure(let error):
             print("Error: \(error)")
@@ -1169,6 +1172,14 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ReviewCell", for: indexPath) as! ReviewCell
         cell.configure(with: viewModel.reviews[indexPath.item])
         return cell
+    }
+    
+    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+        let currentString = (textField.text ?? "") as NSString
+        
+        let newString = currentString.replacingCharacters(in: range, with: string)
+        
+        return newString.count <= ContentLimits.collectionMaxNameLength
     }
     
     //    override func viewDidLayoutSubviews() {

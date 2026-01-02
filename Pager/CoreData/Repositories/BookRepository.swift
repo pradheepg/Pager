@@ -46,27 +46,6 @@ final class BookRepository {
             return .failure(.saveFailed)
         }
     }
- 
-//    func fetchBook(by id: UUID) async -> Result<Book, BookError> {
-//        let context = CoreDataManager.shared.context
-//        
-//        // We use 'perform' to safely jump to the Core Data thread
-//        // 'await' ensures we wait for the block to finish before returning
-//        await context.perform {
-//            let request: NSFetchRequest<Book> = Book.fetchRequest()
-//            request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
-//            request.fetchLimit = 1
-//
-//            do {
-//                guard let book = try context.fetch(request).first else {
-//                    return .failure(.notFound)
-//                }
-//                return .success(book)
-//            } catch {
-//                return .failure(.notFound) // Or map the specific Core Data error here
-//            }
-//        }
-//    }
     
     func fetchBook(by id: UUID?) async -> Result<Book, BookError> {
         guard let id = id else {
@@ -93,23 +72,6 @@ final class BookRepository {
         }
     }
 
-//    func fetchBook(by id: UUID) -> Result<Book, BookError> {
-//        let context = CoreDataManager.shared.context
-//
-//        let request: NSFetchRequest<Book> = Book.fetchRequest()
-//        request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
-//        request.fetchLimit = 1
-//
-//        do {
-//            guard let book = try context.fetch(request).first else {
-//                return .failure(.notFound)
-//            }
-//            return .success(book)
-//        } catch {
-//            return .failure(.notFound)
-//        }
-//    }
-    
     func fetchAllBooks() -> Result<[Book], BookError> {
         let context = CoreDataManager.shared.context
         let request: NSFetchRequest<Book> = Book.fetchRequest()
@@ -121,18 +83,6 @@ final class BookRepository {
         }
     }
     
-//    func fetchBooks(byGenre genre: String) -> Result<[Book], BookError> {
-//        let context = CoreDataManager.shared.context
-//
-//        let request: NSFetchRequest<Book> = Book.fetchRequest()
-//        request.predicate = NSPredicate(format: "genre == %@", genre)
-//
-//        do {
-//            return .success(try context.fetch(request))
-//        } catch {
-//            return .failure(.notFound)
-//        }
-//    }
     func fetchBooks(byGenre genre: String) async -> Result<[Book], BookError> {
         let context = CoreDataManager.shared.context
 
@@ -237,25 +187,5 @@ final class BookRepository {
             return .failure(.saveFailed)
         }
     }
-    
-//    func refreshAverageReview() -> Result<Void, Error> {
-//        
-//    }
 
-//    func deleteAllBooks() -> Result<Void, Error> {
-//        let request: NSFetchRequest<Book> = Book.fetchRequest()
-//        
-//        do {
-//            let books = try CoreDataManager.shared.context.fetch(request)
-//            books.forEach { CoreDataManager.shared.context.delete($0) }
-//            
-//            try CoreDataManager.shared.context.save()
-//            return .success(())
-//        } catch {
-//            return .failure(error)
-//        }
-//    }
-
-
-    
 }

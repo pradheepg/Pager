@@ -5,13 +5,9 @@
 //  Created by Pradheep G on 01/12/25.
 //
 
-
-
-
-
 import UIKit
 
-class BookCollectionViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, ListViewControllerDelegate {
+class BookCollectionViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, ListViewControllerDelegate, UITextFieldDelegate {
     
     let tableView = UITableView()
     var items: [BookCollection] = []
@@ -30,10 +26,16 @@ class BookCollectionViewController: UIViewController, UITableViewDataSource, UIT
     
     private func loadData() {
         let allCollections = UserSession.shared.currentUser?.collections?.allObjects as? [BookCollection] ?? []
+        
         items = allCollections.sorted { (first, second) -> Bool in
-            return first.isDefault && !second.isDefault
+            if first.isDefault != second.isDefault {
+                return first.isDefault
+            }
+            
+            let date1 = first.createdAt ?? Date.distantPast
+            let date2 = second.createdAt ?? Date.distantPast
+            return date1 < date2
         }
-        //        items = UserSession.shared.currentUser?.collections?.allObjects as? [BookCollection] ?? []
     }
     
     private func setupTableView() {
@@ -67,7 +69,6 @@ class BookCollectionViewController: UIViewController, UITableViewDataSource, UIT
         
         if indexPath.row == items.count {
             let cell = tableView.dequeueReusableCell(withIdentifier: AddButtonCell.reuseIdentifier, for: indexPath) as! AddButtonCell
-            
             cell.delegate = self
             return cell
             
@@ -76,11 +77,23 @@ class BookCollectionViewController: UIViewController, UITableViewDataSource, UIT
             if cell == nil {
                 cell = UITableViewCell(style: .value1, reuseIdentifier: itemCellIdentifier)
             }
-            cell?.textLabel?.text = items[indexPath.row].name
-            cell?.textLabel?.numberOfLines = 3
+            
+            let item = items[indexPath.row]
+            
+            cell?.detailTextLabel?.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
+            
+            cell?.textLabel?.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+            
+//            cell?.textLabel?.lineBreakMode = .byTruncatingMiddle
+
+            cell?.textLabel?.text = item.name
+            cell?.textLabel?.numberOfLines = 0
+            
             cell?.accessoryType = .disclosureIndicator
-            cell?.detailTextLabel?.text = String(items[indexPath.row].books?.count ?? 0)
+            
+            cell?.detailTextLabel?.text = String(item.books?.count ?? 0)
             cell?.detailTextLabel?.textColor = AppColors.subtitle
+            
             return cell ?? UITableViewCell()
         }
     }
@@ -98,6 +111,7 @@ class BookCollectionViewController: UIViewController, UITableViewDataSource, UIT
         
         alertController.addTextField { textField in
             textField.placeholder = "Collection name"
+            textField.delegate = self
         }
         
         let addAction = UIAlertAction(title: "Add", style: .default) { [weak self] _ in
@@ -253,13 +267,14 @@ class BookCollectionViewController: UIViewController, UITableViewDataSource, UIT
     }
 
     private func handleCollectionTap(for collection: BookCollection) {
-        if let books = collection.books?.allObjects {
+        if let books = collection.books?.array as? [Book] {
             if books.isEmpty {
                 let vc = EmptyMyBooksViewController(message: "Your collection is empty!", isButtonNeeded: true)
                 vc.hidesBottomBarWhenPushed = true
                 navigationController?.pushViewController(vc, animated: true)
             } else {
-                let vc = BookGridViewController(categoryTitle: collection.name ?? "", books: books as! [Book], currentCollection: collection)
+                let reversedBooks = Array(books.reversed())
+                let vc = BookGridViewController(categoryTitle: collection.name ?? "", books: reversedBooks, currentCollection: collection)
                 vc.hidesBottomBarWhenPushed = true
                 navigationController?.pushViewController(vc, animated: true)
             }
@@ -287,6 +302,7 @@ class BookCollectionViewController: UIViewController, UITableViewDataSource, UIT
         alertController.addTextField { textField in
             textField.placeholder = "Collection Name"
             textField.text = collection.name
+            textField.delegate = self
             textField.autocapitalizationType = .sentences
         }
         
@@ -340,9 +356,12 @@ class BookCollectionViewController: UIViewController, UITableViewDataSource, UIT
             present(alert, animated: true)
         }
     }
-    
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        print("this is the viewdidapoear")
+
+    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+        let currentString = (textField.text ?? "") as NSString
+        
+        let newString = currentString.replacingCharacters(in: range, with: string)
+        
+        return newString.count <= ContentLimits.collectionMaxNameLength
     }
 }

@@ -156,7 +156,7 @@ class DataLoadder {
                 
                 // Link Books
                 let booksForCollection = dto.bookIds.compactMap { bookMap[$0] }
-                collection.addToBooks(NSSet(array: booksForCollection))
+                collection.addToBooks(NSOrderedSet(array: booksForCollection))
             }
             
             // --- STEP D: Create Reviews (Links to User and Book) ---

@@ -7,7 +7,7 @@
 import UIKit
 internal import CoreData
 
-class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchControllerDelegate, UICollectionViewDataSource, UICollectionViewDelegate {
+class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchControllerDelegate, UICollectionViewDataSource, UICollectionViewDelegate, UITextFieldDelegate {
         
     private var tagsCollectionView: UICollectionView!
     private var resultsCollectionView: UICollectionView!
@@ -347,6 +347,7 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
     }
     
     func makeContextMenu(for book: Book, isOwned: Bool) -> UIContextMenuConfiguration? {
+        searchController.searchBar.resignFirstResponder()
         return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
             guard let self = self else {
                 return nil
@@ -392,12 +393,12 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
             
             let containingCollectionIDs = (book.collections as? Set<BookCollection>)?.map { $0.objectID } ?? []
             let containingSet = Set(containingCollectionIDs)
-            
-            var customCollectionActions = allCollections
-                .filter { collection in
-                    let name = collection.name ?? ""
-                    return name != DefaultsName.wantToRead && name != DefaultsName.finiahed
+            let customCollections = allCollections
+                .filter { $0.isDefault == false }
+                .sorted {
+                    ($0.createdAt ?? Date.distantPast) < ($1.createdAt ?? Date.distantPast)
                 }
+            var customCollectionActions = customCollections
                 .map { collection in
                     let isPresent = containingSet.contains(collection.objectID)
                     let collectionName = collection.name ?? "Untitled"
@@ -444,6 +445,7 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
         
         alertController.addTextField { textField in
             textField.placeholder = "Collection name"
+            textField.delegate = self
         }
         
         let addAction = UIAlertAction(title: "Add", style: .default) { [weak self] _ in
@@ -519,11 +521,23 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
     }
     
     func collectionView(_ collectionView: UICollectionView, contextMenuConfigurationForItemAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
-        if indexPath.section == 0 {
-            return makeContextMenu(for: viewModel.myBooks[indexPath.row], isOwned: true)
+        if collectionView == resultsCollectionView {
+            if indexPath.section == 0 {
+                return makeContextMenu(for: viewModel.myBooks[indexPath.row], isOwned: true)
+            } else {
+                return makeContextMenu(for: viewModel.books[indexPath.row], isOwned: false)
+            }
         } else {
-            return makeContextMenu(for: viewModel.books[indexPath.row], isOwned: false)
+            return nil
         }
+    }
+    
+    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+        let currentString = (textField.text ?? "") as NSString
+        
+        let newString = currentString.replacingCharacters(in: range, with: string)
+        
+        return newString.count <= ContentLimits.collectionMaxNameLength
     }
     
     override func viewDidAppear(_ animated: Bool) {

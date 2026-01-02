@@ -63,7 +63,7 @@ class BookStoreViewModel {
         let wantToReadCollection = (user.collections?.allObjects as? [BookCollection])?.first(where: {
             $0.isDefault == true && $0.name == collectionName
         })
-        if let collection = wantToReadCollection, let books = collection.books as? Set<Book> {
+        if let collection = wantToReadCollection, let books = collection.books {
             return books.contains(book)
         }
         

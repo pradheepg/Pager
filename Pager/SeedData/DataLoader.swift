@@ -132,9 +132,6 @@ struct ImportReview: Decodable {
     let reviewText: String?
     let dateCreated: String
 }
-import Foundation
-import CoreData
-import UIKit
 
 struct CommunityRawData {
     static let indianNames = [

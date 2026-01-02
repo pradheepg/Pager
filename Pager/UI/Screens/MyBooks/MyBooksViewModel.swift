@@ -110,7 +110,7 @@ class MyBooksViewModel {
             $0.isDefault == true && $0.name == name
         })
         
-        if let collection = targetCollection, let books = collection.books as? Set<Book> {
+        if let collection = targetCollection, let books = collection.books{
             return books.contains(book)
         }
         return false
@@ -166,7 +166,7 @@ class MyBooksViewModel {
         let wantToReadCollection = (user.collections?.allObjects as? [BookCollection])?.first(where: {
             $0.isDefault == true && $0.name == DefaultsName.wantToRead
         })
-        if let collection = wantToReadCollection, let books = collection.books as? Set<Book> {
+        if let collection = wantToReadCollection, let books = collection.books {
             return books.contains(book)
         }
         
@@ -211,7 +211,7 @@ class MyBooksViewModel {
         })
 
         if let collection = finishedCollection,
-           let books = collection.books as? Set<Book>,
+           let books = collection.books,
            books.contains(book) {
             
             _ = deleteFromCollection(collection: collection, book: book)

@@ -31,8 +31,8 @@ class HomeService {
     func fetchHomeDashboardData() async throws -> HomeDashboardData {
         guard let user = UserSession.shared.currentUser else {
             throw UserError.loginRequired
-        } //pr
-        let currentBookId = user.lastOpenedBookId // UUID(uuidString:"B0000000-0000-0000-0000-000000001342")
+        }
+        let currentBookId = user.lastOpenedBookId
         let recentBooks = fetchOwnedBooksSorted(user: user)
         var currentBook: Book? = nil
         if let id = currentBookId {
@@ -53,8 +53,8 @@ class HomeService {
             print(error.localizedDescription)
         }
         var wantToReadBooks: [Book] = []
-        if let collectionsBooks = collectionsBooks, let bookSet = collectionsBooks.books as? Set<Book> {
-            wantToReadBooks = Array(bookSet)
+        if let collectionsBooks = collectionsBooks, let bookSet = collectionsBooks.books?.array as? [Book]{
+            wantToReadBooks = bookSet.reversed()
         }
         return HomeDashboardData(
             currentBook: currentBook,
@@ -72,7 +72,7 @@ class HomeService {
         let sortedRecords = recordsSet.sorted(by:  { record1, record2 in
             let date1 = record1.lastOpened ?? Date.distantPast
             let date2 = record2.lastOpened ?? Date.distantPast
-            return date1 < date2
+            return date1 > date2
         } )
         
         let books = sortedRecords.compactMap { $0.book }
