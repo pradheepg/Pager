@@ -318,7 +318,7 @@ class BookStoreViewController: UIViewController, UICollectionViewDataSource, UIC
             let isWantToRead = self.viewModel.isBookInCollection(book, collectionName: DefaultsName.wantToRead)
             
             let wantToReadAction = UIAction(
-                title: isWantToRead ? "Remove from Want to Read" : "Add to Want to Read",
+                title: "Want to Read",
                 image: UIImage(systemName: isWantToRead ? "bookmark.fill" : "bookmark"),
                 attributes: []//isWantToRead ? .destructive : []
             ) { _ in

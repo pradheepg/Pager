@@ -477,10 +477,17 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
                 return
             }
 
-            viewModel.saveUserChange(newName, newEmail, newGenre)
+            let result = viewModel.saveUserChange(newName, newEmail, newGenre)
             
             if !isProfileImageNil && (isProfileImageNil != tempImageIsNil) || (profileImageView.image != tempImageData) {
                  viewModel.saveUserProfieImage(image: profileImageView.image)
+            }
+            switch result {
+            case .success():
+                print("helo helo helo helo")
+                Toast.show(message: "Saved", in: self.view)
+            case .failure(let error):
+                print(error.localizedDescription)
             }
             
         } else {
@@ -499,7 +506,6 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
         guard let stringRange = Range(range, in: currentText) else { return false }
         let updatedText = currentText.replacingCharacters(in: stringRange, with: text)
         
-        // 0 = Name, 1 = Email (based on your personalData array order)
         if textView.tag == 0 {
             return updatedText.count <= ContentLimits.userMaxNameLength
         } else if textView.tag == 1 {

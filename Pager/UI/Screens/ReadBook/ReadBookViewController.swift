@@ -287,7 +287,7 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
                 }
                 self.currentIndex = safeIndex
                 self.pageControllerSetUp(startPage: safeIndex)
-                self.setupSliderLayout()
+//                self.setupSliderLayout()
                 self.setUpGesture()
                 //                    self.setUpNavBarItem()
                 self.setupPageNumberLabel()
@@ -448,18 +448,18 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
         return view
     }()
     
-    private let pageSlider: UISlider = {
-        let slider = UISlider()
-        slider.translatesAutoresizingMaskIntoConstraints = false
-        slider.minimumTrackTintColor = .label
-        slider.maximumTrackTintColor = .secondaryLabel
-        
-        let config = UIImage.SymbolConfiguration(scale: .small)
-        let thumb = UIImage(systemName: "circle.fill", withConfiguration: config)
-        slider.setThumbImage(thumb, for: .normal)
-        
-        return slider
-    }()
+//    private let pageSlider: UISlider = {
+//        let slider = UISlider()
+//        slider.translatesAutoresizingMaskIntoConstraints = false
+//        slider.minimumTrackTintColor = .label
+//        slider.maximumTrackTintColor = .secondaryLabel
+//        
+//        let config = UIImage.SymbolConfiguration(scale: .small)
+//        let thumb = UIImage(systemName: "circle.fill", withConfiguration: config)
+//        slider.setThumbImage(thumb, for: .normal)
+//        
+//        return slider
+//    }()
     
     
     
@@ -540,12 +540,12 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
     
     func presentSettings() {
         settingsVC.delegate = self
-        settingsVC.configure(isDark: viewModel.isDark, isVertical: !viewModel.isSwipe, isCurl: !viewModel.isSide)
+        settingsVC.configure(isDark: viewModel.isDark, isVertical: !viewModel.isSwipe, isCurl: !viewModel.isSide,totalPages: pages.count, currentPage: currentIndex)
         if let sheet = settingsVC.sheetPresentationController {
-            sheet.detents = [
-                .custom(resolver: { context in
-                    return 300
-                })
+            sheet.detents = [.medium()
+//                .custom(resolver: { context in
+//                    return 300
+//                })
             ]
             sheet.prefersGrabberVisible = true
         }
@@ -557,21 +557,21 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
         presentSettings()
     }
     
-    private func setupSliderLayout() {
-        view.addSubview(pageSlider)
-        pageSlider.isHidden = false
-        pageSlider.minimumValue = 0
-        pageSlider.maximumValue = Float(max(0, pages.count - 1))
-        pageSlider.value = 0
-        pageSlider.isHidden = true
-        pageSlider.addTarget(self, action: #selector(handleSliderChange), for: .valueChanged)
-        NSLayoutConstraint.activate([
-            pageSlider.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            pageSlider.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            pageSlider.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -1),
-            pageSlider.heightAnchor.constraint(equalToConstant: 30)
-        ])
-    }
+//    private func setupSliderLayout() {
+//        view.addSubview(pageSlider)
+//        pageSlider.isHidden = false
+//        pageSlider.minimumValue = 0
+//        pageSlider.maximumValue = Float(max(0, pages.count - 1))
+//        pageSlider.value = 0
+//        pageSlider.isHidden = true
+//        pageSlider.addTarget(self, action: #selector(handleSliderChange), for: .valueChanged)
+//        NSLayoutConstraint.activate([
+//            pageSlider.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+//            pageSlider.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+//            pageSlider.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -1),
+//            pageSlider.heightAnchor.constraint(equalToConstant: 30)
+//        ])
+//    }
     
     @objc func handleSliderChange(_ sender: UISlider) {
         let targetIndex = Int(sender.value.rounded())
@@ -686,15 +686,26 @@ extension MainBookReaderViewController: UIPageViewControllerDataSource, UIPageVi
         return viewControllerAtIndex(currentVC.pageIndex + 1)
     }
     
-    func pageViewController(_ pageViewController: UIPageViewController, didFinishAnimating finished: Bool, previousViewControllers: [UIViewController], transitionCompleted completed: Bool) {
-        if completed,
-           let currentVC = pageViewController.viewControllers?.first as? PageContentViewController {
-            self.currentIndex = currentVC.pageIndex
-            pageSlider.setValue(Float(self.currentIndex), animated: true)
-            updatePageLabel(currentIndex: self.currentIndex)
+//    func pageViewController(_ pageViewController: UIPageViewController, didFinishAnimating finished: Bool, previousViewControllers: [UIViewController], transitionCompleted completed: Bool) {
+//        if completed,
+//           let currentVC = pageViewController.viewControllers?.first as? PageContentViewController {
+//            self.currentIndex = currentVC.pageIndex
+//            pageSlider.setValue(Float(self.currentIndex), animated: true)
+//            updatePageLabel(currentIndex: self.currentIndex)
+//        }
+//    }
+    func didChangePage(to index: Int) {
+            guard index != currentIndex else { return }
+            
+            // Calculate direction for animation
+            let direction: UIPageViewController.NavigationDirection = index > currentIndex ? .forward : .reverse
+            
+            if let targetVC = viewControllerAtIndex(index) {
+                pageController.setViewControllers([targetVC], direction: direction, animated: false) // animated: false feels snappier when dragging slider
+                currentIndex = index
+                updatePageLabel(currentIndex: index) // Updates the small label at bottom of main screen
+            }
         }
-    }
-    
     func setUpNavBarItem() {
         //        navigationItem.title = bookTitle
         let appearance = UINavigationBarAppearance()
@@ -740,12 +751,13 @@ protocol SettingsViewControllerDelegate: AnyObject {
     func didChangePageStyle(to style: UIPageViewController.TransitionStyle)
     func didChangeTheme(isDark: Bool)
     func didChangeNavigationOrientation(to style: UIPageViewController.NavigationOrientation)
+    func didChangePage(to index: Int)
 }
 
 class SettingsViewController: UIViewController {
     
     weak var delegate: SettingsViewControllerDelegate?
-        
+    private var totalPages: Int = 0
     private let titleLabel: UILabel = {
         let label = UILabel()
         label.text = "Appearance"
@@ -786,8 +798,56 @@ class SettingsViewController: UIViewController {
         return tile
     }()
     
+    private let pageLabel: UILabel = {
+            let label = UILabel()
+            label.font = .monospacedDigitSystemFont(ofSize: 15, weight: .medium)
+            label.textColor = AppColors.secondaryText
+            label.textAlignment = .center
+            return label
+        }()
+    
+    private let pageSlider: UISlider = {
+        let slider = UISlider()
+        slider.translatesAutoresizingMaskIntoConstraints = false
+        slider.minimumTrackTintColor = .label
+        slider.maximumTrackTintColor = .secondaryLabel
+        
+        let config = UIImage.SymbolConfiguration(scale: .medium)
+        let thumb = UIImage(systemName: "circle.fill", withConfiguration: config)
+        slider.setThumbImage(thumb, for: .normal)
+        
+        return slider
+    }()
+    
+    private lazy var sliderContainer: UIView = {
+            let view = UIView()
+            view.backgroundColor = AppColors.tileBackground // Match your other tiles
+            view.layer.cornerRadius = 12
+            view.layer.cornerCurve = .continuous
+            view.translatesAutoresizingMaskIntoConstraints = false
+            
+            view.addSubview(pageLabel)
+            view.addSubview(pageSlider)
+            
+            pageLabel.translatesAutoresizingMaskIntoConstraints = false
+            
+            NSLayoutConstraint.activate([
+                pageLabel.topAnchor.constraint(equalTo: view.topAnchor, constant: 16),
+                pageLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+                
+                pageSlider.topAnchor.constraint(equalTo: pageLabel.bottomAnchor, constant: 12),
+                pageSlider.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+                pageSlider.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+                pageSlider.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -16)
+            ])
+            
+            pageSlider.addTarget(self, action: #selector(sliderValueChanged(_:)), for: .valueChanged)
+            
+            return view
+        }()
+    
     private lazy var mainStack: UIStackView = {
-        let stack = UIStackView(arrangedSubviews: [titleLabel, scrollTile, themeTile, transitionTile])
+        let stack = UIStackView(arrangedSubviews: [titleLabel, sliderContainer, scrollTile, themeTile, transitionTile])
         stack.axis = .vertical
         stack.spacing = 16
         stack.translatesAutoresizingMaskIntoConstraints = false
@@ -801,7 +861,6 @@ class SettingsViewController: UIViewController {
         view.backgroundColor = AppColors.background
         
         view.addSubview(mainStack)
-        
         NSLayoutConstraint.activate([
             mainStack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
             mainStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
@@ -809,11 +868,16 @@ class SettingsViewController: UIViewController {
         ])
     }
     
-    func configure(isDark: Bool, isVertical: Bool, isCurl: Bool) {
+    func configure(isDark: Bool, isVertical: Bool, isCurl: Bool, totalPages: Int, currentPage: Int) {
         themeTile.setSelectedIndex(isDark ? 1 : 0)
         scrollTile.setSelectedIndex(isVertical ? 1 : 0)
         transitionTile.setSelectedIndex(isCurl ? 1 : 0)
         applyThemeOverride(isDark: isDark)
+        self.totalPages = totalPages
+        pageSlider.minimumValue = 0
+        pageSlider.maximumValue = Float(max(0, totalPages - 1))
+        pageSlider.setValue(Float(currentPage), animated: true)
+        updatePageLabel(current: currentPage)
     }
     func applyThemeOverride(isDark: Bool) {
         self.overrideUserInterfaceStyle = isDark ? .dark : .light
@@ -829,6 +893,17 @@ class SettingsViewController: UIViewController {
             }
             
             [scrollTile, themeTile, transitionTile].forEach { $0.updateTheme(isDark: isDark) }
+        }
+    @objc private func sliderValueChanged(_ sender: UISlider) {
+            let index = Int(sender.value.rounded())
+            updatePageLabel(current: index)
+            
+            // Notify Main VC
+            delegate?.didChangePage(to: index)
+        }
+        
+        private func updatePageLabel(current: Int) {
+            pageLabel.text = "Page \(current + 1) of \(totalPages)"
         }
 }
 

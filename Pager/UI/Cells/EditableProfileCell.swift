@@ -10,7 +10,7 @@ class EditableProfileCell: UITableViewCell, UITextViewDelegate {
     
     var onTextChange: ((String) -> Void)?
     var onResize: (() -> Void)?
-
+    
     let titleLabel: UILabel = {
         let label = UILabel()
         label.font = .systemFont(ofSize: 16)
@@ -19,25 +19,26 @@ class EditableProfileCell: UITableViewCell, UITextViewDelegate {
     }()
     
     lazy var inputTextView: UITextView = {
-            let tv = UITextView()
-            tv.font = .systemFont(ofSize: 16)
-            tv.textColor = AppColors.systemBlue
-            tv.textAlignment = .right
-            tv.isScrollEnabled = false
-            tv.backgroundColor = .clear
-            
-            tv.textContainerInset = .zero
-            tv.textContainer.lineFragmentPadding = 0
-            
-            tv.delegate = self
-            return tv
-        }()
+        let tv = UITextView()
+        tv.font = .systemFont(ofSize: 16)
+        tv.textColor = AppColors.systemBlue
+        tv.textAlignment = .right
+        tv.isScrollEnabled = false
+        tv.backgroundColor = .clear
+        tv.spellCheckingType = .no
+        tv.autocorrectionType = .no
+        tv.textContainerInset = .zero
+        tv.textContainer.lineFragmentPadding = 0
+        
+        tv.delegate = self
+        return tv
+    }()
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         
         contentView.addSubview(titleLabel)
-
+        
         contentView.addSubview(inputTextView)
         
         selectionStyle = .none

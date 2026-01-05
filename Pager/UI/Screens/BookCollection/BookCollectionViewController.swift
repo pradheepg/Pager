@@ -38,6 +38,7 @@ class BookCollectionViewController: UIViewController, UITableViewDataSource, UIT
         }
     }
     
+    
     private func setupTableView() {
         view.addSubview(tableView)
         tableView.translatesAutoresizingMaskIntoConstraints = false
@@ -51,7 +52,7 @@ class BookCollectionViewController: UIViewController, UITableViewDataSource, UIT
         
         tableView.dataSource = self
         tableView.delegate = self
-        
+        tableView.register(BookCollectionCell.self, forCellReuseIdentifier: BookCollectionCell.identifier)
         tableView.register(AddButtonCell.self, forCellReuseIdentifier: AddButtonCell.reuseIdentifier)
 //        tableView.register(UITableViewCell.self, forCellReuseIdentifier: itemCellIdentifier)
     }
@@ -65,36 +66,56 @@ class BookCollectionViewController: UIViewController, UITableViewDataSource, UIT
         return items.count + 1
     }
     
+//    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+//        
+//        if indexPath.row == items.count {
+//            let cell = tableView.dequeueReusableCell(withIdentifier: AddButtonCell.reuseIdentifier, for: indexPath) as! AddButtonCell
+//            cell.delegate = self
+//            return cell
+//            
+//        } else {
+//            var cell = tableView.dequeueReusableCell(withIdentifier: itemCellIdentifier)
+//            if cell == nil {
+//                cell = UITableViewCell(style: .value1, reuseIdentifier: itemCellIdentifier)
+//            }
+//            
+//            let item = items[indexPath.row]
+//            
+//            cell?.detailTextLabel?.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
+//            
+//            cell?.textLabel?.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+//            
+////            cell?.textLabel?.lineBreakMode = .byTruncatingMiddle
+//
+//            cell?.textLabel?.text = item.name
+//            cell?.textLabel?.numberOfLines = 0
+//            
+//            cell?.accessoryType = .disclosureIndicator
+//            cell?.detailTextLabel?.text = String(item.books?.count ?? 0)
+//            cell?.detailTextLabel?.textColor = AppColors.subtitle
+//            
+//            return cell ?? UITableViewCell()
+//        }
+//    }
+    
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         if indexPath.row == items.count {
             let cell = tableView.dequeueReusableCell(withIdentifier: AddButtonCell.reuseIdentifier, for: indexPath) as! AddButtonCell
             cell.delegate = self
             return cell
-            
         } else {
-            var cell = tableView.dequeueReusableCell(withIdentifier: itemCellIdentifier)
-            if cell == nil {
-                cell = UITableViewCell(style: .value1, reuseIdentifier: itemCellIdentifier)
+            guard let cell = tableView.dequeueReusableCell(withIdentifier: BookCollectionCell.identifier, for: indexPath) as? BookCollectionCell else {
+                return UITableViewCell()
             }
             
             let item = items[indexPath.row]
             
-            cell?.detailTextLabel?.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
+            cell.configure(with: item.name, count: item.books?.count ?? 0)
             
-            cell?.textLabel?.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+            cell.accessoryType = .disclosureIndicator
             
-//            cell?.textLabel?.lineBreakMode = .byTruncatingMiddle
-
-            cell?.textLabel?.text = item.name
-            cell?.textLabel?.numberOfLines = 0
-            
-            cell?.accessoryType = .disclosureIndicator
-            
-            cell?.detailTextLabel?.text = String(item.books?.count ?? 0)
-            cell?.detailTextLabel?.textColor = AppColors.subtitle
-            
-            return cell ?? UITableViewCell()
+            return cell
         }
     }
     

@@ -137,13 +137,12 @@ final class BookRepository {
         }
     }
     
-    func searchBooks(_ query: String, tokenText: String = "") -> Result<[Book], BookError> {
+    func searchBooks(_ query: String, tokenText: String = "") async -> Result<[Book], BookError> {
         let context = CoreDataManager.shared.context
-
         let request: NSFetchRequest<Book> = Book.fetchRequest()
         if tokenText == "" {
             request.predicate = NSPredicate(
-                format: "title CONTAINS[c] %@ OR author CONTAINS[c] %@",
+                format: "title CONTAINS[cd] %@ OR author CONTAINS[cd] %@",
                 query, query, tokenText
             )
         } else if query == "" {
@@ -152,7 +151,7 @@ final class BookRepository {
             )
         } else {
             request.predicate = NSPredicate(
-                format: "(title CONTAINS[c] %@ OR author CONTAINS[c] %@) AND genre == %@",
+                format: "(title CONTAINS[cd] %@ OR author CONTAINS[cd] %@) AND genre == %@",
                 query, query, tokenText
             )
         }

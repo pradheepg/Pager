@@ -183,43 +183,87 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
         searchController.isActive = true
         updateSearchResults(for: searchController)
     }
+    
+//    func updateSearchResults(for searchController: UISearchController) {
+//        let searchText = searchController.searchBar.text ?? ""
+//        let tokens = searchController.searchBar.searchTextField.tokens
+//        
+//        if searchText.isEmpty && tokens.isEmpty{
+//            tagsCollectionView.isHidden = false
+//            tagsTitleLabel.isHidden = tagsCollectionView.isHidden
+//            resultsCollectionView.isHidden = true
+//            emptyStateView.view.isHidden = true
+//        } else {
+//            tagsCollectionView.isHidden = true
+//            tagsTitleLabel.isHidden = tagsCollectionView.isHidden
+//            let result = viewModel.searchBooks(searchText: searchText, token: tokens)
+//            //driver
+//            switch result {
+//            case .success(let isEmpty):
+////                let midpoint = (foundBooks.count + 1) / 2
+////                self.viewModel.books = Array(foundBooks[..<midpoint])
+////                self.viewModel.myBooks = Array(foundBooks[midpoint...])
+//
+//                if isEmpty {
+//                    print(isEmpty)
+//                    resultsCollectionView.isHidden = true
+//                    emptyStateView.view.isHidden = false
+//                } else {
+//                    resultsCollectionView.isHidden = false
+//                    emptyStateView.view.isHidden = true
+//                }
+//                
+//                resultsCollectionView.reloadData()
+//                
+//            case .failure(let error):
+//                print("Error: \(error.localizedDescription)")
+//            }
+//        }
+//    }
+    
     func updateSearchResults(for searchController: UISearchController) {
-        print(searchController.searchBar.showsCancelButton)
         let searchText = searchController.searchBar.text ?? ""
         let tokens = searchController.searchBar.searchTextField.tokens
-        
-        if searchText.isEmpty && tokens.isEmpty{
+
+        if searchText.isEmpty && tokens.isEmpty {
             tagsCollectionView.isHidden = false
             tagsTitleLabel.isHidden = tagsCollectionView.isHidden
             resultsCollectionView.isHidden = true
             emptyStateView.view.isHidden = true
-        } else {
-            tagsCollectionView.isHidden = true
-            tagsTitleLabel.isHidden = tagsCollectionView.isHidden
-            let result = viewModel.searchBooks(searchText: searchText, token: tokens)
-            //driver
-            switch result {
-            case .success(let isEmpty):
-//                let midpoint = (foundBooks.count + 1) / 2
-//                self.viewModel.books = Array(foundBooks[..<midpoint])
-//                self.viewModel.myBooks = Array(foundBooks[midpoint...])
+            return
+        }
 
-                if isEmpty {
-                    print(isEmpty)
-                    resultsCollectionView.isHidden = true
-                    emptyStateView.view.isHidden = false
-                } else {
-                    resultsCollectionView.isHidden = false
-                    emptyStateView.view.isHidden = true
+        tagsCollectionView.isHidden = true
+        tagsTitleLabel.isHidden = tagsCollectionView.isHidden
+
+        Task { [weak self] in
+            guard let self else { return }
+
+            let result = await self.viewModel.searchBooks(
+                searchText: searchText,
+                token: tokens
+            )
+
+            await MainActor.run {
+                switch result {
+                case .success(let isEmpty):
+                    if isEmpty {
+                        self.resultsCollectionView.isHidden = true
+                        self.emptyStateView.view.isHidden = false
+                    } else {
+                        self.resultsCollectionView.isHidden = false
+                        self.emptyStateView.view.isHidden = true
+                    }
+
+                    self.resultsCollectionView.reloadData()
+
+                case .failure(let error):
+                    print("Error: \(error.localizedDescription)")
                 }
-                
-                resultsCollectionView.reloadData()
-                
-            case .failure(let error):
-                print("Error: \(error.localizedDescription)")
             }
         }
     }
+
     
     @objc func adjustForKeyboard(notification: Notification) {
         guard let keyboardValue = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue else { return }

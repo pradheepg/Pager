@@ -59,6 +59,7 @@ class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayo
 
         collectionView.reloadData()
     }
+    
     private func setUpSearchBar() {
         view.addSubview(searchBar)
         searchBar.placeholder = "Search..."
