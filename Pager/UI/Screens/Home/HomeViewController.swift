@@ -81,6 +81,10 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
 //        }
         
         viewModel.onError = { [weak self] errorMessage in
+            guard let self = self else {
+                return
+            }
+            Toast.show(message: "Error loading home data: \(errorMessage)", in: self.view)
             DispatchQueue.main.async {
                 print("Error loading home data: \(errorMessage)")
             }
@@ -88,7 +92,7 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
     }
     
     private func setupTitleAndProfile() {
-        profileButton.setImage(UIImage(systemName: "person"), for: .normal)//person.crop.circle.fill
+        profileButton.setImage(UIImage(systemName: "person"), for: .normal)
         profileButton.tintColor = .label
         profileButton.translatesAutoresizingMaskIntoConstraints = false
         profileButton.addTarget(self, action: #selector(profileButtonTapped), for: .touchUpInside)
@@ -235,6 +239,7 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
     }
     
     @objc func profileButtonTapped() {
+        Haptics.shared.play(.medium)
         let vc = ProfileViewController()
         vc.hidesBottomBarWhenPushed = true
         

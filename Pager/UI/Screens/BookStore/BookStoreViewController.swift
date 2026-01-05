@@ -73,6 +73,9 @@ class BookStoreViewController: UIViewController, UICollectionViewDataSource, UIC
         }
         
         viewModel.onError = { [weak self] errorMessage in
+            if let self = self {
+                Toast.show(message: "Error loading home data: \(errorMessage)", in: self.view)
+            }
             DispatchQueue.main.async {
                 print("Error loading home data: \(errorMessage)")
             }
@@ -283,7 +286,9 @@ class BookStoreViewController: UIViewController, UICollectionViewDataSource, UIC
     }
  
     func collectionView(_ collectionView: UICollectionView, contextMenuConfigurationForItemAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
-        
+        if indexPath.section == 1 {
+            return nil
+        }
         return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
             guard let self = self else { return nil }
             

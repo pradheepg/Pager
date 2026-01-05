@@ -38,7 +38,7 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
     var personalData = [
         ProfileOption(title: "Name", value: UserSession.shared.currentUser?.profileName ?? "Guest"),
         ProfileOption(title: "Email", value: UserSession.shared.currentUser?.email ?? "No Email"),
-        ProfileOption(title: "Date of Brith", value: UserSession.shared.currentUser?.formattedDOB ?? "NA" )
+        ProfileOption(title: "Date of Birth", value: UserSession.shared.currentUser?.formattedDOB ?? "NA" )
     ]
     
     var preferenceData = [
@@ -269,29 +269,6 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
                 cell.textLabel?.textColor = .systemRed
             }
             return cell
-//            if indexPath.row == 0 {
-//                guard let cell = tableView.dequeueReusableCell(withIdentifier: ChangePasswordLogoutCell.reuseKey, for: indexPath) as? ChangePasswordLogoutCell else {
-//                    return UITableViewCell()
-//                }
-//                cell.onChangePasswordTapped = { [weak self] in
-//                    let vc = ChangePasswordViewController()
-//                    self?.navigationController?.pushViewController(vc, animated: true)
-//                }
-//                
-//                cell.onLogoutTapped = { [weak self] in
-//                    self?.showLogoutAlert()
-//                }
-//                
-//                return cell
-//            } else {
-//                guard let cell = tableView.dequeueReusableCell(withIdentifier: LogoutCell.resueKey, for: indexPath) as? LogoutCell else {
-//                    return UITableViewCell()
-//                }
-//                cell.onLogoutTapped = { [weak self] in
-//                    self?.showLogoutAlert()
-//                }
-//                return cell
-//            }
         } else {
             guard let cell = tableView.dequeueReusableCell(withIdentifier: "EditableCell", for: indexPath) as? EditableProfileCell else {
                 return UITableViewCell()
@@ -349,7 +326,7 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
                     return
                 }
                 self.preferenceData[indexPath.row].value = genreString
-                self.genreSeleted()//driver
+                self.genreSeleted()
                 self.tableView.reloadData()
             }
             
@@ -484,7 +461,7 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
             }
             switch result {
             case .success():
-                print("helo helo helo helo")
+                Haptics.shared.notify(.success)
                 Toast.show(message: "Saved", in: self.view)
             case .failure(let error):
                 print(error.localizedDescription)
@@ -638,6 +615,7 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
         prefersLargeTitles(true)
     }
     private func showAlert(message: String) {
+        Haptics.shared.notify(.error)
         let alert = UIAlertController(title: "Invalid Input", message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default))
         present(alert, animated: true)

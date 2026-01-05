@@ -186,6 +186,8 @@ class EditReviewViewController: UIViewController, UITextFieldDelegate, UITextVie
             let starButton = UIButton()
             starButton.setImage(UIImage(systemName: "star", withConfiguration: largeConfig), for: .normal)
             starButton.setImage(UIImage(systemName: "star.fill", withConfiguration: largeConfig), for: .selected)
+            starButton.setImage(UIImage(systemName: "star.fill", withConfiguration: largeConfig), for: .highlighted)
+            starButton.setImage(UIImage(systemName: "star.fill", withConfiguration: largeConfig), for: [.selected, .highlighted])
             starButton.tintColor = AppColors.systemBlue
             starButton.tag = i
             starButton.addTarget(self, action: #selector(starTapped(_:)), for: .touchUpInside)
@@ -239,6 +241,7 @@ class EditReviewViewController: UIViewController, UITextFieldDelegate, UITextVie
     
     
     @objc func starTapped(_ sender: UIButton) {
+        Haptics.shared.play(.light)
         updateStarUI(rating: sender.tag)
     }
     
@@ -292,6 +295,7 @@ class EditReviewViewController: UIViewController, UITextFieldDelegate, UITextVie
         
         switch result {
         case .success():
+            Haptics.shared.notify(.success)
             Toast.show(message: "Review saved", in: self.view)
             navigationController?.popViewController(animated: true)
         case .failure(let error):
@@ -304,6 +308,7 @@ class EditReviewViewController: UIViewController, UITextFieldDelegate, UITextVie
         
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
         alert.addAction(UIAlertAction(title: "Delete", style: .destructive, handler: { [weak self] _ in
+            Haptics.shared.notify(.success)
             self?.performDelete()
         }))
         
@@ -315,14 +320,16 @@ class EditReviewViewController: UIViewController, UITextFieldDelegate, UITextVie
         switch result {
         case .success:
             self.navigationController?.popViewController(animated: true)
+            Haptics.shared.notify(.success)
             Toast.show(message: "Review deleted", in: view)
         case .failure(let error):
             self.navigationController?.popViewController(animated: true)
+            Haptics.shared.notify(.error)
             Toast.show(message: "Error in deleting review \(error.localizedDescription)", in: view)
         }
     }
     
-    private func makeHorizontalSeparator(color: UIColor = AppColors.subtitle) -> UIView {
+    private func makeHorizontalSeparator(color: UIColor = AppColors.separatorColor) -> UIView {
         let lineView = UIView()
         lineView.backgroundColor = color
         lineView.translatesAutoresizingMaskIntoConstraints = false
@@ -334,7 +341,9 @@ class EditReviewViewController: UIViewController, UITextFieldDelegate, UITextVie
     private func showAlert(title: String, message: String) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default))
+        
         present(alert, animated: true)
+        Haptics.shared.notify(.error)
     }
     
     @objc func dismissKeyboards() {

@@ -8,7 +8,7 @@
 import UIKit
 internal import CoreData
 
-class DetailViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate, UITextFieldDelegate {
+class DetailViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate, UITextFieldDelegate, UIGestureRecognizerDelegate {
 
     private let mainScrollView = UIScrollView()
     private let contentView = UIView()
@@ -30,6 +30,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
     private let averageRatingLabel: UILabel = UILabel()
     private let starStack: UIStackView = UIStackView()
     private let totalRatingLabel: UILabel = UILabel()
+//    private var initialTouchPoint: CGPoint = CGPoint(x: 0,y: 0)
     private let readMoreButton: UIButton = {
         let btn = UIButton(type: .system)
         btn.setTitle("More", for: .normal)
@@ -67,7 +68,6 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         }
         super.init(nibName: nil, bundle: nil)
         modalPresentationStyle = .fullScreen
-        print(book.coverImageUrl)
     }
     
     required init?(coder: NSCoder) {
@@ -88,12 +88,48 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         setupMoreMenu()
         updateButtonUI()
         setupCloseButton()
+//        setupPullToDismiss()
         if let existingReview = viewModel.getCurrentUserReview() {
             let savedRating = Int(existingReview.rating)
             updateStarUI(rating: savedRating)
         }
         
     }
+    
+//    private func setupPullToDismiss() {
+//        let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handleDismissPan(_:)))
+//        panGesture.delegate = self
+//        view.addGestureRecognizer(panGesture)
+//    }
+//
+//    @objc func handleDismissPan(_ gesture: UIPanGestureRecognizer) {
+//        print("Handel this is called")
+//        let translation = gesture.translation(in: view)
+//        let isVertical = abs(translation.y) > abs(translation.x)
+//        
+//        switch gesture.state {
+//        case .began:
+//            initialTouchPoint = gesture.location(in: view)
+//        case .changed:
+//            guard translation.y > 0 && isVertical else { return }
+//            
+//            view.transform = CGAffineTransform(translationX: 0, y: translation.y)
+//            view.alpha = 1.0 - min(translation.y / 800, 0.5)
+//            
+//        case .ended, .cancelled:
+//            if translation.y > 150 {
+//                onDismiss?()
+//                dismiss(animated: true, completion: nil)
+//            } else {
+//                UIView.animate(withDuration: 0.3) {
+//                    self.view.transform = .identity
+//                    self.view.alpha = 1.0
+//                }
+//            }
+//        default:
+//            break
+//        }
+//    }
     
     func updateButtonUI() {
         if isOwned {
@@ -221,7 +257,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         let config = UIImage.SymbolConfiguration(pointSize: 20, weight: .medium)
         moreButton.setImage(UIImage(systemName: "ellipsis", withConfiguration: config), for: .normal)
         moreButton.tintColor = AppColors.title
-        moreButton.backgroundColor = .systemGray6
+        moreButton.backgroundColor = AppColors.gridViewSecondaryColor
         moreButton.layer.cornerRadius = 25
         moreButton.layer.masksToBounds = true
         moreButton.translatesAutoresizingMaskIntoConstraints = false
@@ -332,6 +368,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         } else {
             switch viewModel.purchaseBook(viewModel.book) {
             case .success(let success):
+                Haptics.shared.notify(.success)
                 self.isOwned = true
                 
                 let alert = UIAlertController(
@@ -352,18 +389,15 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
                 
                 present(alert, animated: true)
             case .failure(let failure):
-                // Create the alert
                 let alert = UIAlertController(
                     title: "Purchase Failed",
                     message: "We couldn't add this book to your library.\nError: \(failure.localizedDescription)",
                     preferredStyle: .alert
                 )
                 
-                // Add an "OK" button
                 let okAction = UIAlertAction(title: "OK", style: .default, handler: nil)
                 alert.addAction(okAction)
                 
-                // Present it
                 self.present(alert, animated: true)
             }
             
@@ -530,7 +564,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
                 switch result {
                 case .success:
                     Toast.show(message: "Removed from Library", icon: "trash", in: self.view)
-                    
+                    Haptics.shared.notify(.success)
                     self.isOwned = false
                     
                 case .failure(let error):
@@ -659,6 +693,9 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
             starButtonStack.addArrangedSubview(starButton)
             starButton.setImage(UIImage(systemName: "star", withConfiguration: largeConfig), for: .normal)
             starButton.setImage(UIImage(systemName: "star.fill", withConfiguration: largeConfig), for: .selected)
+            starButton.setImage(UIImage(systemName: "star.fill", withConfiguration: largeConfig), for: .highlighted)
+            starButton.setImage(UIImage(systemName: "star.fill", withConfiguration: largeConfig), for: [.selected, .highlighted])
+            
             starButton.tintColor = AppColors.systemBlue
             starButton.tag = i
             starButton.addTarget(self, action: #selector(starTapped(_: )), for: .touchUpInside)
@@ -863,25 +900,22 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
                                        subtitle: genreEnum.rawValue,
                                        icon: true, genre: genreEnum)
         
-        // 2. Released Date
         let dateData = getReleasedDateStrings()
         let releasedView = makeInfoColumn(title: "Released",
                                           main: dateData.year,
                                           subtitle: dateData.date)
         
-        // 3. Language
         let langData = getLanguageStrings()
         let languageView = makeInfoColumn(title: "Language",
                                           main: langData.code,
                                           subtitle: langData.name)
         
-        // 4. Reading Stats (Length & Time)
         let stats = getReadingStats()
         
-        let lengthView = makeInfoColumn(title: "Length",
-                                        main: stats.pages,
-                                        subtitle: "Pages",
-                                        divider: true)
+//        let lengthView = makeInfoColumn(title: "Length",
+//                                        main: stats.pages,
+//                                        subtitle: "Pages",
+//                                        divider: true)
         
         let readingTimeView = makeInfoColumn(title: "Reading time",
                                              main: stats.timeMain,
@@ -1033,11 +1067,11 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         
         if divider {
             let divider = UIView()
-            divider.backgroundColor = .systemGray3
+            divider.backgroundColor = AppColors.separatorColor
             divider.translatesAutoresizingMaskIntoConstraints = false
             container.addSubview(divider)
             NSLayoutConstraint.activate([
-                divider.widthAnchor.constraint(equalToConstant: 1),
+                divider.widthAnchor.constraint(equalToConstant: 0.8),
                 divider.topAnchor.constraint(equalTo: container.topAnchor, constant: 14),
                 divider.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -14),
                 divider.trailingAnchor.constraint(equalTo: container.trailingAnchor)
@@ -1060,7 +1094,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         dismiss(animated: true, completion: nil)
     }
     
-    func makeVerticalSeparator(color: UIColor = .white,
+    func makeVerticalSeparator(color: UIColor = AppColors.separatorColor,
                                inset: CGFloat = 0) -> UIView {
         let lineView = UIView()
         lineView.backgroundColor = color
@@ -1084,6 +1118,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
     }
     
     @objc func starTapped(_ sender: UIButton) {
+        
         if !isOwned {
             let alert = UIAlertController(
                 title: "Purchase Required",
@@ -1094,6 +1129,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
             alert.addAction(UIAlertAction(title: "OK", style: .default))
             
             present(alert, animated: true)
+            Haptics.shared.notify(.error)
             return
         }
         updateTotalRatingText()
@@ -1104,6 +1140,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
             updateStarUI(rating: selectedRating)
             refreshHeaderUI()
             reviewCollectionView.reloadData()
+            Haptics.shared.play(.light)
             Toast.show(message: "Rating Added", in: self.view)
             
         case .failure(let error):

@@ -327,6 +327,7 @@ class MyBooksViewController: UIViewController, UICollectionViewDataSource, UICol
             switch result {
             case .success():
                 if let self = self {
+                    Haptics.shared.notify(.success)
                     Toast.show(message: "Book Removed from Library ", in: view)
                 }
                 self?.didFinishTask?()

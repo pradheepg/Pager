@@ -7,40 +7,21 @@
 
 import UIKit
 
+enum ThemeMode: Int {
+    case light = 0
+    case dark = 1
+    case system = 2
+    
+    var uiInterfaceStyle: UIUserInterfaceStyle {
+        switch self {
+        case .light: return .light
+        case .dark: return .dark
+        case .system: return .unspecified
+        }
+    }
+}
 
 class BookPaginator {
-    
-    
-//    static func splitTextIntoPages(text: String, size: CGSize, font: UIFont) -> [String] {
-//        let attributedString = NSAttributedString(string: text, attributes: [.font: font])
-//        let framesetter = CTFramesetterCreateWithAttributedString(attributedString)
-//        
-//        var pageRange = CFRange()
-//        var textPos = 0
-//        let totalLength = attributedString.length
-//        var pages = [String]()
-//        
-//        while textPos < totalLength {
-//            let path = CGPath(rect: CGRect(origin: .zero, size: size), transform: nil)
-//            
-//            let frame = CTFramesetterCreateFrame(framesetter, CFRange(location: textPos, length: 0), path, nil)
-//            
-//            pageRange = CTFrameGetVisibleStringRange(frame)
-//            print(text.count,"-=-=-=-",textPos ,"aldjaksdj", pageRange.length)
-//            let pageStart = text.index(text.startIndex, offsetBy: textPos)
-//            let pageEnd = text.index(text.startIndex, offsetBy: textPos + pageRange.length)
-//            let pageString = String(text[pageStart..<pageEnd])
-//            
-//            pages.append(pageString)
-//            if pageRange.length == 0 {
-//                print("Error: Page frame is too small to fit any text.")
-//                break
-//            }
-//            textPos += pageRange.length
-//        }
-//        
-//        return pages
-//    }
     
     static func splitTextIntoPages(text: String, size: CGSize, font: UIFont) -> [String] {
         let attributedString = NSAttributedString(string: text, attributes: [.font: font])
@@ -60,7 +41,7 @@ class BookPaginator {
             let nsRange = NSRange(location: textPos, length: pageRange.length)
             
             if nsRange.location + nsRange.length > totalLength {
-                 break
+                break
             }
             
             let pageString = attributedString.attributedSubstring(from: nsRange).string
@@ -88,7 +69,7 @@ class PageContentViewController: UIViewController {
             textView.font = .systemFont(ofSize: fontSize)
         }
     }
-
+    
     
     let bookTitle: UILabel = {
         let lable = UILabel()
@@ -125,19 +106,17 @@ class PageContentViewController: UIViewController {
         super.viewDidLoad()
         view.backgroundColor = AppColors.background
         applyTheme()
+        bookTitle.setContentHuggingPriority(.defaultHigh, for: .vertical)
         view.addSubview(bookTitle)
         view.addSubview(textView)
         view.addSubview(pageNumber)
-        
         NSLayoutConstraint.activate([
             bookTitle.topAnchor.constraint(equalTo: view.topAnchor, constant: 10),
             
-            // Center it
             bookTitle.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             
             bookTitle.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 16),
             bookTitle.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -16),
-            
             
             pageNumber.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
             
@@ -157,8 +136,10 @@ class PageContentViewController: UIViewController {
     }
     
     private func applyTheme() {
-        view.backgroundColor = AppColors.background
-        textView.textColor = AppColors.text
+//        view.backgroundColor = AppColors.background
+//        textView.textColor = AppColors.text
+        view.backgroundColor = AppColors.readBookBg
+        textView.textColor = AppColors.readBookFg
         bookTitle.textColor = AppColors.secondaryText
         pageNumber.textColor = AppColors.secondaryText
     }
@@ -167,7 +148,7 @@ class PageContentViewController: UIViewController {
         super.traitCollectionDidChange(previousTraitCollection)
         applyTheme()
     }
-
+    
 }
 
 class MainBookReaderViewController: UIViewController, SettingsViewControllerDelegate {
@@ -196,8 +177,8 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
     var pageContentVCs = NSHashTable<PageContentViewController>.weakObjects()
     let settingsVC = SettingsViewController()
     var fontSize = 18
-//    var themeTitle:UIColor = .black
-//    var themeBackGroung:UIColor = .white
+    //    var themeTitle:UIColor = .black
+    //    var themeBackGroung:UIColor = .white
     var transitionStyle: UIPageViewController.TransitionStyle = .scroll
     var navigationOrientation: UIPageViewController.NavigationOrientation = .horizontal
     var startTime: Date? = Date()
@@ -234,7 +215,7 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
     }
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = AppColors.background
+        view.backgroundColor = AppColors.readBookBg
         view.addSubview(loadingSpinner)
         NSLayoutConstraint.activate([
             loadingSpinner.centerXAnchor.constraint(equalTo: view.centerXAnchor),
@@ -242,8 +223,8 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
         ])
         loadingSpinner.startAnimating()
         viewModel.loadSetting()
-
-        didChangeTheme(isDark: viewModel.isDark)
+        
+        didChangeTheme(to: viewModel.themeMode)
         didChangeNavigationOrientation(to: viewModel.isSwipe ? .horizontal : .vertical)
         didChangePageStyle(to: viewModel.isSide ? .scroll : .pageCurl)
         
@@ -287,7 +268,7 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
                 }
                 self.currentIndex = safeIndex
                 self.pageControllerSetUp(startPage: safeIndex)
-//                self.setupSliderLayout()
+                //                self.setupSliderLayout()
                 self.setUpGesture()
                 //                    self.setUpNavBarItem()
                 self.setupPageNumberLabel()
@@ -306,7 +287,7 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
         view.addSubview(pageNumberContainer)
         
         
-//        pageNumberLabel.textColor = themeTitle
+        //        pageNumberLabel.textColor = themeTitle
         
         pageNumberContainer.contentView.addSubview(pageNumberLabel)
         
@@ -339,84 +320,64 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
         managePageControllerChange(transitionStyle: transitionStyle, navigationOrientation: nil)
     }
     
-//    func didChangeTheme(isDark: Bool) {
-//        viewModel.isDark = isDark
-//        if isDark {
-//            themeBackGroung = .black
-//            themeTitle = .white
-//            view.backgroundColor = themeBackGroung
-//            for vc in pageContentVCs.allObjects {
-//                vc.textView.textColor = themeTitle
-//                vc.view.backgroundColor = themeBackGroung
-//            }
-//            let appearance = UINavigationBarAppearance()
-//            appearance.titleTextAttributes = [.foregroundColor: themeTitle]
-//            
-//            navigationController?.navigationBar.standardAppearance = appearance
-//            navigationController?.navigationBar.compactAppearance = appearance
-//            navigationController?.navigationBar.scrollEdgeAppearance = appearance
-//
-//        } else {
-//            themeBackGroung = .white
-//            themeTitle = .black
-//            view.backgroundColor = themeBackGroung
-//            for vc in pageContentVCs.allObjects {
-//                vc.textView.textColor = themeTitle
-//                
-//                vc.view.backgroundColor = themeBackGroung
-//            }
-//            let appearance = UINavigationBarAppearance()
-//            appearance.titleTextAttributes = [.foregroundColor: themeTitle]
-//            
-//            navigationController?.navigationBar.standardAppearance = appearance
-//            navigationController?.navigationBar.compactAppearance = appearance
-//            navigationController?.navigationBar.scrollEdgeAppearance = appearance
-//        }
-//        settingsVC.changeTheme(isDark: isDark)
-//        pageNumberLabel.textColor = themeTitle
-//        
-//        
-//    }
+    //    func didChangeTheme(isDark: Bool) {
+    //        viewModel.isDark = isDark
+    //        let style: UIUserInterfaceStyle = isDark ? .dark : .light
+    //        self.overrideUserInterfaceStyle = style
+    ////        navigationController?.overrideUserInterfaceStyle = style
+    ////        overrideUserInterfaceStyle = style
+    //        settingsVC.overrideUserInterfaceStyle = style//  applyThemeOverride(isDark: isDark)
+    //
+    //        let appearance = UINavigationBarAppearance()
+    //        appearance.configureWithOpaqueBackground()
+    //        appearance.titleTextAttributes = [.foregroundColor: AppColors.text]
+    //        appearance.backgroundColor = AppColors.background
+    //
+    //
+    //        //driver
+    ////        navigationController?.navigationBar.standardAppearance = appearance
+    ////        navigationController?.navigationBar.compactAppearance = appearance
+    ////        navigationController?.navigationBar.scrollEdgeAppearance = appearance
+    ////        setNeedsStatusBarAppearanceUpdate()
+    //        pageNumberLabel.textColor = AppColors.text
+    //    }
     
-    func didChangeTheme(isDark: Bool) {
-        viewModel.isDark = isDark
-        let style: UIUserInterfaceStyle = isDark ? .dark : .light
+    func didChangeTheme(to modeIndex: Int) {
+        viewModel.themeMode = modeIndex
+        
+        let mode = ThemeMode(rawValue: modeIndex) ?? .system
+        let style = mode.uiInterfaceStyle
+        
         self.overrideUserInterfaceStyle = style
-//        navigationController?.overrideUserInterfaceStyle = style
-//        overrideUserInterfaceStyle = style
-        settingsVC.overrideUserInterfaceStyle = style//  applyThemeOverride(isDark: isDark)
+        
+        settingsVC.overrideUserInterfaceStyle = style
         
         let appearance = UINavigationBarAppearance()
         appearance.configureWithOpaqueBackground()
+        
         appearance.titleTextAttributes = [.foregroundColor: AppColors.text]
         appearance.backgroundColor = AppColors.background
         
-        
-        //driver
-//        navigationController?.navigationBar.standardAppearance = appearance
-//        navigationController?.navigationBar.compactAppearance = appearance
-//        navigationController?.navigationBar.scrollEdgeAppearance = appearance
-//        setNeedsStatusBarAppearanceUpdate()
+        setNeedsStatusBarAppearanceUpdate()
         pageNumberLabel.textColor = AppColors.text
+        
+        if presentedViewController == settingsVC {
+            settingsVC.applyThemeOverride(modeIndex: modeIndex)
+        }
     }
     
     private func setupPpageNumberLabel() {
         view.addSubview(pageNumberLabel)
-//        pageNumberLabel.textColor = themeTitle
         
         NSLayoutConstraint.activate([
-            // Center horizontally
             pageNumberLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             
-            // Pin to bottom (Adjust constant based on where your slider is)
-            // If slider is hidden by default, this sits at the bottom.
             pageNumberLabel.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -10)
         ])
     }
     
     private func updatePageLabel(currentIndex: Int) {
         let totalPages = pages.count
-        // +1 because arrays start at 0, but humans count from 1
         pageNumberLabel.text = "Page \(currentIndex + 1) of \(totalPages)"
     }
     
@@ -448,18 +409,18 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
         return view
     }()
     
-//    private let pageSlider: UISlider = {
-//        let slider = UISlider()
-//        slider.translatesAutoresizingMaskIntoConstraints = false
-//        slider.minimumTrackTintColor = .label
-//        slider.maximumTrackTintColor = .secondaryLabel
-//        
-//        let config = UIImage.SymbolConfiguration(scale: .small)
-//        let thumb = UIImage(systemName: "circle.fill", withConfiguration: config)
-//        slider.setThumbImage(thumb, for: .normal)
-//        
-//        return slider
-//    }()
+    //    private let pageSlider: UISlider = {
+    //        let slider = UISlider()
+    //        slider.translatesAutoresizingMaskIntoConstraints = false
+    //        slider.minimumTrackTintColor = .label
+    //        slider.maximumTrackTintColor = .secondaryLabel
+    //
+    //        let config = UIImage.SymbolConfiguration(scale: .small)
+    //        let thumb = UIImage(systemName: "circle.fill", withConfiguration: config)
+    //        slider.setThumbImage(thumb, for: .normal)
+    //
+    //        return slider
+    //    }()
     
     
     
@@ -540,16 +501,16 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
     
     func presentSettings() {
         settingsVC.delegate = self
-        settingsVC.configure(isDark: viewModel.isDark, isVertical: !viewModel.isSwipe, isCurl: !viewModel.isSide,totalPages: pages.count, currentPage: currentIndex)
+        settingsVC.configure(themeMode: viewModel.themeMode, isVertical: !viewModel.isSwipe, isCurl: !viewModel.isSide,totalPages: pages.count, currentPage: currentIndex)
         if let sheet = settingsVC.sheetPresentationController {
             sheet.detents = [.medium()
-//                .custom(resolver: { context in
-//                    return 300
-//                })
+                             //                .custom(resolver: { context in
+                             //                    return 300
+                             //                })
             ]
             sheet.prefersGrabberVisible = true
         }
-
+        
         
         present(settingsVC, animated: true)
     }
@@ -557,21 +518,21 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
         presentSettings()
     }
     
-//    private func setupSliderLayout() {
-//        view.addSubview(pageSlider)
-//        pageSlider.isHidden = false
-//        pageSlider.minimumValue = 0
-//        pageSlider.maximumValue = Float(max(0, pages.count - 1))
-//        pageSlider.value = 0
-//        pageSlider.isHidden = true
-//        pageSlider.addTarget(self, action: #selector(handleSliderChange), for: .valueChanged)
-//        NSLayoutConstraint.activate([
-//            pageSlider.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-//            pageSlider.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-//            pageSlider.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -1),
-//            pageSlider.heightAnchor.constraint(equalToConstant: 30)
-//        ])
-//    }
+    //    private func setupSliderLayout() {
+    //        view.addSubview(pageSlider)
+    //        pageSlider.isHidden = false
+    //        pageSlider.minimumValue = 0
+    //        pageSlider.maximumValue = Float(max(0, pages.count - 1))
+    //        pageSlider.value = 0
+    //        pageSlider.isHidden = true
+    //        pageSlider.addTarget(self, action: #selector(handleSliderChange), for: .valueChanged)
+    //        NSLayoutConstraint.activate([
+    //            pageSlider.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+    //            pageSlider.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+    //            pageSlider.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -1),
+    //            pageSlider.heightAnchor.constraint(equalToConstant: 30)
+    //        ])
+    //    }
     
     @objc func handleSliderChange(_ sender: UISlider) {
         let targetIndex = Int(sender.value.rounded())
@@ -592,8 +553,8 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
         vc.pageText = pages[index]
         vc.bookTitleString = bookTitle
         vc.pageIndex = index
-//        vc.textView.textColor = themeTitle
-//        vc.view.backgroundColor = themeBackGroung
+        //        vc.textView.textColor = themeTitle
+        //        vc.view.backgroundColor = themeBackGroung
         vc.fontSize = CGFloat(fontSize)
         pageContentVCs.add(vc)
         return vc
@@ -605,7 +566,7 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
             startTime = Date()
         }
     }
-
+    
     private func saveAndResetSession() {
         guard let start = startTime else { return }
         
@@ -616,19 +577,19 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
     
     @objc func appWillEnterForeground() {
         startSession()
-     }
-
-     @objc func appDidEnterBackground() {
-         saveAndResetSession()
-     }
-
+    }
+    
+    @objc func appDidEnterBackground() {
+        saveAndResetSession()
+    }
+    
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         viewModel.saveProgress(progressValue: currentIndex)
         viewModel.saveSetting()
         saveAndResetSession()
         restoreDefaultNavbar()
-
+        
     }
     
     override func viewDidDisappear(_ animated: Bool) {
@@ -640,30 +601,30 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
     
     private func configureTransparentNavbar() {
         guard let navBar = navigationController?.navigationBar else { return }
-
+        
         let appearance = UINavigationBarAppearance()
         appearance.configureWithTransparentBackground()
-
+        
         appearance.titleTextAttributes = [
             .foregroundColor: AppColors.text
         ]
-
+        
         navBar.standardAppearance = appearance
         navBar.scrollEdgeAppearance = appearance
         navBar.compactAppearance = appearance
-
+        
         navBar.isTranslucent = true
     }
-
+    
     private func restoreDefaultNavbar() {
         guard let navBar = navigationController?.navigationBar else { return }
-
+        
         let appearance = UINavigationBarAppearance()
         appearance.configureWithDefaultBackground()
         navBar.standardAppearance = appearance
         navBar.scrollEdgeAppearance = appearance
         navBar.compactAppearance = appearance
-
+        
         navBar.isTranslucent = true
     }
     
@@ -686,30 +647,30 @@ extension MainBookReaderViewController: UIPageViewControllerDataSource, UIPageVi
         return viewControllerAtIndex(currentVC.pageIndex + 1)
     }
     
-//    func pageViewController(_ pageViewController: UIPageViewController, didFinishAnimating finished: Bool, previousViewControllers: [UIViewController], transitionCompleted completed: Bool) {
-//        if completed,
-//           let currentVC = pageViewController.viewControllers?.first as? PageContentViewController {
-//            self.currentIndex = currentVC.pageIndex
-//            pageSlider.setValue(Float(self.currentIndex), animated: true)
-//            updatePageLabel(currentIndex: self.currentIndex)
-//        }
-//    }
-    func didChangePage(to index: Int) {
-            guard index != currentIndex else { return }
-            
-            // Calculate direction for animation
-            let direction: UIPageViewController.NavigationDirection = index > currentIndex ? .forward : .reverse
-            
-            if let targetVC = viewControllerAtIndex(index) {
-                pageController.setViewControllers([targetVC], direction: direction, animated: false) // animated: false feels snappier when dragging slider
-                currentIndex = index
-                updatePageLabel(currentIndex: index) // Updates the small label at bottom of main screen
-            }
+    func pageViewController(_ pageViewController: UIPageViewController, didFinishAnimating finished: Bool, previousViewControllers: [UIViewController], transitionCompleted completed: Bool) {
+        if completed,
+           let currentVC = pageViewController.viewControllers?.first as? PageContentViewController {
+            self.currentIndex = currentVC.pageIndex
+            //            pageSlider.setValue(Float(self.currentIndex), animated: true)
+            updatePageLabel(currentIndex: self.currentIndex)
         }
+    }
+    func didChangePage(to index: Int) {
+        guard index != currentIndex else { return }
+        
+        // Calculate direction for animation
+        let direction: UIPageViewController.NavigationDirection = index > currentIndex ? .forward : .reverse
+        
+        if let targetVC = viewControllerAtIndex(index) {
+            pageController.setViewControllers([targetVC], direction: direction, animated: false) // animated: false feels snappier when dragging slider
+            currentIndex = index
+            updatePageLabel(currentIndex: index) // Updates the small label at bottom of main screen
+        }
+    }
     func setUpNavBarItem() {
         //        navigationItem.title = bookTitle
         let appearance = UINavigationBarAppearance()
-//        appearance.titleTextAttributes = [.foregroundColor: themeTitle]
+        //        appearance.titleTextAttributes = [.foregroundColor: themeTitle]
         
         navigationController?.navigationBar.standardAppearance = appearance
         navigationController?.navigationBar.compactAppearance = appearance
@@ -749,7 +710,7 @@ extension MainBookReaderViewController: UIPageViewControllerDataSource, UIPageVi
 
 protocol SettingsViewControllerDelegate: AnyObject {
     func didChangePageStyle(to style: UIPageViewController.TransitionStyle)
-    func didChangeTheme(isDark: Bool)
+    func didChangeTheme(to mode: Int)
     func didChangeNavigationOrientation(to style: UIPageViewController.NavigationOrientation)
     func didChangePage(to index: Int)
 }
@@ -777,13 +738,15 @@ class SettingsViewController: UIViewController {
     }()
     
     private lazy var themeTile: SettingsTileView = {
-        let items: [Any] = [UIImage(systemName: "sun.max.fill")!, UIImage(systemName: "moon.fill")!]
+        let items: [Any] = [
+            UIImage(systemName: "sun.max.fill")!,
+            UIImage(systemName: "moon.fill")!,
+            UIImage(systemName: "iphone")!
+        ]
         let tile = SettingsTileView(title: "Theme", items: items)
         
         tile.onSegmentChanged = { [weak self] index in
-            let isDark = (index == 1)
-            self?.delegate?.didChangeTheme(isDark: isDark)
-//            self?.changeTheme(isDark: isDark)
+            self?.delegate?.didChangeTheme(to: index)
         }
         return tile
     }()
@@ -798,13 +761,32 @@ class SettingsViewController: UIViewController {
         return tile
     }()
     
-    private let pageLabel: UILabel = {
-            let label = UILabel()
-            label.font = .monospacedDigitSystemFont(ofSize: 15, weight: .medium)
-            label.textColor = AppColors.secondaryText
-            label.textAlignment = .center
-            return label
-        }()
+    private lazy var pageLabel: UILabel = {
+        let label = UILabel()
+        label.font = .monospacedDigitSystemFont(ofSize: 15, weight: .medium)
+        label.textColor = AppColors.secondaryText
+        label.textAlignment = .center
+        label.layer.borderWidth = 1.0
+        
+        label.layer.borderColor = AppColors.secondaryText.withAlphaComponent(0.4).cgColor
+        
+        label.layer.cornerRadius = 8
+        
+        label.backgroundColor = AppColors.secondaryText.withAlphaComponent(0.1)
+        
+        label.clipsToBounds = true
+        
+        label.isUserInteractionEnabled = true
+        
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(didTapPageLabel))
+        label.addGestureRecognizer(tapGesture)
+        
+        return label
+    }()
+    
+    @objc func didTapPageLabel() {
+        presentGoToPageAlert()
+    }
     
     private let pageSlider: UISlider = {
         let slider = UISlider()
@@ -812,7 +794,7 @@ class SettingsViewController: UIViewController {
         slider.minimumTrackTintColor = .label
         slider.maximumTrackTintColor = .secondaryLabel
         
-        let config = UIImage.SymbolConfiguration(scale: .medium)
+        let config = UIImage.SymbolConfiguration(scale: .large)
         let thumb = UIImage(systemName: "circle.fill", withConfiguration: config)
         slider.setThumbImage(thumb, for: .normal)
         
@@ -820,31 +802,38 @@ class SettingsViewController: UIViewController {
     }()
     
     private lazy var sliderContainer: UIView = {
-            let view = UIView()
-            view.backgroundColor = AppColors.tileBackground // Match your other tiles
-            view.layer.cornerRadius = 12
-            view.layer.cornerCurve = .continuous
-            view.translatesAutoresizingMaskIntoConstraints = false
-            
-            view.addSubview(pageLabel)
-            view.addSubview(pageSlider)
-            
-            pageLabel.translatesAutoresizingMaskIntoConstraints = false
-            
-            NSLayoutConstraint.activate([
-                pageLabel.topAnchor.constraint(equalTo: view.topAnchor, constant: 16),
-                pageLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-                
-                pageSlider.topAnchor.constraint(equalTo: pageLabel.bottomAnchor, constant: 12),
-                pageSlider.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-                pageSlider.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-                pageSlider.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -16)
-            ])
-            
-            pageSlider.addTarget(self, action: #selector(sliderValueChanged(_:)), for: .valueChanged)
-            
-            return view
-        }()
+        let view = UIView()
+        view.backgroundColor = AppColors.tileBackground
+        view.layer.cornerRadius = 12
+        view.layer.cornerCurve = .continuous
+        view.translatesAutoresizingMaskIntoConstraints = false
+        
+        view.addSubview(pageLabel)
+        view.addSubview(pageSlider)
+        
+        pageLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate([
+            pageLabel.topAnchor.constraint(equalTo: view.topAnchor, constant: 16),
+            pageLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            pageLabel.widthAnchor.constraint(greaterThanOrEqualToConstant: 100),
+            pageLabel.heightAnchor.constraint(greaterThanOrEqualToConstant: 30),
+            pageSlider.topAnchor.constraint(equalTo: pageLabel.bottomAnchor, constant: 12),
+            pageSlider.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            pageSlider.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            pageSlider.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -16)
+        ])
+        
+        pageSlider.addTarget(self, action: #selector(sliderValueChanged(_:)), for: .valueChanged)
+        pageSlider.addTarget(self, action: #selector(sliderDidEndSliding), for: .touchUpInside)
+
+        pageSlider.addTarget(self, action: #selector(sliderDidEndSliding), for: .touchUpOutside)
+        return view
+    }()
+    
+    @objc func sliderDidEndSliding(_ sender: UISlider) {
+        Haptics.shared.play(.medium)
+    }
     
     private lazy var mainStack: UIStackView = {
         let stack = UIStackView(arrangedSubviews: [titleLabel, sliderContainer, scrollTile, themeTile, transitionTile])
@@ -855,7 +844,7 @@ class SettingsViewController: UIViewController {
         stack.setCustomSpacing(24, after: titleLabel)
         return stack
     }()
-        
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = AppColors.background
@@ -868,43 +857,97 @@ class SettingsViewController: UIViewController {
         ])
     }
     
-    func configure(isDark: Bool, isVertical: Bool, isCurl: Bool, totalPages: Int, currentPage: Int) {
-        themeTile.setSelectedIndex(isDark ? 1 : 0)
+    func configure(themeMode: Int, isVertical: Bool, isCurl: Bool, totalPages: Int, currentPage: Int) {
+        themeTile.setSelectedIndex(themeMode)
+        
         scrollTile.setSelectedIndex(isVertical ? 1 : 0)
         transitionTile.setSelectedIndex(isCurl ? 1 : 0)
-        applyThemeOverride(isDark: isDark)
+        
+        applyThemeOverride(modeIndex: themeMode)
+        
         self.totalPages = totalPages
         pageSlider.minimumValue = 0
         pageSlider.maximumValue = Float(max(0, totalPages - 1))
         pageSlider.setValue(Float(currentPage), animated: true)
         updatePageLabel(current: currentPage)
     }
-    func applyThemeOverride(isDark: Bool) {
-        self.overrideUserInterfaceStyle = isDark ? .dark : .light
+    
+    func applyThemeOverride(modeIndex: Int) {
+        guard let mode = ThemeMode(rawValue: modeIndex) else { return }
+        self.overrideUserInterfaceStyle = mode.uiInterfaceStyle
+        
+        let isActuallyDark = mode == .dark || (mode == .system && traitCollection.userInterfaceStyle == .dark)
+        
+        [scrollTile, themeTile, transitionTile].forEach { $0.updateTheme(isDark: isActuallyDark) }
     }
     
     func changeTheme(isDark: Bool) {
         if isDark {
-                view.backgroundColor = .black
-                titleLabel.textColor = .white
-            } else {
-                view.backgroundColor = UIColor(red: 0.95, green: 0.95, blue: 0.97, alpha: 1.0)
-                titleLabel.textColor = .black
-            }
-            
-            [scrollTile, themeTile, transitionTile].forEach { $0.updateTheme(isDark: isDark) }
-        }
-    @objc private func sliderValueChanged(_ sender: UISlider) {
-            let index = Int(sender.value.rounded())
-            updatePageLabel(current: index)
-            
-            // Notify Main VC
-            delegate?.didChangePage(to: index)
+            view.backgroundColor = .black
+            titleLabel.textColor = .white
+        } else {
+            view.backgroundColor = UIColor(red: 0.95, green: 0.95, blue: 0.97, alpha: 1.0)
+            titleLabel.textColor = .black
         }
         
-        private func updatePageLabel(current: Int) {
-            pageLabel.text = "Page \(current + 1) of \(totalPages)"
+        [scrollTile, themeTile, transitionTile].forEach { $0.updateTheme(isDark: isDark) }
+    }
+    @objc private func sliderValueChanged(_ sender: UISlider) {
+        let index = Int(sender.value.rounded())
+        updatePageLabel(current: index)
+        
+        delegate?.didChangePage(to: index)
+    }
+    
+    private func updatePageLabel(current: Int) {
+        pageLabel.text = " Page \(current + 1) of \(totalPages) "
+    }
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        if self.overrideUserInterfaceStyle == .unspecified {
+            let isDark = traitCollection.userInterfaceStyle == .dark
+            [scrollTile, themeTile, transitionTile].forEach { $0.updateTheme(isDark: isDark) }
         }
+    }
+    func presentGoToPageAlert() {
+        let totalPages = totalPages
+        let alert = UIAlertController(
+            title: "Go to Page",
+            message: "Enter a page number (1 - \(totalPages))",
+            preferredStyle: .alert
+        )
+        
+        alert.addTextField { textField in
+            textField.placeholder = "Page #"
+            textField.keyboardType = .numberPad
+            textField.textAlignment = .center
+        }
+        
+        let goAction = UIAlertAction(title: "Go", style: .default) { [weak self] _ in
+            guard let self = self,
+                  let text = alert.textFields?.first?.text,
+                  let pageInput = Int(text) else { return }
+            
+            let targetIndex = pageInput - 1
+            
+            if targetIndex >= 0 && targetIndex < self.totalPages {
+                updatePageLabel(current: targetIndex)
+                delegate?.didChangePage(to: targetIndex)
+                pageSlider.setValue(Float(targetIndex), animated: true)
+                Haptics.shared.play(.medium)
+            } else {
+                Haptics.shared.notify(.warning)
+                Toast.show(message: "Invalid page number entered", in: self.view)
+            }
+        }
+        
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+        
+        alert.addAction(cancelAction)
+        alert.addAction(goAction)
+        
+        present(alert, animated: true)
+    }
 }
 
 class SettingsTileView: UIView {
@@ -951,7 +994,7 @@ class SettingsTileView: UIView {
     }
     
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
-        
+    
     private func setupLayout() {
         addSubview(label)
         addSubview(segmentedControl)
@@ -967,11 +1010,12 @@ class SettingsTileView: UIView {
             
             segmentedControl.leadingAnchor.constraint(greaterThanOrEqualTo: label.trailingAnchor, constant: 16),
             
-             segmentedControl.widthAnchor.constraint(greaterThanOrEqualToConstant: 120)
+            segmentedControl.widthAnchor.constraint(greaterThanOrEqualToConstant: 180)
         ])
     }
-        
+    
     @objc private func segmentAction(_ sender: UISegmentedControl) {
+        Haptics.shared.play(.medium)
         onSegmentChanged?(sender.selectedSegmentIndex)
     }
     
@@ -979,14 +1023,14 @@ class SettingsTileView: UIView {
         segmentedControl.selectedSegmentIndex = index
     }
     func updateTheme(isDark: Bool) {
-            if isDark {
-                self.backgroundColor = UIColor(white: 0.12, alpha: 1.0)
-                label.textColor = .white
-                segmentedControl.overrideUserInterfaceStyle = .dark
-            } else {
-                self.backgroundColor = .white
-                label.textColor = .black
-                segmentedControl.overrideUserInterfaceStyle = .light
-            }
+        if isDark {
+            self.backgroundColor = UIColor(white: 0.12, alpha: 1.0)
+            label.textColor = .white
+            segmentedControl.overrideUserInterfaceStyle = .dark
+        } else {
+            self.backgroundColor = .white
+            label.textColor = .black
+            segmentedControl.overrideUserInterfaceStyle = .light
         }
+    }
 }

@@ -59,6 +59,7 @@ class AppearanceSettingCell: UITableViewCell {
         ])
     }
     @objc private func didChangeTheme(_ sender: UISegmentedControl) {
+        Haptics.shared.play(.light)
         UserDefaults.standard.set(sender.selectedSegmentIndex, forKey: "selectedThemeIndex")
         let selectedStyle: UIUserInterfaceStyle
         

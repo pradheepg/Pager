@@ -102,6 +102,8 @@ class ReviewViewController: UIViewController, UICollectionViewDelegate, UICollec
             starButtonStack.addArrangedSubview(starButton)
             starButton.setImage(UIImage(systemName: "star", withConfiguration: largeConfig), for: .normal)
             starButton.setImage(UIImage(systemName: "star.fill", withConfiguration: largeConfig), for: .selected)
+            starButton.setImage(UIImage(systemName: "star.fill", withConfiguration: largeConfig), for: .highlighted)
+            starButton.setImage(UIImage(systemName: "star.fill", withConfiguration: largeConfig), for: [.selected, .highlighted])
             starButton.tintColor = AppColors.systemBlue
             starButton.tag = i
             starButton.addTarget(self, action: #selector(starTapped(_: )), for: .touchUpInside)
@@ -321,6 +323,7 @@ class ReviewViewController: UIViewController, UICollectionViewDelegate, UICollec
             alert.addAction(UIAlertAction(title: "OK", style: .default))
             
             present(alert, animated: true)
+            Haptics.shared.notify(.error)
             return
         }
         updateTotalRatingText()
@@ -331,6 +334,7 @@ class ReviewViewController: UIViewController, UICollectionViewDelegate, UICollec
             updateStarUI(rating: selectedRating)
             refreshHeaderUI()
             reviewCollectionView.reloadData()
+            Haptics.shared.play(.light)
             Toast.show(message: "Rating Added", in: self.view)
         case .failure(let error):
             print("Error: \(error)")
