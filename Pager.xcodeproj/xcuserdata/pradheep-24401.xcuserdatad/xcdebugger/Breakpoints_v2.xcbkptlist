@@ -126,8 +126,8 @@
             filePath = "Pager/UI/Screens/Home/HomeViewController.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "670"
-            endingLineNumber = "670"
+            startingLineNumber = "691"
+            endingLineNumber = "691"
             landmarkName = "showNameExistsAlert(name:)"
             landmarkType = "7">
          </BreakpointContent>
@@ -142,8 +142,8 @@
             filePath = "Pager/UI/Screens/Home/HomeViewController.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "670"
-            endingLineNumber = "670"
+            startingLineNumber = "691"
+            endingLineNumber = "691"
             landmarkName = "showNameExistsAlert(name:)"
             landmarkType = "7">
          </BreakpointContent>

@@ -44,7 +44,7 @@ final class ReviewCell: UICollectionViewCell {
         ])
         
 //        container.addSubview(reviewTitleLable)
-        reviewTitleLable.numberOfLines = 2
+        reviewTitleLable.numberOfLines = 1
         reviewTitleLable.font = .systemFont(ofSize: 20, weight: .semibold)
         reviewTitleLable.textAlignment = .left
         reviewTitleLable.textColor = AppColors.title
@@ -60,7 +60,7 @@ final class ReviewCell: UICollectionViewCell {
         
         
 //        container.addSubview(metaLable)
-        metaLable.numberOfLines = 0
+        metaLable.numberOfLines = 1
         metaLable.textAlignment = .left
         metaLable.font = .systemFont(ofSize: 14)
         metaLable.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
@@ -71,10 +71,15 @@ final class ReviewCell: UICollectionViewCell {
         bottomRow.spacing = 8
         bottomRow.alignment = .center
         bottomRow.translatesAutoresizingMaskIntoConstraints = false
-
-        let vStack = UIStackView(arrangedSubviews: [reviewTitleLable, reviewContentLable, bottomRow])
+        
+        let spacer = UIView()
+        spacer.isUserInteractionEnabled = false
+        spacer.setContentHuggingPriority(.defaultLow, for: .vertical)
+        
+        let vStack = UIStackView(arrangedSubviews: [reviewTitleLable, reviewContentLable, spacer, bottomRow])
         vStack.axis = .vertical
-        vStack.spacing = 12
+        vStack.spacing = 8
+        vStack.distribution = .fill
         vStack.translatesAutoresizingMaskIntoConstraints = false
         container.addSubview(vStack)
         
@@ -126,6 +131,7 @@ final class ReviewCell: UICollectionViewCell {
         reviewContentLable.text = review.reviewText
         if isDetailView {
             reviewTitleLable.numberOfLines = 0
+            metaLable.numberOfLines = 0
         }
         if let date = review.dateEdited ?? review.dateCreated{
             metaLable.text = "\(formatter.string(from: date)), \(review.postedBy?.profileName ?? "guest user")"

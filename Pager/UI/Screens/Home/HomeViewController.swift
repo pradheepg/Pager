@@ -582,9 +582,30 @@ extension HomeViewController: UICollectionViewDataSource, UITextFieldDelegate {
             return UIMenu(title: "", children: [
                 UIMenu(options: .displayInline, children: [detailsAction]),
                 UIMenu(options: .displayInline, children: [wantToReadAction]),
-                addToCollectionMenu
+                setUpAddToCollectionView(book: book)
             ])
         }
+    }
+    
+    func setUpAddToCollectionView(book: Book) -> UIAction {
+        return UIAction(title: "Add to Collection",
+                                           image: UIImage(systemName: "folder.badge.plus")) { [weak self] _ in
+            guard let self = self else { return }
+            let addToCollectionVC = AddToCollectionViewController(book: book)
+            
+            let nav = UINavigationController(rootViewController: addToCollectionVC)
+            
+            if let sheet = nav.sheetPresentationController {
+                sheet.detents = [.medium(), .large()]
+                
+                sheet.prefersGrabberVisible = true
+                
+                sheet.prefersScrollingExpandsWhenScrolledToEdge = true
+            }
+            
+            self.present(nav, animated: true)
+        }
+        
     }
     
     func showToast(result: Result<Void,CollectionError>?, collectionName: String?, isAdded: Bool) {

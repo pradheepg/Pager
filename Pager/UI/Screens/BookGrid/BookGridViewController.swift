@@ -495,7 +495,7 @@ class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayo
         searchController.searchResultsUpdater = self
         searchController.obscuresBackgroundDuringPresentation = false
         searchController.searchBar.placeholder = "Search..."
-        
+        searchController.searchBar.barTintColor = AppColors.gridViewBGColor
         navigationItem.searchController = searchController
         navigationItem.hidesSearchBarWhenScrolling = false
         definesPresentationContext = true
@@ -659,7 +659,7 @@ class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayo
             if viewModel.currentCollection?.name != DefaultsName.wantToRead {
                 childCollection.append(wantToReadAction)
             }
-            childCollection.append(addToCollectionMenu)
+            childCollection.append(setUpAddToCollectionView(book: book))
             var menuItems: [UIMenuElement] = [
                 UIMenu(title: "", options: .displayInline, children: [detailsAction]),
                 UIMenu(title: "", options: .displayInline, children: childCollection)
@@ -682,6 +682,27 @@ class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayo
             }
             return UIMenu(title: "", children: menuItems)
         }
+    }
+    
+    func setUpAddToCollectionView(book: Book) -> UIAction {
+        return UIAction(title: "Add to Collection",
+                                           image: UIImage(systemName: "folder.badge.plus")) { [weak self] _ in
+            guard let self = self else { return }
+            let addToCollectionVC = AddToCollectionViewController(book: book)
+            
+            let nav = UINavigationController(rootViewController: addToCollectionVC)
+            
+            if let sheet = nav.sheetPresentationController {
+                sheet.detents = [.medium(), .large()]
+                
+                sheet.prefersGrabberVisible = true
+                
+                sheet.prefersScrollingExpandsWhenScrolledToEdge = true
+            }
+            
+            self.present(nav, animated: true)
+        }
+        
     }
     
     

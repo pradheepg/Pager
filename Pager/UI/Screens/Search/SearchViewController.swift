@@ -11,7 +11,8 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
         
     private var tagsCollectionView: UICollectionView!
     private var resultsCollectionView: UICollectionView!
-    
+    private var searchTask: Task<Void, Never>?
+
     var collapsedSections = Set<Int>()
     let tagsTitleLabel = UILabel()
 
@@ -187,45 +188,55 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
 //    func updateSearchResults(for searchController: UISearchController) {
 //        let searchText = searchController.searchBar.text ?? ""
 //        let tokens = searchController.searchBar.searchTextField.tokens
-//        
-//        if searchText.isEmpty && tokens.isEmpty{
+//
+//        if searchText.isEmpty && tokens.isEmpty {
 //            tagsCollectionView.isHidden = false
 //            tagsTitleLabel.isHidden = tagsCollectionView.isHidden
 //            resultsCollectionView.isHidden = true
 //            emptyStateView.view.isHidden = true
-//        } else {
-//            tagsCollectionView.isHidden = true
-//            tagsTitleLabel.isHidden = tagsCollectionView.isHidden
-//            let result = viewModel.searchBooks(searchText: searchText, token: tokens)
-//            //driver
-//            switch result {
-//            case .success(let isEmpty):
-////                let midpoint = (foundBooks.count + 1) / 2
-////                self.viewModel.books = Array(foundBooks[..<midpoint])
-////                self.viewModel.myBooks = Array(foundBooks[midpoint...])
+//            return
+//        }
 //
-//                if isEmpty {
-//                    print(isEmpty)
-//                    resultsCollectionView.isHidden = true
-//                    emptyStateView.view.isHidden = false
-//                } else {
-//                    resultsCollectionView.isHidden = false
-//                    emptyStateView.view.isHidden = true
+//        tagsCollectionView.isHidden = true
+//        tagsTitleLabel.isHidden = tagsCollectionView.isHidden
+//
+//        Task { [weak self] in
+//            guard let self else { return }
+//
+//            let result = await self.viewModel.searchBooks(
+//                searchText: searchText,
+//                token: tokens
+//            )
+//
+//            await MainActor.run {
+//                switch result {
+//                case .success(let isEmpty):
+//                    if isEmpty {
+//                        self.resultsCollectionView.isHidden = true
+//                        self.emptyStateView.view.isHidden = false
+//                    } else {
+//                        self.resultsCollectionView.isHidden = false
+//                        self.emptyStateView.view.isHidden = true
+//                    }
+//
+//                    self.resultsCollectionView.reloadData()
+//
+//                case .failure(let error):
+//                    print("Error: \(error.localizedDescription)")
 //                }
-//                
-//                resultsCollectionView.reloadData()
-//                
-//            case .failure(let error):
-//                print("Error: \(error.localizedDescription)")
 //            }
 //        }
 //    }
-    
-    func updateSearchResults(for searchController: UISearchController) {
-        let searchText = searchController.searchBar.text ?? ""
-        let tokens = searchController.searchBar.searchTextField.tokens
 
+    func updateSearchResults(for searchController: UISearchController) {
+        let rawText = searchController.searchBar.text ?? ""
+        let tokens = searchController.searchBar.searchTextField.tokens
+        
+        let searchText = rawText.trimmingCharacters(in: .whitespacesAndNewlines)
+        
         if searchText.isEmpty && tokens.isEmpty {
+            searchTask?.cancel()
+            
             tagsCollectionView.isHidden = false
             tagsTitleLabel.isHidden = tagsCollectionView.isHidden
             resultsCollectionView.isHidden = true
@@ -235,14 +246,22 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
 
         tagsCollectionView.isHidden = true
         tagsTitleLabel.isHidden = tagsCollectionView.isHidden
+        
+        searchTask?.cancel()
 
-        Task { [weak self] in
+        searchTask = Task { [weak self] in
             guard let self else { return }
+            
+            try? await Task.sleep(nanoseconds: 300_000_000)
+            
+            if Task.isCancelled { return }
 
             let result = await self.viewModel.searchBooks(
                 searchText: searchText,
                 token: tokens
             )
+
+            if Task.isCancelled { return }
 
             await MainActor.run {
                 switch result {
@@ -254,7 +273,6 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
                         self.resultsCollectionView.isHidden = false
                         self.emptyStateView.view.isHidden = true
                     }
-
                     self.resultsCollectionView.reloadData()
 
                 case .failure(let error):
@@ -474,10 +492,31 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
                 image: UIImage(systemName: "folder.badge.plus"),
                 children: customCollectionActions
             )
-            menuItems.append(UIMenu(options: .displayInline, children: [addToCollectionMenu]))
+            menuItems.append(UIMenu(options: .displayInline, children: [setUpAddToCollectionView(book: book)]))
             
             return UIMenu(title: "", children: menuItems)
         }
+    }
+    
+    func setUpAddToCollectionView(book: Book) -> UIAction {
+        return UIAction(title: "Add to Collection",
+                                           image: UIImage(systemName: "folder.badge.plus")) { [weak self] _ in
+            guard let self = self else { return }
+            let addToCollectionVC = AddToCollectionViewController(book: book)
+            
+            let nav = UINavigationController(rootViewController: addToCollectionVC)
+            
+            if let sheet = nav.sheetPresentationController {
+                sheet.detents = [.medium(), .large()]
+                
+                sheet.prefersGrabberVisible = true
+                
+                sheet.prefersScrollingExpandsWhenScrolledToEdge = true
+            }
+            
+            self.present(nav, animated: true)
+        }
+        
     }
     
     func showAddItemAlert(book: Book) {
@@ -684,6 +723,7 @@ class CollapsibleCollectionHeader: UICollectionReusableView {
     required init?(coder: NSCoder) { fatalError() }
     
     @objc private func didTapHeader() {
+        Haptics.shared.play(.heavy)
         onToggle?()
     }
     

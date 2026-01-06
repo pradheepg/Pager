@@ -35,7 +35,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         let btn = UIButton(type: .system)
         btn.setTitle("More", for: .normal)
         btn.setTitleColor(AppColors.title, for: .normal)
-        btn.titleLabel?.font = UIFont.systemFont(ofSize: 12, weight: .bold)
+        btn.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .bold)
         btn.translatesAutoresizingMaskIntoConstraints = false
         return btn
     }()
@@ -195,6 +195,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         reviewCollectionView.translatesAutoresizingMaskIntoConstraints = false
         reviewCollectionView.dataSource = self
         reviewCollectionView.delegate = self
+        reviewCollectionView.isPagingEnabled = true
         reviewCollectionView.register(ReviewCell.self, forCellWithReuseIdentifier: "ReviewCell")
         //        reviewCollectionView.register(DemoCell.self, forCellWithReuseIdentifier: "DemoCell")
         
@@ -225,13 +226,13 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         
         bookNameLable.text = viewModel.book.title
         bookNameLable.textAlignment = .center
-        bookNameLable.font = UIFont.boldSystemFont(ofSize: 25)
+        bookNameLable.font = UIFont.boldSystemFont(ofSize: 28)
         bookNameLable.numberOfLines = 0
         bookNameLable.translatesAutoresizingMaskIntoConstraints = false
         
         authorNameLable.text = viewModel.book.author
         authorNameLable.textAlignment = .center
-        authorNameLable.font = UIFont.systemFont(ofSize: 15)
+        authorNameLable.font = UIFont.systemFont(ofSize: 20)
         authorNameLable.numberOfLines = 0
         authorNameLable.translatesAutoresizingMaskIntoConstraints = false
         
@@ -271,14 +272,14 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         
         descriptionTitleLable.text = "Publisher Description"
         descriptionTitleLable.textAlignment = .left
-        descriptionTitleLable.font = UIFont.boldSystemFont(ofSize: 15)
+        descriptionTitleLable.font = UIFont.boldSystemFont(ofSize: 17)
         descriptionTitleLable.numberOfLines = 0
         descriptionTitleLable.translatesAutoresizingMaskIntoConstraints = false
         descriptionView.addSubview(descriptionTitleLable)
         
         descriptionContentLable.text = viewModel.book.descriptionText
         descriptionContentLable.textAlignment = .left
-        descriptionContentLable.font = UIFont.systemFont(ofSize: 12)
+        descriptionContentLable.font = UIFont.systemFont(ofSize: 16)
         descriptionContentLable.numberOfLines = 4
         descriptionContentLable.translatesAutoresizingMaskIntoConstraints = false
         let tapGestore = UITapGestureRecognizer(target: self, action: #selector(toggleDescription))
@@ -547,7 +548,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
             image: UIImage(systemName: "folder.badge.plus"),
             children: customCollectionActions
         )
-        menuItems.append(UIMenu(options: .displayInline, children: [addToCollectionMenu]))
+        menuItems.append(UIMenu(options: .displayInline, children: [setUpAddToCollectionView(book: book)]))
         
         
         
@@ -578,6 +579,27 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         }
 
         return UIMenu(title: "", children: menuItems)
+    }
+    
+    func setUpAddToCollectionView(book: Book) -> UIAction {
+        return UIAction(title: "Add to Collection",
+                                           image: UIImage(systemName: "folder.badge.plus")) { [weak self] _ in
+            guard let self = self else { return }
+            let addToCollectionVC = AddToCollectionViewController(book: book)
+            
+            let nav = UINavigationController(rootViewController: addToCollectionVC)
+            
+            if let sheet = nav.sheetPresentationController {
+                sheet.detents = [.medium(), .large()]
+                
+                sheet.prefersGrabberVisible = true
+                
+                sheet.prefersScrollingExpandsWhenScrolledToEdge = true
+            }
+            
+            self.present(nav, animated: true)
+        }
+        
     }
     
     func showAddItemAlert(book: Book) {

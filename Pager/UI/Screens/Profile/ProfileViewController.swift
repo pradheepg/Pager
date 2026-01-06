@@ -163,32 +163,6 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
         tableView.tableHeaderView = headerView
     }
     
-    func setupTableHeaderr() {
-        let headerView = UIView(frame: CGRect(x: 0, y: 0, width: view.frame.width, height: 200))
-        
-        let profileImageView = UIImageView()
-        profileImageView.contentMode = .scaleAspectFill
-        profileImageView.clipsToBounds = true
-        profileImageView.layer.cornerRadius = 60
-        profileImageView.translatesAutoresizingMaskIntoConstraints = false
-        profileImageView.image = getImage()
-        profileImageView.isUserInteractionEnabled = true
-        
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(didTapProfileImage))
-        profileImageView.addGestureRecognizer(tapGesture)
-        
-        headerView.addSubview(profileImageView)
-        
-        NSLayoutConstraint.activate([
-            profileImageView.centerXAnchor.constraint(equalTo: headerView.centerXAnchor),
-            profileImageView.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
-            profileImageView.widthAnchor.constraint(equalToConstant: 120),
-            profileImageView.heightAnchor.constraint(equalToConstant: 120),
-        ])
-        
-        tableView.tableHeaderView = headerView
-    }
-    
     private func showDiscardChangesAlert() {
         let alert = UIAlertController(
             title: "Unsaved Changes",
@@ -249,74 +223,234 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
         view.addGestureRecognizer(tapGesture)
     }
     
+//    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+//        if indexPath.section == 2 {
+//            guard let cell = tableView.dequeueReusableCell(withIdentifier: AppearanceSettingCell.reuseKey, for: indexPath) as? AppearanceSettingCell else {
+//                return UITableViewCell()
+//            }
+//            return cell
+//            
+//        } else if indexPath.section == 3 {
+//            guard let cell = tableView.dequeueReusableCell(withIdentifier: "cell") else {
+//                return UITableViewCell()
+//            }
+//            cell.accessoryType = .disclosureIndicator
+//            if indexPath.row == 0{
+//                cell.textLabel?.text = "Change Password"
+//                cell.textLabel?.textColor = AppColors.systemBlue
+//            } else {
+//                cell.textLabel?.text = "Logout"
+//                cell.textLabel?.textColor = .systemRed
+//            }
+//            return cell
+//        } else {
+//            guard let cell = tableView.dequeueReusableCell(withIdentifier: "EditableCell", for: indexPath) as? EditableProfileCell else {
+//                return UITableViewCell()
+//            }
+//            
+//            let isSectionZero = indexPath.section == 0
+//            let data = isSectionZero ? personalData[indexPath.row] : preferenceData[indexPath.row]
+//            if !isSectionZero || indexPath.row == personalData.count-1 {
+//                cell.inputTextView.isEditable = false
+//                cell.inputTextView.isUserInteractionEnabled = false
+//                cell.setEditingMode(isEditingMode, onlyChangeColor: true)
+//                if !isSectionZero {
+//                    cell.accessoryType = .disclosureIndicator
+//                } else {
+//                    cell.accessoryType = .none
+//                }
+//            } else {
+//                cell.setEditingMode(isEditingMode)
+//                cell.inputTextView.returnKeyType = .done
+//                cell.accessoryType = .none
+//
+//                
+//                if indexPath.row == 1 {
+//                    cell.inputTextView.keyboardType = .emailAddress
+//                    
+//                }
+//            }
+//            cell.titleLabel.text = data.title
+//            cell.inputTextView.text = data.value == "" ? "None" : data.value
+//            
+//            cell.onTextChange = { [weak self] newText in
+//                if isSectionZero {
+//                    self?.personalData[indexPath.row].value = newText
+//                } else {
+//                    self?.preferenceData[indexPath.row].value = newText
+//                }
+//            }
+//            cell.onResize = { [weak self] in
+//                self?.tableView.beginUpdates()
+//                self?.tableView.endUpdates()
+//            }
+//            
+//            
+//            return cell
+//        }
+//    }
+    
+    
+//    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+//        if indexPath.section == 2 {
+//            guard let cell = tableView.dequeueReusableCell(withIdentifier: AppearanceSettingCell.reuseKey, for: indexPath) as? AppearanceSettingCell else { return UITableViewCell() }
+//            return cell
+//        } else if indexPath.section == 3 {
+//            guard let cell = tableView.dequeueReusableCell(withIdentifier: "cell") else {
+//                return UITableViewCell()
+//            }
+//            cell.accessoryType = .disclosureIndicator
+//            if indexPath.row == 0{
+//                cell.textLabel?.text = "Change Password"
+//                cell.textLabel?.textColor = AppColors.systemBlue
+//            } else {
+//                cell.textLabel?.text = "Logout"
+//                cell.textLabel?.textColor = .systemRed
+//            }
+//            return cell
+//        } else {
+//            guard let cell = tableView.dequeueReusableCell(withIdentifier: "EditableCell", for: indexPath) as? EditableProfileCell else { return UITableViewCell() }
+//            
+//            let isSectionZero = indexPath.section == 0
+//            let data = isSectionZero ? personalData[indexPath.row] : preferenceData[indexPath.row]
+//            
+//            cell.titleLabel.text = data.title
+//            
+//            cell.inputTextView.text = (data.value.isEmpty) ? "None" : data.value
+//
+//            let isEditableField = isSectionZero && indexPath.row < 2
+//            
+//            if isEditableField {
+//                cell.setEditingMode(isEditingMode)
+//                cell.inputTextView.tag = indexPath.row
+//                
+//                if indexPath.row == 1 {
+//                    cell.inputTextView.keyboardType = .emailAddress
+//                } else {
+//                    cell.inputTextView.keyboardType = .default
+//                }
+//                cell.accessoryType = .none
+//            } else {
+//                cell.inputTextView.isEditable = false
+//                cell.inputTextView.isUserInteractionEnabled = false
+//                cell.setEditingMode(isEditingMode, onlyChangeColor: true)
+//                if isEditingMode {
+//                    cell.accessoryType = .disclosureIndicator
+//                } else {
+//                    cell.accessoryType = .none
+//                }
+//            }
+//            
+//            cell.onTextChange = { [weak self] newText in
+//                if isSectionZero {
+//                    self?.personalData[indexPath.row].value = newText
+//                } else {
+//                    self?.preferenceData[indexPath.row].value = newText
+//                }
+//            }
+//            
+//            cell.onResize = { [weak self] in
+//                self?.tableView.beginUpdates()
+//                self?.tableView.endUpdates()
+//            }
+//            
+//            return cell
+//        }
+//    }
+
+    
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        if indexPath.section == 2 {
+            switch indexPath.section {
+            case 0:
+                return configurePersonalDataCell(for: indexPath)
+            case 1:
+                return configurePreferenceCell(for: indexPath)
+            case 2:
+                return configureAppearanceCell(for: indexPath)
+            case 3:
+                return configureSettingsCell(for: indexPath)
+            default:
+                return UITableViewCell()
+            }
+        }
+                
+        private func configurePersonalDataCell(for indexPath: IndexPath) -> UITableViewCell {
+            guard let cell = tableView.dequeueReusableCell(withIdentifier: "EditableCell", for: indexPath) as? EditableProfileCell else {
+                return UITableViewCell()
+            }
+            
+            let data = personalData[indexPath.row]
+            
+            let isTextEntry = (indexPath.row < 2)
+            
+            let keyboardType: UIKeyboardType = (indexPath.row == 1) ? .emailAddress : .default
+            
+            cell.configure(
+                with: data,
+                isEditing: isEditingMode,
+                isTextFieldEditable: isTextEntry,
+                keyboardType: keyboardType,
+                tag: indexPath.row
+            )
+            
+            cell.onTextChange = { [weak self] newText in
+                self?.personalData[indexPath.row].value = newText
+            }
+            
+            cell.onResize = { [weak self] in
+                self?.tableView.beginUpdates()
+                self?.tableView.endUpdates()
+            }
+            
+            return cell
+        }
+        
+        private func configurePreferenceCell(for indexPath: IndexPath) -> UITableViewCell {
+            guard let cell = tableView.dequeueReusableCell(withIdentifier: "EditableCell", for: indexPath) as? EditableProfileCell else {
+                return UITableViewCell()
+            }
+            
+            let data = preferenceData[indexPath.row]
+            
+            cell.configure(
+                with: data,
+                isEditing: isEditingMode,
+                isTextFieldEditable: false
+            )
+            
+            cell.onTextChange = { [weak self] newText in
+                self?.preferenceData[indexPath.row].value = newText
+            }
+            cell.accessoryType = .disclosureIndicator
+            return cell
+        }
+        
+        private func configureAppearanceCell(for indexPath: IndexPath) -> UITableViewCell {
             guard let cell = tableView.dequeueReusableCell(withIdentifier: AppearanceSettingCell.reuseKey, for: indexPath) as? AppearanceSettingCell else {
                 return UITableViewCell()
             }
             return cell
-            
-        } else if indexPath.section == 3 {
+        }
+        
+        private func configureSettingsCell(for indexPath: IndexPath) -> UITableViewCell {
             guard let cell = tableView.dequeueReusableCell(withIdentifier: "cell") else {
                 return UITableViewCell()
             }
+            
             cell.accessoryType = .disclosureIndicator
-            if indexPath.row == 0{
+            
+            if indexPath.row == 0 {
                 cell.textLabel?.text = "Change Password"
                 cell.textLabel?.textColor = AppColors.systemBlue
             } else {
                 cell.textLabel?.text = "Logout"
                 cell.textLabel?.textColor = .systemRed
             }
-            return cell
-        } else {
-            guard let cell = tableView.dequeueReusableCell(withIdentifier: "EditableCell", for: indexPath) as? EditableProfileCell else {
-                return UITableViewCell()
-            }
-            
-            let isSectionZero = indexPath.section == 0
-            let data = isSectionZero ? personalData[indexPath.row] : preferenceData[indexPath.row]
-            if !isSectionZero || indexPath.row == personalData.count-1 {
-                cell.inputTextView.isEditable = false
-                cell.inputTextView.isUserInteractionEnabled = false
-                cell.setEditingMode(isEditingMode, onlyChangeColor: true)
-                if !isSectionZero {
-                    cell.accessoryType = .disclosureIndicator
-                } else {
-                    cell.accessoryType = .none
-                }
-            } else {
-                cell.setEditingMode(isEditingMode)
-                cell.inputTextView.returnKeyType = .done
-                cell.accessoryType = .none
-
-                
-                if indexPath.row == 1 {
-                    cell.inputTextView.keyboardType = .emailAddress
-                    
-                }
-            }
-            cell.titleLabel.text = data.title
-            cell.inputTextView.text = data.value == "" ? "None" : data.value
-            
-            cell.onTextChange = { [weak self] newText in
-                if isSectionZero {
-                    self?.personalData[indexPath.row].value = newText
-                } else {
-                    self?.preferenceData[indexPath.row].value = newText
-                }
-            }
-            cell.onResize = { [weak self] in
-                self?.tableView.beginUpdates()
-                self?.tableView.endUpdates()
-            }
-            
             
             return cell
         }
-    }
     
-
+    
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         if indexPath.section == 1 && indexPath.row == 0 {
@@ -345,7 +479,8 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
                 guard let self = self else {
                     return
                 }
-                dobSelected(date: seletedDOB)//driver
+                Haptics.shared.notify(.success)
+                dobSelected(date: seletedDOB)
                 personalData[indexPath.row].value = UserSession.shared.currentUser?.formattedDOB ?? "None"
                 tableView.reloadData()
             }
@@ -386,56 +521,15 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
         let newName = personalData[0].value.trimmingCharacters(in: .whitespacesAndNewlines)
         let newEmail = personalData[1].value.trimmingCharacters(in: .whitespacesAndNewlines)
         let newGenre = preferenceData[0].value
-        viewModel.saveUserChange(newName, newEmail, newGenre)
+        switch viewModel.saveUserChange(newName, newEmail, newGenre) {
+        case .success():
+            Haptics.shared.notify(.success)
+            Toast.show(message: "Fav genre saved", in: self.view)
+        case .failure(let error):
+            print(error.localizedDescription)
+        }
     }
-    
-//    @objc func didTapToggleEdit() {
-//        if isEditingMode {
-//            let newName = personalData[0].value.trimmingCharacters(in: .whitespacesAndNewlines)
-//            let newEmail = personalData[1].value.trimmingCharacters(in: .whitespacesAndNewlines)
-//            let newGenre = preferenceData[0].value
-//            
-//            if newName.isEmpty {
-//                showAlert(message: "Name cannot be empty.")
-//                return
-//            }
-//            
-//            if newEmail.isEmpty {
-//                showAlert(message: "Email cannot be empty.")
-//                return
-//            }
-//            guard isValidEmail(newEmail) else {
-//                showAlert(message: "Please enter a valid email address.")
-//                return
-//            }
-//            viewModel.saveUserChange(newName, newEmail, newGenre)
-//            viewModel.saveUserProfieImage(image: profileImageView.image)
-////            if !isProfileImageNil && (isProfileImageNil != tempImageIsNil) {
-////                print("Save user profile\(profileImageView.image)")
-////
-////                viewModel.saveUserProfieImage(image: profileImageView.image)
-//
-////                if let header = tableView.tableHeaderView {
-////                    for subview in header.subviews {
-////                        if let imgView = subview as? UIImageView {
-////                            print("Save user profile")
-////                            viewModel.saveUserProfieImage(image: imgView.image)
-////                        }
-////                    }
-////                }
-////            }
-//        } else {
-//            tempPersonalData = personalData
-//            tempPreferenceData = preferenceData
-//            tempImageData = profileImageView.image
-//            tempImageIsNil = isProfileImageNil
-//        }
-//        
-//        isEditingMode.toggle()
-//        setUpNavBarItem()
-//        
-//    }
-    
+ 
     @objc func didTapToggleEdit() {
         if isEditingMode {
             let newName = personalData[0].value.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -552,7 +646,7 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
         
         alert.addAction(cancelAction)
         alert.addAction(logoutAction)
-        
+        Haptics.shared.notify(.warning)
         present(alert, animated: true, completion: nil)
     }
     
@@ -591,13 +685,17 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
     }
     
     private func isValidEmail(_ email: String) -> Bool {
-        if email.count < ContentLimits.userMinEmailLength ||
-           email.count > ContentLimits.userMaxEmailLength {
+        let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if trimmedEmail.count < ContentLimits.userMinEmailLength ||
+           trimmedEmail.count > ContentLimits.userMaxEmailLength {
             return false
         }
-        let regex = "[A-Z0-9a-z.-_]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,3}"
-        return NSPredicate(format:"SELF MATCHES %@", regex).evaluate(with: email)
+
+        let regex = "^[A-Za-z0-9]+([._%+-]?[A-Za-z0-9]+)*@([A-Za-z0-9]+(-?[A-Za-z0-9]+)*\\.)+[A-Za-z]{2,}$"
+        return NSPredicate(format: "SELF MATCHES %@", regex).evaluate(with: trimmedEmail)
     }
+
     
     func prefersLargeTitles(_ bool: Bool){
         if #available(iOS 16, *) {

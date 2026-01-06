@@ -170,8 +170,8 @@ enum AppColors {
     static let tileBackground: UIColor = {
         return UIColor { trait in
             return trait.userInterfaceStyle == .dark
-            ? UIColor(white: 0.12, alpha: 1.0) // Custom Dark Gray
-            : UIColor(red: 0.95, green: 0.95, blue: 0.97, alpha: 1.0) // Soft Gray
+            ? UIColor(white: 0.12, alpha: 1.0)
+            : UIColor(red: 0.95, green: 0.95, blue: 0.97, alpha: 1.0)
         }
     }()
     
