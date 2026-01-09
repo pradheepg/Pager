@@ -77,6 +77,7 @@ class AppearanceSettingCell: UITableViewCell {
         if let windowScene = self.window?.windowScene {
             for window in windowScene.windows {
                 window.overrideUserInterfaceStyle = selectedStyle
+                GobalProperty.systemTheme = selectedStyle
             }
         }
     }

@@ -100,7 +100,7 @@ class Toast {
         let container = UIView()
         container.tag = toastTag
         
-        container.backgroundColor = UIColor.label.withAlphaComponent(0.8)
+        container.backgroundColor = AppColors.title.withAlphaComponent(0.8)//UIColor.label.withAlphaComponent(0.8)
         container.layer.cornerRadius = 20
         container.clipsToBounds = false
         
@@ -136,7 +136,7 @@ class Toast {
         let label = UILabel()
         label.text = message
         label.font = .systemFont(ofSize: 15, weight: .semibold)
-        label.textColor = .systemBackground
+        label.textColor = AppColors.background
         label.numberOfLines = 2
         stack.addArrangedSubview(label)
         

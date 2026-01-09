@@ -290,7 +290,6 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
     }
     
     func handleDismissal() {
-        print("handelDismissal")
         if let _ = viewModel.onDataUpdated {
             viewModel.loadData()
         }

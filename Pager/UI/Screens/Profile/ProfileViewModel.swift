@@ -25,11 +25,25 @@ class ProfileViewModel {
             return
         }
         Task {
-            
             let result = await userRepository.updateProfileImage(for: user, imageData: imageData)
             switch result {
             case .success():
                 print("Saved")
+            case .failure(let error):
+                print(error.localizedDescription)
+            }
+        }
+    }
+    
+    func removeUserProfileImage() {
+        guard let user = UserSession.shared.currentUser else {
+            return
+        }
+        Task {
+            let result = await userRepository.removeProflieImage(for: user)
+            switch result {
+            case .success():
+                print("iamge removed")
             case .failure(let error):
                 print(error.localizedDescription)
             }

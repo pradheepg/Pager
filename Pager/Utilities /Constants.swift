@@ -344,3 +344,7 @@ extension UIColor {
         self.init(red: r, green: g, blue: b, alpha: 1.0)
     }
 }
+
+class GobalProperty {
+    static var systemTheme: UIUserInterfaceStyle? =  nil
+}

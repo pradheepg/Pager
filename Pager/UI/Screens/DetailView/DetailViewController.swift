@@ -58,7 +58,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         layout.scrollDirection = .horizontal
         layout.minimumLineSpacing = 16
         layout.sectionInset = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
-        layout.itemSize = CGSize(width: 350, height: 200)
+        layout.itemSize = CGSize(width: 350, height: 150)
         reviewCollectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         
         if let records = UserSession.shared.currentUser?.owned?.allObjects as? [UserBookRecord] {
@@ -586,7 +586,10 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
                                            image: UIImage(systemName: "folder.badge.plus")) { [weak self] _ in
             guard let self = self else { return }
             let addToCollectionVC = AddToCollectionViewController(book: book)
-            
+            addToCollectionVC.onDismiss = { [weak self] in
+                print("OnDismiss")
+                self?.setupMoreMenu()
+            }
             let nav = UINavigationController(rootViewController: addToCollectionVC)
             
             if let sheet = nav.sheetPresentationController {

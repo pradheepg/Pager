@@ -12,6 +12,8 @@ class EditReviewViewController: UIViewController, UITextFieldDelegate, UITextVie
 
     private let placeholderText = "Enter what's on your mind..."
     
+    var onToastDismiss: ((_ message: String) -> Void)?
+    
     private let scrollView: UIScrollView = {
         let sv = UIScrollView()
         sv.translatesAutoresizingMaskIntoConstraints = false
@@ -211,7 +213,7 @@ class EditReviewViewController: UIViewController, UITextFieldDelegate, UITextVie
                                           style: .done,
                                           target: self,
                                           action: #selector(saveButtonTapped))
-        editBarButton.tintColor = AppColors.title
+        editBarButton.tintColor = AppColors.background
         navigationItem.rightBarButtonItem = editBarButton
         
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboards))
@@ -228,11 +230,10 @@ class EditReviewViewController: UIViewController, UITextFieldDelegate, UITextVie
             updateStarUI(rating: savedRating)
             
             titleTextField.text = existingReview.reviewTitle
-            if ((existingReview.reviewText?.isEmpty) != nil) {
-                bodyTextView.text = existingReview.reviewText
+            if let text = existingReview.reviewText, !text.isEmpty {
+                bodyTextView.text = text
                 bodyTextView.textColor = AppColors.title
             }
-            
             deleteButton.isHidden = false
         } else {
             deleteButton.isHidden = true
@@ -296,8 +297,10 @@ class EditReviewViewController: UIViewController, UITextFieldDelegate, UITextVie
         switch result {
         case .success():
             Haptics.shared.notify(.success)
-            Toast.show(message: "Review saved", in: self.view)
+//            Toast.show(message: "Review saved", in: self.view)
             navigationController?.popViewController(animated: true)
+            onToastDismiss?("Review saved")
+
         case .failure(let error):
             showAlert(title: "Error", message: error.localizedDescription)
         }
@@ -321,7 +324,8 @@ class EditReviewViewController: UIViewController, UITextFieldDelegate, UITextVie
         case .success:
             self.navigationController?.popViewController(animated: true)
             Haptics.shared.notify(.success)
-            Toast.show(message: "Review deleted", in: view)
+            onToastDismiss?("Review deleted")
+//            Toast.show(message: "Review deleted", in: view)
         case .failure(let error):
             self.navigationController?.popViewController(animated: true)
             Haptics.shared.notify(.error)

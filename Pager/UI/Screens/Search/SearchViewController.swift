@@ -624,23 +624,19 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
     }
     
     override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
+        super.viewWillAppear(animated)
         DispatchQueue.main.async {
             self.searchController.isActive = true
             self.searchController.searchBar.becomeFirstResponder()
-        }
+        } 
     }
 }
 
 class LeftAlignedFlowLayout: UICollectionViewFlowLayout {
     
     override func layoutAttributesForElements(in rect: CGRect) -> [UICollectionViewLayoutAttributes]? {
-        // 1. Get the standard attributes from the parent class
-        // (This is efficient because it only returns items in the visible rect)
         guard let attributes = super.layoutAttributesForElements(in: rect) else { return nil }
         
-        // 2. Create a safe copy of the attributes to modify
-        // (Modifying the original attributes directly can cause layout warnings)
         var leftAlignedAttributes = [UICollectionViewLayoutAttributes]()
         
         for attribute in attributes {
@@ -649,25 +645,19 @@ class LeftAlignedFlowLayout: UICollectionViewFlowLayout {
             }
         }
         
-        // 3. Loop through and shift items to the left
         var leftMargin = sectionInset.left
         var maxY: CGFloat = -1.0
         
         for layoutAttribute in leftAlignedAttributes {
             
-            // Check if this cell is on a new row
-            // (We check if its Y position is lower than the previous known row)
             if layoutAttribute.frame.origin.y >= maxY {
-                leftMargin = sectionInset.left // Reset margin for new row
+                leftMargin = sectionInset.left
             }
             
-            // Shift the cell to the current left margin
             layoutAttribute.frame.origin.x = leftMargin
             
-            // Calculate where the NEXT cell should start
             leftMargin += layoutAttribute.frame.width + minimumInteritemSpacing
             
-            // Update the vertical tracker
             maxY = max(layoutAttribute.frame.maxY, maxY)
         }
         

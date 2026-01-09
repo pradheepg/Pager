@@ -107,7 +107,7 @@ class NewReleaseHeroView: UIView {
             containerView.leadingAnchor.constraint(equalTo: leadingAnchor),
             containerView.trailingAnchor.constraint(equalTo: trailingAnchor),
             containerView.bottomAnchor.constraint(equalTo: bottomAnchor),
-            containerView.heightAnchor.constraint(equalToConstant: 220), // Fixed Hero Height
+            containerView.heightAnchor.constraint(equalToConstant: 220),
             
             backgroundImageView.topAnchor.constraint(equalTo: containerView.topAnchor),
             backgroundImageView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),

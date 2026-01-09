@@ -104,14 +104,14 @@ final class ReviewCell: UICollectionViewCell {
 //                let img = UIImageView(image: UIImage(systemName: "star.fill"))
 //                img.tintColor = .systemYellow
 //                startStack.addArrangedSubview(img)
-                startStack.addArrangedSubview(makeStar(named: "star.fill", tint: .systemYellow))
+                startStack.addArrangedSubview(makeStar(named: "star.fill", tint: .gray))
             }
 
             for _ in 0..<(5 - clamped) {
 //                let img = UIImageView(image: UIImage(systemName: "star"))
 //                img.tintColor = .systemGray
 //                startStack.addArrangedSubview(img)
-                startStack.addArrangedSubview(makeStar(named: "star", tint: .systemYellow))
+                startStack.addArrangedSubview(makeStar(named: "star", tint: .gray))
             }
         }
     

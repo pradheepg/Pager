@@ -31,7 +31,7 @@ class ReviewViewController: UIViewController, UICollectionViewDelegate, UICollec
         layout.scrollDirection = .vertical
         layout.minimumLineSpacing = 16
         layout.sectionInset = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
-        layout.itemSize = CGSize(width: 350, height: 200)
+        layout.itemSize = CGSize(width: 350, height: 150)
         reviewCollectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         super.init(nibName: nil, bundle: nil)
     }
@@ -154,6 +154,11 @@ class ReviewViewController: UIViewController, UICollectionViewDelegate, UICollec
     
     @objc private func editButtonTapped() {
         let vc = EditReviewViewController(book: viewModel.book)
+        vc.onToastDismiss = { [weak self] message in
+            if let self = self {
+                Toast.show(message: message, in: self.view)
+            }   
+        }
         if let nav = navigationController {
             nav.pushViewController(vc, animated: true)
         } else {

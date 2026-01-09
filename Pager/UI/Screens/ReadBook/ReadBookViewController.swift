@@ -7,6 +7,12 @@
 
 import UIKit
 
+enum ReadingStyle: Int {
+    case slide = 0
+    case scroll = 1
+    case curl = 2
+}
+
 enum ThemeMode: Int {
     case light = 0
     case dark = 1
@@ -21,47 +27,74 @@ enum ThemeMode: Int {
     }
 }
 
-class BookPaginator {
+struct ReaderAppearance {
+    var themeMode: ThemeEnum = .light
+    var fontSize: CGFloat = 18.0
+    var font: FontEnum = FontEnum.helvetica
+}
+
+class OptimizedPaginator {
     
-    static func splitTextIntoPages(text: String, size: CGSize, font: UIFont) -> [String] {
-        let attributedString = NSAttributedString(string: text, attributes: [.font: font])
-        let framesetter = CTFramesetterCreateWithAttributedString(attributedString)
+    private let fullAttributedText: NSAttributedString
+    private let framesetter: CTFramesetter
+    
+    init(bookText: String, appearance: ReaderAppearance) {
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: appearance.font.uiFont(size: appearance.fontSize),
+            .foregroundColor: appearance.themeMode.foregroundColor
+        ]
         
-        var textPos = 0
-        let totalLength = attributedString.length
-        var pages = [String]()
+        self.fullAttributedText = NSAttributedString(string: bookText, attributes: attributes)
+        self.framesetter = CTFramesetterCreateWithAttributedString(fullAttributedText)
+    }
+    
+    func computePageRanges(textAreaSize: CGSize) -> [NSRange] {
+        var ranges: [NSRange] = []
+        let totalLength = fullAttributedText.length
+        var currentOffset = 0
         
-        while textPos < totalLength {
-            let path = CGPath(rect: CGRect(origin: .zero, size: size), transform: nil)
+        while currentOffset < totalLength {
+            let path = CGPath(rect: CGRect(origin: .zero, size: textAreaSize), transform: nil)
             
-            let frame = CTFramesetterCreateFrame(framesetter, CFRange(location: textPos, length: 0), path, nil)
+            let frame = CTFramesetterCreateFrame(framesetter, CFRange(location: currentOffset, length: 0), path, nil)
+            let frameRange = CTFrameGetVisibleStringRange(frame)
             
-            let pageRange = CTFrameGetVisibleStringRange(frame)
+            let nsRange = NSRange(location: frameRange.location, length: frameRange.length)
+            ranges.append(nsRange)
             
-            let nsRange = NSRange(location: textPos, length: pageRange.length)
-            
-            if nsRange.location + nsRange.length > totalLength {
-                break
-            }
-            
-            let pageString = attributedString.attributedSubstring(from: nsRange).string
-            
-            pages.append(pageString)
-            
-            if pageRange.length == 0 {
-                print("Error: Page frame is too small to fit any text.")
-                break
-            }
-            textPos += pageRange.length
+            currentOffset += frameRange.length
         }
         
-        return pages
+        return ranges
+    }
+    
+    func getAttributedText(for range: NSRange) -> NSAttributedString {
+        return fullAttributedText.attributedSubstring(from: range)
+    }
+    
+    func getPageIndex(forCharacterIndex index: Int, in ranges: [NSRange]) -> Int {
+        for (i, range) in ranges.enumerated() {
+            if index >= range.location && index < (range.location + range.length) {
+                return i
+            }
+        }
+        return 0
     }
 }
 
 class PageContentViewController: UIViewController {
     
-    var pageText: String = ""
+    init(presentationViewModel: ReaderPresentationViewModel) {
+        self.presentationViewModel = presentationViewModel
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    weak var presentationViewModel: ReaderPresentationViewModel?
+    var pageText: NSAttributedString?
     var pageIndex: Int = 0
     var bookTitleString: String = ""
     var fontSize: CGFloat = 18 {
@@ -132,14 +165,14 @@ class PageContentViewController: UIViewController {
         ])
         pageNumber.text = String(pageIndex + 1)
         bookTitle.text = bookTitleString
-        textView.text = pageText
+        textView.attributedText = pageText
     }
     
     private func applyTheme() {
-//        view.backgroundColor = AppColors.background
-//        textView.textColor = AppColors.text
-        view.backgroundColor = AppColors.readBookBg
-        textView.textColor = AppColors.readBookFg
+        //        view.backgroundColor = AppColors.background
+        //        textView.textColor = AppColors.text
+        view.backgroundColor = self.presentationViewModel?.appearance.themeMode.backgroundColor ?? AppColors.readBookBg
+        textView.textColor = self.presentationViewModel?.appearance.themeMode.foregroundColor ?? AppColors.readBookFg
         bookTitle.textColor = AppColors.secondaryText
         pageNumber.textColor = AppColors.secondaryText
     }
@@ -151,8 +184,10 @@ class PageContentViewController: UIViewController {
     
 }
 
-class MainBookReaderViewController: UIViewController, SettingsViewControllerDelegate {
+class MainBookReaderViewController: UIViewController, SettingsViewControllerDelegate, FontSettingsViewControllerDelegate {
+
     
+    var presentationViewModel: ReaderPresentationViewModel!
     var isFullScreen: Bool = false {
         didSet {
             setNeedsStatusBarAppearanceUpdate()
@@ -169,16 +204,24 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
     }
     
     
-    var pages: [String] = []
-    var currentIndex: Int = 0
+    var currentIndex: Int {
+        didSet {
+            if let vm = presentationViewModel {
+                vm.currentPageIndex = currentIndex
+            }
+            updatePageLabel(currentIndex: currentIndex)
+        }
+    }
+    
     let percentage: Double?
     let bookTitle: String
     let fullBookText: String
     var pageContentVCs = NSHashTable<PageContentViewController>.weakObjects()
     let settingsVC = SettingsViewController()
+    let themeSettingVC = ThemeSettingViewController()
+    let fontSettingVC = FontSettingViewController()
+    
     var fontSize = 18
-    //    var themeTitle:UIColor = .black
-    //    var themeBackGroung:UIColor = .white
     var transitionStyle: UIPageViewController.TransitionStyle = .scroll
     var navigationOrientation: UIPageViewController.NavigationOrientation = .horizontal
     var startTime: Date? = Date()
@@ -186,7 +229,7 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
         let spinner = UIActivityIndicatorView(style: .large)
         spinner.translatesAutoresizingMaskIntoConstraints = false
         spinner.hidesWhenStopped = true
-        spinner.color = .gray // Or use your theme color
+        spinner.color = .systemPurple
         return spinner
     }()
     var onDismiss: (() -> Void)?
@@ -195,12 +238,16 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
     private let readGoalService: ReadGoalService = ReadGoalService()
     
     init(book: Book) {
+        
         self.bookTitle = book.title ?? ""
         self.viewModel = ReadBookViewModel(book: book)
-        self.fullBookText = ViewHelper.loadBookContent(fileName: book.contentText ?? "") //driver
+        self.fullBookText = ViewHelper.loadBookContent(fileName: book.contentText ?? "")
         self.currentIndex = self.viewModel.loadProgress()
         self.percentage = self.viewModel.loadPercentage()
         super.init(nibName: nil, bundle: nil)
+        self.viewModel.configure()
+        self.transitionStyle =  self.viewModel.isSide ? .scroll : .pageCurl
+        self.navigationOrientation = self.viewModel.isSwipe ? .horizontal : .vertical
     }
     
     required init?(coder: NSCoder) {
@@ -213,73 +260,72 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
         startSession()
         setUpNavBarItem()
     }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        
         view.backgroundColor = AppColors.readBookBg
         view.addSubview(loadingSpinner)
+        
         NSLayoutConstraint.activate([
             loadingSpinner.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             loadingSpinner.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
+        
         loadingSpinner.startAnimating()
-        viewModel.loadSetting()
         
-        didChangeTheme(to: viewModel.themeMode)
-        didChangeNavigationOrientation(to: viewModel.isSwipe ? .horizontal : .vertical)
-        didChangePageStyle(to: viewModel.isSide ? .scroll : .pageCurl)
-        
-        let screenWidth = view.bounds.width > 0 ? view.bounds.width : UIScreen.main.bounds.width
-        let screenHeight = view.bounds.height > 0 ? view.bounds.height : UIScreen.main.bounds.height
-        
-        let textAreaSize = CGSize(
-            width: screenWidth - 40,
-            height: screenHeight - 60 // Adjusted based on previous discussion
-        )
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            guard let self = self else { return }
-            //driver
-            print(fullBookText.count)
-            let calculatedPages = BookPaginator.splitTextIntoPages(
-                text: self.fullBookText,
-                size: textAreaSize,
-                font: .systemFont(ofSize: 20)
-            )
-            
+        presentationViewModel = ReaderPresentationViewModel(bookContent: self.fullBookText)
+        presentationViewModel.currentPageIndex = self.currentIndex
+        presentationViewModel.appearance.fontSize = CGFloat(viewModel.fontSize)
+        presentationViewModel.appearance.themeMode = viewModel.theme
+        presentationViewModel.appearance.font = viewModel.font
+        presentationViewModel.onLoading = { [weak self] isLoading in
             DispatchQueue.main.async {
-                self.loadingSpinner.stopAnimating()
-                guard !calculatedPages.isEmpty else {
-                    return
-                }
-                self.pages = calculatedPages
-                let totalPageCount = calculatedPages.count
-                self.viewModel.saveTotalPages(count: totalPageCount)
-                var safeIndex: Int = 0
-                
-                if let percentage = self.percentage, percentage > 0 {
-                    let rawIndex = Int(Double(totalPageCount) * percentage / 100.0)
-                    safeIndex = min(rawIndex, totalPageCount - 1)
-                    
+                if isLoading {
+                    self?.loadingSpinner.startAnimating()
+                    self?.view.isUserInteractionEnabled = false
                 } else {
-                    if self.currentIndex < totalPageCount {
-                        safeIndex = self.currentIndex
-                    } else {
-                        safeIndex = totalPageCount - 1
-                    }
+                    self?.loadingSpinner.stopAnimating()
+                    self?.view.isUserInteractionEnabled = true
                 }
-                self.currentIndex = safeIndex
-                self.pageControllerSetUp(startPage: safeIndex)
-                //                self.setupSliderLayout()
-                self.setUpGesture()
-                //                    self.setUpNavBarItem()
-                self.setupPageNumberLabel()
-                self.updatePageLabel(currentIndex: safeIndex)
             }
         }
         
+        presentationViewModel.onReloadNeeded = { [weak self] in
+            guard let self = self else { return }
+            
+            DispatchQueue.main.async {
+                self.view.backgroundColor = self.presentationViewModel.appearance.themeMode.backgroundColor
+                
+                let newIndex = self.presentationViewModel.currentPageIndex
+                self.currentIndex = newIndex
+                self.viewModel.saveTotalPages(count: self.presentationViewModel.totalPages)
+                self.pageControllerReSetUp(startPage: newIndex)
+                
+                self.updatePageLabel(currentIndex: newIndex)
+                
+                self.setUpGesture()
+                self.setupPageNumberLabel()
+                self.settingsVC.configure(
+                    themeMode: self.viewModel.themeMode,
+                    isVertical: !self.viewModel.isSwipe,
+                    isCurl: !self.viewModel.isSide,
+                    totalPages: self.presentationViewModel.totalPages,
+                    currentPage: self.currentIndex
+                )
+                self.themeSettingVC.configure(theme: self.viewModel.theme, currentFont: self.viewModel.font)
+
+            }
+        }
+        
+        let width = view.bounds.width > 0 ? view.bounds.width : UIScreen.main.bounds.width
+        let height = view.bounds.height > 0 ? view.bounds.height : UIScreen.main.bounds.height
+        
+        let textAreaSize = CGSize(width: width - 40, height: height - 60)
+        presentationViewModel.loadBook(textAreaSize: textAreaSize)
+        
         let notificationCenter = NotificationCenter.default
-        
         notificationCenter.addObserver(self, selector: #selector(appWillEnterForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
-        
         notificationCenter.addObserver(self, selector: #selector(appDidEnterBackground), name: UIApplication.didEnterBackgroundNotification, object: nil)
     }
     
@@ -304,6 +350,42 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
             pageNumberLabel.trailingAnchor.constraint(equalTo: pageNumberContainer.contentView.trailingAnchor, constant: -10)
         ])
     }
+    func didChangeReadingStyle(to style: ReadingStyle) {
+        
+        let newTransitionStyle: UIPageViewController.TransitionStyle
+        let newOrientation: UIPageViewController.NavigationOrientation
+        
+        switch style {
+        case .slide:
+            newTransitionStyle = .scroll
+            newOrientation = .horizontal
+            
+            viewModel.isSwipe = true
+            viewModel.isSide = true
+            
+        case .scroll:
+            newTransitionStyle = .scroll
+            newOrientation = .vertical
+            
+            viewModel.isSwipe = false
+            viewModel.isSide = true
+            
+        case .curl:
+            newTransitionStyle = .pageCurl
+            newOrientation = .horizontal
+            
+            viewModel.isSwipe = true
+            viewModel.isSide = false
+        }
+        
+        self.transitionStyle = newTransitionStyle
+        self.navigationOrientation = newOrientation
+        
+        managePageControllerChange(
+            transitionStyle: newTransitionStyle,
+            navigationOrientation: newOrientation
+        )
+    }
     
     func didChangeNavigationOrientation(to style: UIPageViewController.NavigationOrientation) {
         let isVertical = (style == .vertical)
@@ -320,46 +402,42 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
         managePageControllerChange(transitionStyle: transitionStyle, navigationOrientation: nil)
     }
     
-    //    func didChangeTheme(isDark: Bool) {
-    //        viewModel.isDark = isDark
-    //        let style: UIUserInterfaceStyle = isDark ? .dark : .light
-    //        self.overrideUserInterfaceStyle = style
-    ////        navigationController?.overrideUserInterfaceStyle = style
-    ////        overrideUserInterfaceStyle = style
-    //        settingsVC.overrideUserInterfaceStyle = style//  applyThemeOverride(isDark: isDark)
-    //
-    //        let appearance = UINavigationBarAppearance()
-    //        appearance.configureWithOpaqueBackground()
-    //        appearance.titleTextAttributes = [.foregroundColor: AppColors.text]
-    //        appearance.backgroundColor = AppColors.background
-    //
-    //
-    //        //driver
-    ////        navigationController?.navigationBar.standardAppearance = appearance
-    ////        navigationController?.navigationBar.compactAppearance = appearance
-    ////        navigationController?.navigationBar.scrollEdgeAppearance = appearance
-    ////        setNeedsStatusBarAppearanceUpdate()
-    //        pageNumberLabel.textColor = AppColors.text
-    //    }
+    func didChangeFont(to font: FontEnum) {
+        let width = view.bounds.width
+        let height = view.bounds.height
+        let textAreaSize = CGSize(width: width - 40, height: height - 60)
+        viewModel.font = font
+        presentationViewModel.updateSettings(font: font, textAreaSize: textAreaSize)
+    }
+    
+    func didChangeFontSize(to size: CGFloat) {
+        let width = view.bounds.width
+        let height = view.bounds.height
+        let textAreaSize = CGSize(width: width - 40, height: height - 60)
+        viewModel.fontSize = Float(size)
+        presentationViewModel.updateSettings(fontSize: size, textAreaSize: textAreaSize)
+    }
     
     func didChangeTheme(to modeIndex: Int) {
-        viewModel.themeMode = modeIndex
+        return
+        let width = view.bounds.width
+        let height = view.bounds.height
+        let textAreaSize = CGSize(width: width - 40, height: height - 60)
+        
+//        presentationViewModel.updateSettings(theme: modeIndex, textAreaSize: textAreaSize)
         
         let mode = ThemeMode(rawValue: modeIndex) ?? .system
         let style = mode.uiInterfaceStyle
         
         self.overrideUserInterfaceStyle = style
-        
         settingsVC.overrideUserInterfaceStyle = style
         
         let appearance = UINavigationBarAppearance()
-        appearance.configureWithOpaqueBackground()
-        
-        appearance.titleTextAttributes = [.foregroundColor: AppColors.text]
-        appearance.backgroundColor = AppColors.background
+        appearance.configureWithTransparentBackground()
+        appearance.titleTextAttributes = [.foregroundColor: presentationViewModel.appearance.themeMode.foregroundColor]
         
         setNeedsStatusBarAppearanceUpdate()
-        pageNumberLabel.textColor = AppColors.text
+        pageNumberLabel.textColor = presentationViewModel.appearance.themeMode.foregroundColor
         
         if presentedViewController == settingsVC {
             settingsVC.applyThemeOverride(modeIndex: modeIndex)
@@ -377,8 +455,8 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
     }
     
     private func updatePageLabel(currentIndex: Int) {
-        let totalPages = pages.count
-        pageNumberLabel.text = "Page \(currentIndex + 1) of \(totalPages)"
+        //        let totalPages = pages.count
+        pageNumberLabel.text = "Page \(currentIndex + 1) of \(self.presentationViewModel.totalPages)"
     }
     
     private func createPageController(transitionStyle: UIPageViewController.TransitionStyle, navigationOrientation: UIPageViewController.NavigationOrientation) -> UIPageViewController{
@@ -408,21 +486,35 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
         view.layer.borderColor = UIColor.separator.cgColor // Subtle border
         return view
     }()
+
+    private lazy var floatingButton: UIButton = {
+    var config = UIButton.Configuration.filled()
     
-    //    private let pageSlider: UISlider = {
-    //        let slider = UISlider()
-    //        slider.translatesAutoresizingMaskIntoConstraints = false
-    //        slider.minimumTrackTintColor = .label
-    //        slider.maximumTrackTintColor = .secondaryLabel
-    //
-    //        let config = UIImage.SymbolConfiguration(scale: .small)
-    //        let thumb = UIImage(systemName: "circle.fill", withConfiguration: config)
-    //        slider.setThumbImage(thumb, for: .normal)
-    //
-    //        return slider
-    //    }()
+    config.image = UIImage(systemName: "slider.horizontal.3")
+    config.baseForegroundColor = .label
     
+    config.background.visualEffect = UIBlurEffect(style: .systemUltraThinMaterial)
     
+    config.background.backgroundColor = UIColor.clear
+    
+    config.cornerStyle = .capsule
+    config.contentInsets = NSDirectionalEdgeInsets(top: 16, leading: 16, bottom: 16, trailing: 16)
+    
+    let button = UIButton(configuration: config)
+    button.translatesAutoresizingMaskIntoConstraints = false
+    
+    button.layer.shadowColor = UIColor.black.cgColor
+    button.layer.shadowOpacity = 0.2
+    button.layer.shadowOffset = CGSize(width: 0, height: 4)
+    button.layer.shadowRadius = 8
+    
+    button.layer.borderWidth = 0.5
+    button.layer.borderColor = UIColor.white.withAlphaComponent(0.3).cgColor
+    
+    button.addTarget(self, action: #selector(showHideSettingView), for: .touchUpInside)
+    
+    return button
+}()
     
     private func pageControllerSetUp(startPage index: Int) {
         setupPageController()
@@ -434,12 +526,12 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
     private func pageControllerReSetUp(startPage index: Int) {
         reSetupPageController()
         if let firstVC = viewControllerAtIndex(index) {
-            pageController.setViewControllers([firstVC], direction: .forward, animated: true)
+            pageController.setViewControllers([firstVC], direction: .forward, animated: false)
         }
     }
     
     private func setUpGesture() {
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(showSlider))
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(showSettingButton))
         tapGesture.cancelsTouchesInView = true
         
         view.addGestureRecognizer(tapGesture)
@@ -461,16 +553,16 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
         pageControllerReSetUp(startPage: currentIndex)
     }
     
-    @objc func showSlider() {
+    @objc func showSettingButton() {
         isFullScreen = !isFullScreen
         pageNumberContainer.isHidden = !pageNumberContainer.isHidden
+        floatingButton.isHidden = isFullScreen
         //                mainSettingButton.isHidden = !mainSettingButton.isHidden
     }
     
     
     private func setupPageController() {
         addChild(pageController)
-        
         view.addSubview(pageController.view)
         
         pageController.view.translatesAutoresizingMaskIntoConstraints = false
@@ -501,62 +593,68 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
     
     func presentSettings() {
         settingsVC.delegate = self
-        settingsVC.configure(themeMode: viewModel.themeMode, isVertical: !viewModel.isSwipe, isCurl: !viewModel.isSide,totalPages: pages.count, currentPage: currentIndex)
-        if let sheet = settingsVC.sheetPresentationController {
-            sheet.detents = [.medium()
-                             //                .custom(resolver: { context in
-                             //                    return 300
-                             //                })
-            ]
+        settingsVC.configure(
+            themeMode: viewModel.themeMode,
+            isVertical: !viewModel.isSwipe,
+            isCurl: !viewModel.isSide,
+            totalPages: presentationViewModel.totalPages,
+            currentPage: currentIndex
+        )
+        
+        settingsVC.tabBarItem = UITabBarItem(
+            title: "",
+            image: UIImage(systemName: "gearshape"),
+            tag: 0
+        )
+        
+
+        themeSettingVC.view.backgroundColor = AppColors.background
+        themeSettingVC.delegate = self
+        themeSettingVC.configure(theme: viewModel.theme, currentFont: viewModel.font)
+        themeSettingVC.tabBarItem = UITabBarItem(
+            title: "",
+            image: UIImage(systemName: "sun.min"),
+            tag: 1
+        )
+        
+        fontSettingVC.view.backgroundColor = AppColors.background
+        fontSettingVC.delegate = self
+        fontSettingVC.configure(font: viewModel.font, fontSize: viewModel.fontSize)
+        fontSettingVC.tabBarItem = UITabBarItem(
+            title: "",
+            image: UIImage(systemName: "textformat.size"),
+            tag: 2
+        )
+        
+        let tabBarController = UITabBarController()
+        tabBarController.viewControllers = [settingsVC, themeSettingVC, fontSettingVC]
+        
+//        tabBarController.tabBar.backgroundColor = .systemBackground
+        
+        if let sheet = tabBarController.sheetPresentationController {
+            let customDetent = UISheetPresentationController.Detent.custom { context in
+                                return 300
+                            }
+            sheet.detents = [customDetent,.medium()]
             sheet.prefersGrabberVisible = true
+            sheet.prefersEdgeAttachedInCompactHeight = true
         }
         
-        
-        present(settingsVC, animated: true)
+        present(tabBarController, animated: true)
     }
+    
     @objc func showHideSettingView() {
         presentSettings()
     }
     
-    //    private func setupSliderLayout() {
-    //        view.addSubview(pageSlider)
-    //        pageSlider.isHidden = false
-    //        pageSlider.minimumValue = 0
-    //        pageSlider.maximumValue = Float(max(0, pages.count - 1))
-    //        pageSlider.value = 0
-    //        pageSlider.isHidden = true
-    //        pageSlider.addTarget(self, action: #selector(handleSliderChange), for: .valueChanged)
-    //        NSLayoutConstraint.activate([
-    //            pageSlider.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-    //            pageSlider.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-    //            pageSlider.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -1),
-    //            pageSlider.heightAnchor.constraint(equalToConstant: 30)
-    //        ])
-    //    }
-    
-    @objc func handleSliderChange(_ sender: UISlider) {
-        let targetIndex = Int(sender.value.rounded())
-        guard targetIndex != currentIndex else { return }
-        
-        let direction: UIPageViewController.NavigationDirection = targetIndex > currentIndex ? .forward : .reverse
-        
-        if let targetVC = viewControllerAtIndex(targetIndex) {
-            pageController.setViewControllers([targetVC], direction: direction, animated: false)
-            currentIndex = targetIndex
-        }
-        updatePageLabel(currentIndex: targetIndex)
-    }
     
     func viewControllerAtIndex(_ index: Int) -> PageContentViewController? {
-        if index >= pages.count || index < 0 { return nil }
-        let vc = PageContentViewController()
-        vc.pageText = pages[index]
+        if index >= presentationViewModel.totalPages || index < 0 { return nil }
+        
+        let vc = PageContentViewController(presentationViewModel: presentationViewModel)
+        vc.pageText = presentationViewModel.getPageContent(at: index)
         vc.bookTitleString = bookTitle
         vc.pageIndex = index
-        //        vc.textView.textColor = themeTitle
-        //        vc.view.backgroundColor = themeBackGroung
-        vc.fontSize = CGFloat(fontSize)
-        pageContentVCs.add(vc)
         return vc
     }
     
@@ -648,25 +746,28 @@ extension MainBookReaderViewController: UIPageViewControllerDataSource, UIPageVi
     }
     
     func pageViewController(_ pageViewController: UIPageViewController, didFinishAnimating finished: Bool, previousViewControllers: [UIViewController], transitionCompleted completed: Bool) {
+        
         if completed,
            let currentVC = pageViewController.viewControllers?.first as? PageContentViewController {
+            
             self.currentIndex = currentVC.pageIndex
-            //            pageSlider.setValue(Float(self.currentIndex), animated: true)
-            updatePageLabel(currentIndex: self.currentIndex)
         }
     }
+    
     func didChangePage(to index: Int) {
-        guard index != currentIndex else { return }
+        guard index != currentIndex else {
+            return
+        }
         
-        // Calculate direction for animation
         let direction: UIPageViewController.NavigationDirection = index > currentIndex ? .forward : .reverse
         
         if let targetVC = viewControllerAtIndex(index) {
-            pageController.setViewControllers([targetVC], direction: direction, animated: false) // animated: false feels snappier when dragging slider
-            currentIndex = index
-            updatePageLabel(currentIndex: index) // Updates the small label at bottom of main screen
+            pageController.setViewControllers([targetVC], direction: direction, animated: false)
+            
+            self.currentIndex = index
         }
     }
+    
     func setUpNavBarItem() {
         //        navigationItem.title = bookTitle
         let appearance = UINavigationBarAppearance()
@@ -680,25 +781,38 @@ extension MainBookReaderViewController: UIPageViewControllerDataSource, UIPageVi
                                              action: #selector(closeButtonTapped))
         
         navigationItem.leftBarButtonItems = [closeBarButton]
-        
-        if #available(iOS 26.0, *) {
-            let editBarButton = UIBarButtonItem(image: UIImage(systemName: "slider.horizontal.3"),
-                                                style: .prominent,
-                                                target: self,
-                                                action: #selector(showHideSettingView))
-            editBarButton.tintColor = AppColors.background
-            navigationItem.rightBarButtonItems = [editBarButton]
-        } else {
-            let editBarButton = UIBarButtonItem(image: UIImage(systemName: "slider.horizontal.3"),
-                                                style: .plain,
-                                                target: self,
-                                                action: #selector(showHideSettingView) )
-            editBarButton.tintColor = AppColors.title
-            navigationItem.rightBarButtonItems = [editBarButton]
-        }
-        
+//        let editBarButton = UIBarButtonItem(barButtonSystemItem: .edit,
+//                                             target: self,
+//                                             action: #selector(showHideSettingView))
+//        if #available(iOS 26.0, *) {
+//            let editBarButton = UIBarButtonItem(image: UIImage(systemName: "slider.horizontal.3"),
+//                                                style: .prominent,
+//                                                target: self,
+//                                                action: #selector(showHideSettingView))
+//            editBarButton.tintColor = AppColors.background
+//            navigationItem.rightBarButtonItems = [editBarButton]
+//        } else {
+//            let editBarButton = UIBarButtonItem(image: UIImage(systemName: "slider.horizontal.3"),
+//                                                style: .plain,
+//                                                target: self,
+//                                                action: #selector(showHideSettingView) )
+//            editBarButton.tintColor = AppColors.title
+//            navigationItem.rightBarButtonItems = [editBarButton]
+//        }
+        setupFloatingButton()
     }
-    
+    private func setupFloatingButton() {
+            view.addSubview(floatingButton)
+        floatingButton.isHidden = isFullScreen
+            NSLayoutConstraint.activate([
+                floatingButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -40),
+                floatingButton.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -40),
+                
+                // Optional: Force a specific size if you don't want it to grow with content
+                // floatingButton.widthAnchor.constraint(equalToConstant: 60),
+                // floatingButton.heightAnchor.constraint(equalToConstant: 60)
+            ])
+        }
     @objc private func closeButtonTapped() {
         if let nav = navigationController, nav.viewControllers.first != self {
             nav.popViewController(animated: true)
@@ -708,329 +822,39 @@ extension MainBookReaderViewController: UIPageViewControllerDataSource, UIPageVi
     }
 }
 
-protocol SettingsViewControllerDelegate: AnyObject {
-    func didChangePageStyle(to style: UIPageViewController.TransitionStyle)
-    func didChangeTheme(to mode: Int)
-    func didChangeNavigationOrientation(to style: UIPageViewController.NavigationOrientation)
-    func didChangePage(to index: Int)
-}
+extension MainBookReaderViewController: ThemeSettingsViewControllerDelegate {
 
-class SettingsViewController: UIViewController {
-    
-    weak var delegate: SettingsViewControllerDelegate?
-    private var totalPages: Int = 0
-    private let titleLabel: UILabel = {
-        let label = UILabel()
-        label.text = "Appearance"
-        label.font = .systemFont(ofSize: 28, weight: .bold)
-        label.textColor = AppColors.text
-        return label
-    }()
-    
-    private lazy var scrollTile: SettingsTileView = {
-        let tile = SettingsTileView(title: "Scroll Direction", items: ["Horizontal", "Vertical"])
-        
-        tile.onSegmentChanged = { [weak self] index in
-            let style: UIPageViewController.NavigationOrientation = (index == 0) ? .horizontal : .vertical
-            self?.delegate?.didChangeNavigationOrientation(to: style)
+    func didSetSettingViewTheme(isDark: Bool) {
+        print("didsetsetting")
+        let style: UIUserInterfaceStyle = isDark ? .dark : .light
+//        let modeIndex = isDark ? 1 : 0
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return }
+        windowScene.windows.forEach { window in
+                    window.overrideUserInterfaceStyle = style
         }
-        return tile
-    }()
-    
-    private lazy var themeTile: SettingsTileView = {
-        let items: [Any] = [
-            UIImage(systemName: "sun.max.fill")!,
-            UIImage(systemName: "moon.fill")!,
-            UIImage(systemName: "iphone")!
-        ]
-        let tile = SettingsTileView(title: "Theme", items: items)
+//        settingsVC.overrideUserInterfaceStyle = style
+//        themeSettingVC.overrideUserInterfaceStyle = style
+//        fontSettingVC.overrideUserInterfaceStyle = style
         
-        tile.onSegmentChanged = { [weak self] index in
-            self?.delegate?.didChangeTheme(to: index)
-        }
-        return tile
-    }()
-    
-    private lazy var transitionTile: SettingsTileView = {
-        let tile = SettingsTileView(title: "Transition Style", items: ["None", "Curl"])
-        
-        tile.onSegmentChanged = { [weak self] index in
-            let style: UIPageViewController.TransitionStyle = (index == 0) ? .scroll : .pageCurl
-            self?.delegate?.didChangePageStyle(to: style)
-        }
-        return tile
-    }()
-    
-    private lazy var pageLabel: UILabel = {
-        let label = UILabel()
-        label.font = .monospacedDigitSystemFont(ofSize: 15, weight: .medium)
-        label.textColor = AppColors.secondaryText
-        label.textAlignment = .center
-        label.layer.borderWidth = 1.0
-        
-        label.layer.borderColor = AppColors.secondaryText.withAlphaComponent(0.4).cgColor
-        
-        label.layer.cornerRadius = 8
-        
-        label.backgroundColor = AppColors.secondaryText.withAlphaComponent(0.1)
-        
-        label.clipsToBounds = true
-        
-        label.isUserInteractionEnabled = true
-        
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(didTapPageLabel))
-        label.addGestureRecognizer(tapGesture)
-        
-        return label
-    }()
-    
-    @objc func didTapPageLabel() {
-        presentGoToPageAlert()
+//        if presentedViewController == settingsVC {
+//            settingsVC.applyThemeOverride(modeIndex: modeIndex)
+//        }
+//        
+//        if presentedViewController == themeSettingVC {
+//            themeSettingVC.applyThemeOverride(modeIndex: modeIndex)
+//        }
+//        
+//        if presentedViewController == fontSettingVC {
+//            fontSettingVC.applyThemeOverride(modeIndex: modeIndex)
+//        }
     }
     
-    private let pageSlider: UISlider = {
-        let slider = UISlider()
-        slider.translatesAutoresizingMaskIntoConstraints = false
-        slider.minimumTrackTintColor = .label
-        slider.maximumTrackTintColor = .secondaryLabel
-        
-        let config = UIImage.SymbolConfiguration(scale: .large)
-        let thumb = UIImage(systemName: "circle.fill", withConfiguration: config)
-        slider.setThumbImage(thumb, for: .normal)
-        
-        return slider
-    }()
-    
-    private lazy var sliderContainer: UIView = {
-        let view = UIView()
-        view.backgroundColor = AppColors.tileBackground
-        view.layer.cornerRadius = 12
-        view.layer.cornerCurve = .continuous
-        view.translatesAutoresizingMaskIntoConstraints = false
-        
-        view.addSubview(pageLabel)
-        view.addSubview(pageSlider)
-        
-        pageLabel.translatesAutoresizingMaskIntoConstraints = false
-        
-        NSLayoutConstraint.activate([
-            pageLabel.topAnchor.constraint(equalTo: view.topAnchor, constant: 16),
-            pageLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            pageLabel.widthAnchor.constraint(greaterThanOrEqualToConstant: 100),
-            pageLabel.heightAnchor.constraint(greaterThanOrEqualToConstant: 30),
-            pageSlider.topAnchor.constraint(equalTo: pageLabel.bottomAnchor, constant: 12),
-            pageSlider.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            pageSlider.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            pageSlider.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -16)
-        ])
-        
-        pageSlider.addTarget(self, action: #selector(sliderValueChanged(_:)), for: .valueChanged)
-        pageSlider.addTarget(self, action: #selector(sliderDidEndSliding), for: .touchUpInside)
-
-        pageSlider.addTarget(self, action: #selector(sliderDidEndSliding), for: .touchUpOutside)
-        return view
-    }()
-    
-    @objc func sliderDidEndSliding(_ sender: UISlider) {
-        Haptics.shared.play(.medium)
-    }
-    
-    private lazy var mainStack: UIStackView = {
-        let stack = UIStackView(arrangedSubviews: [titleLabel, sliderContainer, scrollTile, themeTile, transitionTile])
-        stack.axis = .vertical
-        stack.spacing = 16
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        
-        stack.setCustomSpacing(24, after: titleLabel)
-        return stack
-    }()
-    
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        view.backgroundColor = AppColors.background
-        
-        view.addSubview(mainStack)
-        NSLayoutConstraint.activate([
-            mainStack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
-            mainStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            mainStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-        ])
-    }
-    
-    func configure(themeMode: Int, isVertical: Bool, isCurl: Bool, totalPages: Int, currentPage: Int) {
-        themeTile.setSelectedIndex(themeMode)
-        
-        scrollTile.setSelectedIndex(isVertical ? 1 : 0)
-        transitionTile.setSelectedIndex(isCurl ? 1 : 0)
-        
-        applyThemeOverride(modeIndex: themeMode)
-        
-        self.totalPages = totalPages
-        pageSlider.minimumValue = 0
-        pageSlider.maximumValue = Float(max(0, totalPages - 1))
-        pageSlider.setValue(Float(currentPage), animated: true)
-        updatePageLabel(current: currentPage)
-    }
-    
-    func applyThemeOverride(modeIndex: Int) {
-        guard let mode = ThemeMode(rawValue: modeIndex) else { return }
-        self.overrideUserInterfaceStyle = mode.uiInterfaceStyle
-        
-        let isActuallyDark = mode == .dark || (mode == .system && traitCollection.userInterfaceStyle == .dark)
-        
-        [scrollTile, themeTile, transitionTile].forEach { $0.updateTheme(isDark: isActuallyDark) }
-    }
-    
-    func changeTheme(isDark: Bool) {
-        if isDark {
-            view.backgroundColor = .black
-            titleLabel.textColor = .white
-        } else {
-            view.backgroundColor = UIColor(red: 0.95, green: 0.95, blue: 0.97, alpha: 1.0)
-            titleLabel.textColor = .black
-        }
-        
-        [scrollTile, themeTile, transitionTile].forEach { $0.updateTheme(isDark: isDark) }
-    }
-    @objc private func sliderValueChanged(_ sender: UISlider) {
-        let index = Int(sender.value.rounded())
-        updatePageLabel(current: index)
-        
-        delegate?.didChangePage(to: index)
-    }
-    
-    private func updatePageLabel(current: Int) {
-        pageLabel.text = " Page \(current + 1) of \(totalPages) "
-    }
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        if self.overrideUserInterfaceStyle == .unspecified {
-            let isDark = traitCollection.userInterfaceStyle == .dark
-            [scrollTile, themeTile, transitionTile].forEach { $0.updateTheme(isDark: isDark) }
-        }
-    }
-    func presentGoToPageAlert() {
-        let totalPages = totalPages
-        let alert = UIAlertController(
-            title: "Go to Page",
-            message: "Enter a page number (1 - \(totalPages))",
-            preferredStyle: .alert
-        )
-        
-        alert.addTextField { textField in
-            textField.placeholder = "Page #"
-            textField.keyboardType = .numberPad
-            textField.textAlignment = .center
-        }
-        
-        let goAction = UIAlertAction(title: "Go", style: .default) { [weak self] _ in
-            guard let self = self,
-                  let text = alert.textFields?.first?.text,
-                  let pageInput = Int(text) else { return }
+    func didChangeTheme(to theme: ThemeEnum) {
+        viewModel.theme = theme
+            let width = view.bounds.width
+            let height = view.bounds.height
+            let textAreaSize = CGSize(width: width - 40, height: height - 60)
             
-            let targetIndex = pageInput - 1
-            
-            if targetIndex >= 0 && targetIndex < self.totalPages {
-                updatePageLabel(current: targetIndex)
-                delegate?.didChangePage(to: targetIndex)
-                pageSlider.setValue(Float(targetIndex), animated: true)
-                Haptics.shared.play(.medium)
-            } else {
-                Haptics.shared.notify(.warning)
-                Toast.show(message: "Invalid page number entered", in: self.view)
-            }
-        }
-        
-        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
-        
-        alert.addAction(cancelAction)
-        alert.addAction(goAction)
-        
-        present(alert, animated: true)
-    }
-}
-
-class SettingsTileView: UIView {
-    
-    var onSegmentChanged: ((Int) -> Void)?
-    
-    
-    private let label: UILabel = {
-        let label = UILabel()
-        label.font = .systemFont(ofSize: 17, weight: .regular)
-        label.textColor = AppColors.text
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
-    }()
-    
-    private let segmentedControl: UISegmentedControl = {
-        let sc = UISegmentedControl(items: [])
-        sc.translatesAutoresizingMaskIntoConstraints = false
-        return sc
-    }()
-    
-    
-    init(title: String, items: [Any], defaultIndex: Int = 0) {
-        super.init(frame: .zero)
-        
-        self.backgroundColor = AppColors.tileBackground
-        self.layer.cornerRadius = 12
-        self.layer.cornerCurve = .continuous
-        self.translatesAutoresizingMaskIntoConstraints = false
-        
-        label.text = title
-        
-        for (index, item) in items.enumerated() {
-            if let string = item as? String {
-                segmentedControl.insertSegment(withTitle: string, at: index, animated: false)
-            } else if let image = item as? UIImage {
-                segmentedControl.insertSegment(with: image, at: index, animated: false)
-            }
-        }
-        segmentedControl.selectedSegmentIndex = defaultIndex
-        segmentedControl.addTarget(self, action: #selector(segmentAction(_:)), for: .valueChanged)
-        
-        setupLayout()
-    }
-    
-    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
-    
-    private func setupLayout() {
-        addSubview(label)
-        addSubview(segmentedControl)
-        
-        NSLayoutConstraint.activate([
-            self.heightAnchor.constraint(greaterThanOrEqualToConstant: 54),
-            
-            label.leadingAnchor.constraint(equalTo: self.leadingAnchor, constant: 16),
-            label.centerYAnchor.constraint(equalTo: self.centerYAnchor),
-            
-            segmentedControl.trailingAnchor.constraint(equalTo: self.trailingAnchor, constant: -16),
-            segmentedControl.centerYAnchor.constraint(equalTo: self.centerYAnchor),
-            
-            segmentedControl.leadingAnchor.constraint(greaterThanOrEqualTo: label.trailingAnchor, constant: 16),
-            
-            segmentedControl.widthAnchor.constraint(greaterThanOrEqualToConstant: 180)
-        ])
-    }
-    
-    @objc private func segmentAction(_ sender: UISegmentedControl) {
-        Haptics.shared.play(.medium)
-        onSegmentChanged?(sender.selectedSegmentIndex)
-    }
-    
-    func setSelectedIndex(_ index: Int) {
-        segmentedControl.selectedSegmentIndex = index
-    }
-    func updateTheme(isDark: Bool) {
-        if isDark {
-            self.backgroundColor = UIColor(white: 0.12, alpha: 1.0)
-            label.textColor = .white
-            segmentedControl.overrideUserInterfaceStyle = .dark
-        } else {
-            self.backgroundColor = .white
-            label.textColor = .black
-            segmentedControl.overrideUserInterfaceStyle = .light
-        }
+            presentationViewModel.updateSettings(theme: theme, textAreaSize: textAreaSize)
     }
 }
