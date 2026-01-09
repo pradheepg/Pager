@@ -2,6 +2,25 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>UIAppFonts</key>
+	<array>
+		<string>LibreBaskerville-VariableFont_wght.ttf</string>
+		<string>Literata-Italic-VariableFont_opsz,wght.ttf</string>
+		<string>Literata-VariableFont_opsz,wght.ttf</string>
+		<string>Lora-Italic-VariableFont_wght.ttf</string>
+		<string>Lora-VariableFont_wght.ttf</string>
+		<string>Merriweather-Italic-VariableFont_opsz,wdth,wght.ttf</string>
+		<string>Merriweather-VariableFont_opsz,wdth,wght.ttf</string>
+		<string>Nunito-Italic-VariableFont_wght.ttf</string>
+		<string>Nunito-VariableFont_wght.ttf</string>
+		<string>OpenSans-Italic-VariableFont_wdth,wght.ttf</string>
+		<string>OpenSans-VariableFont_wdth,wght.ttf</string>
+		<string>LibreBaskerville-Italic-VariableFont_wght.ttf</string>
+	</array>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict/>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

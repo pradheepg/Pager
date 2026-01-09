@@ -10,21 +10,9 @@ import Foundation
 class HomeViewModel {
     
 
-    var currentBook: Book? {
-        didSet {
-            //onDataUpdated?()
-        }
-    }
-    var recentBooks: [Book] = [] {
-        didSet {
-            //onDataUpdated?()
-        }
-    }
-    var wantToReadBooks: [Book] = [] {
-        didSet {
-           // onDataUpdated?()
-        }
-    }
+    var currentBook: Book?
+    var recentBooks: [Book] = []
+    var wantToReadBooks: [Book] = []
     
     var categories: [(name: String, books: [Book])] = []
     let collectionRepository: CollectionRepository = CollectionRepository()
@@ -32,6 +20,7 @@ class HomeViewModel {
 
 
     var onDataUpdated: (() -> Void)?
+    var onWantToReadDataUpdated: (() -> Void)?
     var onError: ((String) -> Void)?
     
     private let service: HomeService
@@ -92,19 +81,17 @@ class HomeViewModel {
         Task {
             
             do {
-//                self.isLoading = true
+                self.isLoading = true
+                try? await Task.sleep(nanoseconds: 600000000) //added to make the ui update smooth
                 let payload = try await service.fetchHomeDashboardData()
-                try await Task.sleep(nanoseconds: 500000000)
-//                self.currentBook = payload.currentBook
-//                self.recentBooks = payload.recentBooks
                 self.wantToReadBooks = payload.wantToReadBooks
                 self.categories = payload.categories
                 
-                
                 self.configureSections()
                 self.onDataUpdated?()
+//                self.onWantToReadDataUpdated?()
                 
-//                self.isLoading = false
+                self.isLoading = false
             } catch {
                 print("Error loading home data: \(error)")
                 self.onError?(error.localizedDescription)
@@ -112,26 +99,6 @@ class HomeViewModel {
             
         }
     }
-    
-//    func configureSections() {
-//        var sections: [HomeSection] = [.currently]
-//        
-//        if !recentBooks.isEmpty {
-//            sections.append(.recent)
-//        }
-//        
-//        if !wantToReadBooks.isEmpty {
-//            sections.append(.wantToRead)
-//        }
-//        
-//        for category in categories {
-//            if !category.books.isEmpty {
-//                sections.append(.category(category.name, category.books))
-//            }
-//        }
-//        
-//        self.displayedSections = sections
-//    }
     
     func configureSections() {
         var sections: [HomeSection] = [.currently]
@@ -187,7 +154,7 @@ class HomeViewModel {
         let wantToReadCollection = (user.collections?.allObjects as? [BookCollection])?.first(where: {
             $0.isDefault == true && $0.name == collectionName
         })
-        if let collection = wantToReadCollection, let books = collection.books as? Set<Book> {
+        if let collection = wantToReadCollection, let books = collection.books {
             return books.contains(book)
         }
         

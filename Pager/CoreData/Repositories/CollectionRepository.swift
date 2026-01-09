@@ -42,13 +42,9 @@ final class CollectionRepository {
         collection.name = name
         collection.descriptionText = description
         collection.isDefault = isDefault
-
+        collection.createdAt = Date()
         collection.owner = owner
-
-//        if isDefault {
-//            let _ = unsetDefaultCollections(for: owner)
-//        }
-
+        
         do {
             try CoreDataManager.shared.saveContext()
             return .success(collection)
@@ -244,10 +240,9 @@ final class CollectionRepository {
         if isBook(book, in: collection) {
             return .failure(.bookAlreadyInCollection)
         }
-
-        var currentSet = collection.books as? Set<Book> ?? Set<Book>()
-        currentSet.insert(book)
-        collection.books = currentSet as NSSet
+        let currentOrderedSet = collection.books?.mutableCopy() as? NSMutableOrderedSet ?? NSMutableOrderedSet()
+        currentOrderedSet.add(book)
+        collection.books = currentOrderedSet
 
         do {
             try CoreDataManager.shared.saveContext()
@@ -256,23 +251,6 @@ final class CollectionRepository {
             return .failure(.saveFailed)
         }
     }
-
-//    func removeBook(_ book: Book, from collection: BookCollection) -> Result<Void, CollectionError> {
-//        if !isBook(book, in: collection) {
-//            return .failure(.bookNotInCollection)
-//        }
-//
-//        var currentSet = collection.books as? Set<Book> ?? Set<Book>()
-//        currentSet.remove(book)
-//        collection.books = currentSet as NSSet
-//
-//        do {
-//            try CoreDataManager.shared.saveContext()
-//            return .success(())
-//        } catch {
-//            return .failure(.saveFailed)
-//        }
-//    }
     
     func removeBook(_ book: Book, from collection: BookCollection, for user: User?) -> Result<Void, CollectionError> {
         
@@ -284,9 +262,9 @@ final class CollectionRepository {
             return .failure(.bookNotInCollection)
         }
 
-        var currentSet = collection.books as? Set<Book> ?? Set<Book>()
-        currentSet.remove(book)
-        collection.books = currentSet as NSSet
+        let currentOrderedSet = collection.books?.mutableCopy() as? NSMutableOrderedSet ?? NSMutableOrderedSet()
+        currentOrderedSet.remove(book)
+        collection.books = currentOrderedSet
 
         do {
             try CoreDataManager.shared.saveContext()
@@ -297,16 +275,16 @@ final class CollectionRepository {
     }
 
     func isBook(_ book: Book, in collection: BookCollection) -> Bool {
-        guard let set = collection.books as? Set<Book> else { return false }
-        return set.contains(book)
+        guard let orderedSet = collection.books else { return false }
+        return orderedSet.contains(book)
     }
-
+    
     func fetchBooks(in collection: BookCollection) -> Result<[Book], CollectionError> {
-        guard let set = collection.books as? Set<Book> else {
+        guard let orderedSet = collection.books else {
             return .success([])
         }
-        let arr = Array(set).sorted { ($0.title ?? "") < ($1.title ?? "") }
-        return .success(arr)
+        let booksArray = orderedSet.array as? [Book] ?? []
+        return .success(booksArray.reversed())
     }
 
     func collectionExists(name: String, owner: User) -> Bool {

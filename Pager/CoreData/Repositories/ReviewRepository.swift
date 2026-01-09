@@ -42,7 +42,7 @@ final class ReviewRepository {
         review.reviewTitle = title
         review.reviewText = text
         review.dateCreated = date
-        review.dateEdited = nil
+        review.dateEdited = date
         review.book = book
         review.postedBy = user
         book.updateAverageRating()

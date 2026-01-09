@@ -315,10 +315,9 @@ class AdjustGoalViewController: UIViewController, UIPickerViewDataSource, UIPick
     
     @objc private func saveTapped() {
         var totalMinutes = getCurrentMinutes()
-        print(totalMinutes)
         totalMinutes = min(1440, max(1, totalMinutes))
-        print(totalMinutes)
         onGoalSelected?(totalMinutes)
+        Haptics.shared.notify(.success)
         dismiss(animated: true)
     }
 

@@ -2,7 +2,7 @@
 //  User+CoreDataProperties.swift
 //  Pager
 //
-//  Created by Pradheep G on 26/12/25.
+//  Created by Pradheep G on 02/01/26.
 //
 //
 
@@ -20,6 +20,7 @@ extension User {
 
     @NSManaged public var createDate: Date?
     @NSManaged public var dailyReadingGoal: Int16
+    @NSManaged public var dob: Date?
     @NSManaged public var email: String?
     @NSManaged public var favoriteGenres: String?
     @NSManaged public var lastOpenedBookId: UUID?
@@ -29,7 +30,6 @@ extension User {
     @NSManaged public var profileName: String?
     @NSManaged public var todayReadingMinutes: Double
     @NSManaged public var userId: UUID?
-    @NSManaged public var dob: Date?
     @NSManaged public var collections: NSSet?
     @NSManaged public var owned: NSSet?
     @NSManaged public var reviews: NSSet?
@@ -96,5 +96,4 @@ extension User : Identifiable {
         formatter.dateFormat = "dd/MM/yyyy"
         return formatter.string(from: date)
     }
-    
 }

@@ -7,11 +7,12 @@
 import UIKit
 internal import CoreData
 
-class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchControllerDelegate, UICollectionViewDataSource, UICollectionViewDelegate {
+class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchControllerDelegate, UICollectionViewDataSource, UICollectionViewDelegate, UITextFieldDelegate {
         
     private var tagsCollectionView: UICollectionView!
     private var resultsCollectionView: UICollectionView!
-    
+    private var searchTask: Task<Void, Never>?
+
     var collapsedSections = Set<Int>()
     let tagsTitleLabel = UILabel()
 
@@ -183,43 +184,104 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
         searchController.isActive = true
         updateSearchResults(for: searchController)
     }
+    
+//    func updateSearchResults(for searchController: UISearchController) {
+//        let searchText = searchController.searchBar.text ?? ""
+//        let tokens = searchController.searchBar.searchTextField.tokens
+//
+//        if searchText.isEmpty && tokens.isEmpty {
+//            tagsCollectionView.isHidden = false
+//            tagsTitleLabel.isHidden = tagsCollectionView.isHidden
+//            resultsCollectionView.isHidden = true
+//            emptyStateView.view.isHidden = true
+//            return
+//        }
+//
+//        tagsCollectionView.isHidden = true
+//        tagsTitleLabel.isHidden = tagsCollectionView.isHidden
+//
+//        Task { [weak self] in
+//            guard let self else { return }
+//
+//            let result = await self.viewModel.searchBooks(
+//                searchText: searchText,
+//                token: tokens
+//            )
+//
+//            await MainActor.run {
+//                switch result {
+//                case .success(let isEmpty):
+//                    if isEmpty {
+//                        self.resultsCollectionView.isHidden = true
+//                        self.emptyStateView.view.isHidden = false
+//                    } else {
+//                        self.resultsCollectionView.isHidden = false
+//                        self.emptyStateView.view.isHidden = true
+//                    }
+//
+//                    self.resultsCollectionView.reloadData()
+//
+//                case .failure(let error):
+//                    print("Error: \(error.localizedDescription)")
+//                }
+//            }
+//        }
+//    }
+
     func updateSearchResults(for searchController: UISearchController) {
-        print(searchController.searchBar.showsCancelButton)
-        let searchText = searchController.searchBar.text ?? ""
+        let rawText = searchController.searchBar.text ?? ""
         let tokens = searchController.searchBar.searchTextField.tokens
         
-        if searchText.isEmpty && tokens.isEmpty{
+        let searchText = rawText.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        if searchText.isEmpty && tokens.isEmpty {
+            searchTask?.cancel()
+            
             tagsCollectionView.isHidden = false
             tagsTitleLabel.isHidden = tagsCollectionView.isHidden
             resultsCollectionView.isHidden = true
             emptyStateView.view.isHidden = true
-        } else {
-            tagsCollectionView.isHidden = true
-            tagsTitleLabel.isHidden = tagsCollectionView.isHidden
-            let result = viewModel.searchBooks(searchText: searchText, token: tokens)
-            //driver
-            switch result {
-            case .success(let isEmpty):
-//                let midpoint = (foundBooks.count + 1) / 2
-//                self.viewModel.books = Array(foundBooks[..<midpoint])
-//                self.viewModel.myBooks = Array(foundBooks[midpoint...])
+            return
+        }
 
-                if isEmpty {
-                    print(isEmpty)
-                    resultsCollectionView.isHidden = true
-                    emptyStateView.view.isHidden = false
-                } else {
-                    resultsCollectionView.isHidden = false
-                    emptyStateView.view.isHidden = true
+        tagsCollectionView.isHidden = true
+        tagsTitleLabel.isHidden = tagsCollectionView.isHidden
+        
+        searchTask?.cancel()
+
+        searchTask = Task { [weak self] in
+            guard let self else { return }
+            
+            try? await Task.sleep(nanoseconds: 300_000_000)
+            
+            if Task.isCancelled { return }
+
+            let result = await self.viewModel.searchBooks(
+                searchText: searchText,
+                token: tokens
+            )
+
+            if Task.isCancelled { return }
+
+            await MainActor.run {
+                switch result {
+                case .success(let isEmpty):
+                    if isEmpty {
+                        self.resultsCollectionView.isHidden = true
+                        self.emptyStateView.view.isHidden = false
+                    } else {
+                        self.resultsCollectionView.isHidden = false
+                        self.emptyStateView.view.isHidden = true
+                    }
+                    self.resultsCollectionView.reloadData()
+
+                case .failure(let error):
+                    print("Error: \(error.localizedDescription)")
                 }
-                
-                resultsCollectionView.reloadData()
-                
-            case .failure(let error):
-                print("Error: \(error.localizedDescription)")
             }
         }
     }
+
     
     @objc func adjustForKeyboard(notification: Notification) {
         guard let keyboardValue = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue else { return }
@@ -347,6 +409,7 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
     }
     
     func makeContextMenu(for book: Book, isOwned: Bool) -> UIContextMenuConfiguration? {
+        searchController.searchBar.resignFirstResponder()
         return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
             guard let self = self else {
                 return nil
@@ -392,12 +455,12 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
             
             let containingCollectionIDs = (book.collections as? Set<BookCollection>)?.map { $0.objectID } ?? []
             let containingSet = Set(containingCollectionIDs)
-            
-            var customCollectionActions = allCollections
-                .filter { collection in
-                    let name = collection.name ?? ""
-                    return name != DefaultsName.wantToRead && name != DefaultsName.finiahed
+            let customCollections = allCollections
+                .filter { $0.isDefault == false }
+                .sorted {
+                    ($0.createdAt ?? Date.distantPast) < ($1.createdAt ?? Date.distantPast)
                 }
+            var customCollectionActions = customCollections
                 .map { collection in
                     let isPresent = containingSet.contains(collection.objectID)
                     let collectionName = collection.name ?? "Untitled"
@@ -429,10 +492,31 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
                 image: UIImage(systemName: "folder.badge.plus"),
                 children: customCollectionActions
             )
-            menuItems.append(UIMenu(options: .displayInline, children: [addToCollectionMenu]))
+            menuItems.append(UIMenu(options: .displayInline, children: [setUpAddToCollectionView(book: book)]))
             
             return UIMenu(title: "", children: menuItems)
         }
+    }
+    
+    func setUpAddToCollectionView(book: Book) -> UIAction {
+        return UIAction(title: "Add to Collection",
+                                           image: UIImage(systemName: "folder.badge.plus")) { [weak self] _ in
+            guard let self = self else { return }
+            let addToCollectionVC = AddToCollectionViewController(book: book)
+            
+            let nav = UINavigationController(rootViewController: addToCollectionVC)
+            
+            if let sheet = nav.sheetPresentationController {
+                sheet.detents = [.medium(), .large()]
+                
+                sheet.prefersGrabberVisible = true
+                
+                sheet.prefersScrollingExpandsWhenScrolledToEdge = true
+            }
+            
+            self.present(nav, animated: true)
+        }
+        
     }
     
     func showAddItemAlert(book: Book) {
@@ -444,6 +528,7 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
         
         alertController.addTextField { textField in
             textField.placeholder = "Collection name"
+            textField.delegate = self
         }
         
         let addAction = UIAlertAction(title: "Add", style: .default) { [weak self] _ in
@@ -519,31 +604,39 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
     }
     
     func collectionView(_ collectionView: UICollectionView, contextMenuConfigurationForItemAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
-        if indexPath.section == 0 {
-            return makeContextMenu(for: viewModel.myBooks[indexPath.row], isOwned: true)
+        if collectionView == resultsCollectionView {
+            if indexPath.section == 0 {
+                return makeContextMenu(for: viewModel.myBooks[indexPath.row], isOwned: true)
+            } else {
+                return makeContextMenu(for: viewModel.books[indexPath.row], isOwned: false)
+            }
         } else {
-            return makeContextMenu(for: viewModel.books[indexPath.row], isOwned: false)
+            return nil
         }
     }
     
+    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+        let currentString = (textField.text ?? "") as NSString
+        
+        let newString = currentString.replacingCharacters(in: range, with: string)
+        
+        return newString.count <= ContentLimits.collectionMaxNameLength
+    }
+    
     override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
+        super.viewWillAppear(animated)
         DispatchQueue.main.async {
             self.searchController.isActive = true
             self.searchController.searchBar.becomeFirstResponder()
-        }
+        } 
     }
 }
 
 class LeftAlignedFlowLayout: UICollectionViewFlowLayout {
     
     override func layoutAttributesForElements(in rect: CGRect) -> [UICollectionViewLayoutAttributes]? {
-        // 1. Get the standard attributes from the parent class
-        // (This is efficient because it only returns items in the visible rect)
         guard let attributes = super.layoutAttributesForElements(in: rect) else { return nil }
         
-        // 2. Create a safe copy of the attributes to modify
-        // (Modifying the original attributes directly can cause layout warnings)
         var leftAlignedAttributes = [UICollectionViewLayoutAttributes]()
         
         for attribute in attributes {
@@ -552,25 +645,19 @@ class LeftAlignedFlowLayout: UICollectionViewFlowLayout {
             }
         }
         
-        // 3. Loop through and shift items to the left
         var leftMargin = sectionInset.left
         var maxY: CGFloat = -1.0
         
         for layoutAttribute in leftAlignedAttributes {
             
-            // Check if this cell is on a new row
-            // (We check if its Y position is lower than the previous known row)
             if layoutAttribute.frame.origin.y >= maxY {
-                leftMargin = sectionInset.left // Reset margin for new row
+                leftMargin = sectionInset.left
             }
             
-            // Shift the cell to the current left margin
             layoutAttribute.frame.origin.x = leftMargin
             
-            // Calculate where the NEXT cell should start
             leftMargin += layoutAttribute.frame.width + minimumInteritemSpacing
             
-            // Update the vertical tracker
             maxY = max(layoutAttribute.frame.maxY, maxY)
         }
         
@@ -626,6 +713,7 @@ class CollapsibleCollectionHeader: UICollectionReusableView {
     required init?(coder: NSCoder) { fatalError() }
     
     @objc private func didTapHeader() {
+        Haptics.shared.play(.heavy)
         onToggle?()
     }
     

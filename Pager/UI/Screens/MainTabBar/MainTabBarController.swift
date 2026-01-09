@@ -31,7 +31,7 @@ class MainTabBarController: UITabBarController {
         let searchVC = SearchViewController()
         let searchNav = UINavigationController(rootViewController: searchVC)
         searchVC.searchController.searchBar.becomeFirstResponder()
-        searchNav.tabBarItem = UITabBarItem(tabBarSystemItem: .search, tag: 3)//UITabBarItem( title: "Search", image: UIImage(systemName: "magnifyingglass"), tag: 3)
+        searchNav.tabBarItem = UITabBarItem(tabBarSystemItem: .search, tag: 3) 
         viewControllers = [homeNav, libraryNav, bookStoreNav, searchNav]
     }
 

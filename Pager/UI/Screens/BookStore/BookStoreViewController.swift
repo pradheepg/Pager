@@ -7,7 +7,7 @@
 
 import UIKit
 
-class BookStoreViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate {
+class BookStoreViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate, UITextFieldDelegate {
 
      enum SectionType: Int, CaseIterable {
         case hero = 0
@@ -73,6 +73,9 @@ class BookStoreViewController: UIViewController, UICollectionViewDataSource, UIC
         }
         
         viewModel.onError = { [weak self] errorMessage in
+            if let self = self {
+                Toast.show(message: "Error loading home data: \(errorMessage)", in: self.view)
+            }
             DispatchQueue.main.async {
                 print("Error loading home data: \(errorMessage)")
             }
@@ -283,7 +286,9 @@ class BookStoreViewController: UIViewController, UICollectionViewDataSource, UIC
     }
  
     func collectionView(_ collectionView: UICollectionView, contextMenuConfigurationForItemAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
-        
+        if indexPath.section == 1 {
+            return nil
+        }
         return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
             guard let self = self else { return nil }
             
@@ -318,26 +323,27 @@ class BookStoreViewController: UIViewController, UICollectionViewDataSource, UIC
             let isWantToRead = self.viewModel.isBookInCollection(book, collectionName: DefaultsName.wantToRead)
             
             let wantToReadAction = UIAction(
-                title: isWantToRead ? "Remove from Want to Read" : "Add to Want to Read",
+                title: "Want to Read",
                 image: UIImage(systemName: isWantToRead ? "bookmark.fill" : "bookmark"),
                 attributes: []//isWantToRead ? .destructive : []
             ) { _ in
                 if isWantToRead {
-                    _ = self.viewModel.removeBookFromWantToRead(book: book)
+                    self.showToast(result: self.viewModel.removeBookFromWantToRead(book: book),collectionName: DefaultsName.wantToRead,isAdded: !isWantToRead)
                 } else {
-                    _ = self.viewModel.addBookToWantToRead(book: book)
+                    self.showToast(result: self.viewModel.addBookToWantToRead(book: book),collectionName: DefaultsName.wantToRead,isAdded: !isWantToRead)
                 }
 //                self.viewModel.loadData()
             }
             
             let allCollections = UserSession.shared.currentUser?.collections?.allObjects as? [BookCollection] ?? []
             
-            let customCollections = allCollections.filter {
-                $0.isDefault == false
-            }
-            
+            let customCollections = allCollections
+                .filter { $0.isDefault == false }
+                .sorted {
+                    ($0.createdAt ?? Date.distantPast) < ($1.createdAt ?? Date.distantPast)
+                }
             var collectionItems = customCollections.map { collection in
-                let isAdded = (collection.books as? Set<Book>)?.contains(book) ?? false
+                let isAdded = (collection.books)?.contains(book) ?? false
                 
                 return UIAction(
                     title: collection.name ?? "Untitled",
@@ -345,9 +351,9 @@ class BookStoreViewController: UIViewController, UICollectionViewDataSource, UIC
 //                    state: isAdded ? .on : .off
                 ) { _ in
                     if isAdded {
-                        _ = self.viewModel.deleteFromCollection(collection: collection, book: book)
+                        self.showToast(result: self.viewModel.deleteFromCollection(collection: collection, book: book),collectionName: collection.name,isAdded: !isAdded)
                     } else {
-                        _ = self.viewModel.addBook(book, to: collection)
+                        self.showToast(result: self.viewModel.addBook(book, to: collection), collectionName: collection.name, isAdded: !isAdded)
                     }
                 }
             }
@@ -356,6 +362,8 @@ class BookStoreViewController: UIViewController, UICollectionViewDataSource, UIC
                 self.showAddItemAlert(book: book)
             }
             collectionItems.append(addCollection)
+            
+
 
             let addToCollectionMenu = UIMenu(
                 title: "Add to Collection",
@@ -366,9 +374,30 @@ class BookStoreViewController: UIViewController, UICollectionViewDataSource, UIC
             return UIMenu(title: "", children: [
                 UIMenu(options: .displayInline, children: [detailsAction]),
                 UIMenu(options: .displayInline, children: [wantToReadAction]),
-                addToCollectionMenu
+                setUpAddToCollectionView(book: book)
             ])
         }
+    }
+    
+    func setUpAddToCollectionView(book: Book) -> UIAction {
+        return UIAction(title: "Add to Collection",
+                                           image: UIImage(systemName: "folder.badge.plus")) { [weak self] _ in
+            guard let self = self else { return }
+            let addToCollectionVC = AddToCollectionViewController(book: book)
+            
+            let nav = UINavigationController(rootViewController: addToCollectionVC)
+            
+            if let sheet = nav.sheetPresentationController {
+                sheet.detents = [.medium(), .large()]
+                
+                sheet.prefersGrabberVisible = true
+                
+                sheet.prefersScrollingExpandsWhenScrolledToEdge = true
+            }
+            
+            self.present(nav, animated: true)
+        }
+        
     }
     
     func showAddItemAlert(book: Book) {
@@ -380,6 +409,7 @@ class BookStoreViewController: UIViewController, UICollectionViewDataSource, UIC
         
         alertController.addTextField { textField in
             textField.placeholder = "Collection name"
+            textField.delegate = self
         }
         
         let addAction = UIAlertAction(title: "Add", style: .default) { [weak self] _ in
@@ -453,4 +483,13 @@ class BookStoreViewController: UIViewController, UICollectionViewDataSource, UIC
             print(error)
         }
     }
+    
+    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+        let currentString = (textField.text ?? "") as NSString
+        
+        let newString = currentString.replacingCharacters(in: range, with: string)
+        
+        return newString.count <= ContentLimits.collectionMaxNameLength
+    }
+    
 }

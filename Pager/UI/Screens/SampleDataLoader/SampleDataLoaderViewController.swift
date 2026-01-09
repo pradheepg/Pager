@@ -65,7 +65,6 @@ class SampleDataLoaderViewController: UIViewController {
     func onOK() {
         self.loadingSpinner.startAnimating()
         Task {
-            await try? Task.sleep(nanoseconds: 10000000000)
             if let user = UserSession.shared.currentUser {
                 do{
                     let request: NSFetchRequest<Book> = Book.fetchRequest()

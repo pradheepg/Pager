@@ -174,7 +174,6 @@ final class UserBookRecordRepository {
         }
     }
     
-    //may not need but check before removing
     func fetchUserBookRecords(for userId: User) async -> Result<[UserBookRecord], UserBookRecordError> {
         let context = CoreDataManager.shared.context
         userId.owned?.allObjects

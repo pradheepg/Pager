@@ -11,13 +11,21 @@ class BookGridViewModel {
     var books: [Book] = []
     var resultBooks: [Book] = []
     let repository: CollectionRepository
-    let currentCollection: BookCollection?
+    var currentCollection: BookCollection?
     
-    init(categoryTitle: String, books: [Book],currentCollection: BookCollection?, repository: CollectionRepository = CollectionRepository()) {
+    init(categoryTitle: String, books: [Book], currentCollection: BookCollection?, repository: CollectionRepository = CollectionRepository()) {
         self.categoryTitle = categoryTitle
         self.books = books
         self.repository = repository
+        
         self.currentCollection = currentCollection
+        
+    }
+    
+    func checkForWantToRead() {
+        if currentCollection == nil && categoryTitle == DefaultsName.wantToRead {
+            currentCollection = fetchWantToReadCollection()
+        }
     }
     
     func deleteFromCollection(collection: BookCollection, book: Book) -> Result<Void, CollectionError> {
@@ -34,7 +42,7 @@ class BookGridViewModel {
         guard let currentCollection = currentCollection else {
             return
         }
-        books = currentCollection.books?.allObjects as? [Book] ?? []
+        books = currentCollection.books?.array as? [Book] ?? []
         resultBooks = books
     }
     
@@ -73,15 +81,25 @@ class BookGridViewModel {
     func isBookInDefaultCollection(_ book: Book) -> Bool {
         guard let user = UserSession.shared.currentUser else { return false }
         
-        let wantToReadCollection = (user.collections?.allObjects as? [BookCollection])?.first(where: {
-            $0.isDefault == true && $0.name == DefaultsName.wantToRead
-        })
-        if let collection = wantToReadCollection, let books = collection.books as? Set<Book> {
+        let wantToReadCollection = fetchWantToReadCollection()
+//        let wantToReadCollection = (user.collections?.allObjects as? [BookCollection])?.first(where: {
+//            $0.isDefault == true && $0.name == DefaultsName.wantToRead
+//        })
+        if let collection = wantToReadCollection, let books = collection.books {
             return books.contains(book)
         }
         
         return false
     }
+    
+    func fetchWantToReadCollection() -> BookCollection? {
+        guard let user = UserSession.shared.currentUser else { return nil }
+
+        return (user.collections?.allObjects as? [BookCollection])?.first(where: {
+            $0.isDefault == true && $0.name == DefaultsName.wantToRead
+        })
+    }
+    
     func searchBook(searchText: String) -> Result<Void, CollectionError> {
         if searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             resultBooks = books

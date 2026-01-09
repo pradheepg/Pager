@@ -176,11 +176,11 @@ extension SceneDelegate {
             default:
                 style = .unspecified
             }
+        GobalProperty.systemTheme = style
             
             UIApplication.shared.connectedScenes.forEach { scene in
                 if let windowScene = scene as? UIWindowScene {
                     windowScene.windows.forEach { window in
-                        // This forces the change with an animation
                         UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: {
                             window.overrideUserInterfaceStyle = style
                         }, completion: nil)

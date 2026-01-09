@@ -8,7 +8,7 @@
 import UIKit
 internal import CoreData
 
-class DetailViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate {
+class DetailViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate, UITextFieldDelegate, UIGestureRecognizerDelegate {
 
     private let mainScrollView = UIScrollView()
     private let contentView = UIView()
@@ -30,11 +30,12 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
     private let averageRatingLabel: UILabel = UILabel()
     private let starStack: UIStackView = UIStackView()
     private let totalRatingLabel: UILabel = UILabel()
+//    private var initialTouchPoint: CGPoint = CGPoint(x: 0,y: 0)
     private let readMoreButton: UIButton = {
         let btn = UIButton(type: .system)
         btn.setTitle("More", for: .normal)
         btn.setTitleColor(AppColors.title, for: .normal)
-        btn.titleLabel?.font = UIFont.systemFont(ofSize: 12, weight: .bold)
+        btn.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .bold)
         btn.translatesAutoresizingMaskIntoConstraints = false
         return btn
     }()
@@ -57,7 +58,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         layout.scrollDirection = .horizontal
         layout.minimumLineSpacing = 16
         layout.sectionInset = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
-        layout.itemSize = CGSize(width: 350, height: 200)
+        layout.itemSize = CGSize(width: 350, height: 150)
         reviewCollectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         
         if let records = UserSession.shared.currentUser?.owned?.allObjects as? [UserBookRecord] {
@@ -87,12 +88,48 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         setupMoreMenu()
         updateButtonUI()
         setupCloseButton()
+//        setupPullToDismiss()
         if let existingReview = viewModel.getCurrentUserReview() {
             let savedRating = Int(existingReview.rating)
             updateStarUI(rating: savedRating)
         }
         
     }
+    
+//    private func setupPullToDismiss() {
+//        let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handleDismissPan(_:)))
+//        panGesture.delegate = self
+//        view.addGestureRecognizer(panGesture)
+//    }
+//
+//    @objc func handleDismissPan(_ gesture: UIPanGestureRecognizer) {
+//        print("Handel this is called")
+//        let translation = gesture.translation(in: view)
+//        let isVertical = abs(translation.y) > abs(translation.x)
+//        
+//        switch gesture.state {
+//        case .began:
+//            initialTouchPoint = gesture.location(in: view)
+//        case .changed:
+//            guard translation.y > 0 && isVertical else { return }
+//            
+//            view.transform = CGAffineTransform(translationX: 0, y: translation.y)
+//            view.alpha = 1.0 - min(translation.y / 800, 0.5)
+//            
+//        case .ended, .cancelled:
+//            if translation.y > 150 {
+//                onDismiss?()
+//                dismiss(animated: true, completion: nil)
+//            } else {
+//                UIView.animate(withDuration: 0.3) {
+//                    self.view.transform = .identity
+//                    self.view.alpha = 1.0
+//                }
+//            }
+//        default:
+//            break
+//        }
+//    }
     
     func updateButtonUI() {
         if isOwned {
@@ -158,6 +195,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         reviewCollectionView.translatesAutoresizingMaskIntoConstraints = false
         reviewCollectionView.dataSource = self
         reviewCollectionView.delegate = self
+        reviewCollectionView.isPagingEnabled = true
         reviewCollectionView.register(ReviewCell.self, forCellWithReuseIdentifier: "ReviewCell")
         //        reviewCollectionView.register(DemoCell.self, forCellWithReuseIdentifier: "DemoCell")
         
@@ -188,13 +226,13 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         
         bookNameLable.text = viewModel.book.title
         bookNameLable.textAlignment = .center
-        bookNameLable.font = UIFont.boldSystemFont(ofSize: 25)
+        bookNameLable.font = UIFont.boldSystemFont(ofSize: 28)
         bookNameLable.numberOfLines = 0
         bookNameLable.translatesAutoresizingMaskIntoConstraints = false
         
         authorNameLable.text = viewModel.book.author
         authorNameLable.textAlignment = .center
-        authorNameLable.font = UIFont.systemFont(ofSize: 15)
+        authorNameLable.font = UIFont.systemFont(ofSize: 20)
         authorNameLable.numberOfLines = 0
         authorNameLable.translatesAutoresizingMaskIntoConstraints = false
         
@@ -220,7 +258,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         let config = UIImage.SymbolConfiguration(pointSize: 20, weight: .medium)
         moreButton.setImage(UIImage(systemName: "ellipsis", withConfiguration: config), for: .normal)
         moreButton.tintColor = AppColors.title
-        moreButton.backgroundColor = .systemGray6
+        moreButton.backgroundColor = AppColors.gridViewSecondaryColor
         moreButton.layer.cornerRadius = 25
         moreButton.layer.masksToBounds = true
         moreButton.translatesAutoresizingMaskIntoConstraints = false
@@ -234,14 +272,14 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         
         descriptionTitleLable.text = "Publisher Description"
         descriptionTitleLable.textAlignment = .left
-        descriptionTitleLable.font = UIFont.boldSystemFont(ofSize: 15)
+        descriptionTitleLable.font = UIFont.boldSystemFont(ofSize: 17)
         descriptionTitleLable.numberOfLines = 0
         descriptionTitleLable.translatesAutoresizingMaskIntoConstraints = false
         descriptionView.addSubview(descriptionTitleLable)
         
         descriptionContentLable.text = viewModel.book.descriptionText
         descriptionContentLable.textAlignment = .left
-        descriptionContentLable.font = UIFont.systemFont(ofSize: 12)
+        descriptionContentLable.font = UIFont.systemFont(ofSize: 16)
         descriptionContentLable.numberOfLines = 4
         descriptionContentLable.translatesAutoresizingMaskIntoConstraints = false
         let tapGestore = UITapGestureRecognizer(target: self, action: #selector(toggleDescription))
@@ -331,6 +369,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         } else {
             switch viewModel.purchaseBook(viewModel.book) {
             case .success(let success):
+                Haptics.shared.notify(.success)
                 self.isOwned = true
                 
                 let alert = UIAlertController(
@@ -351,18 +390,15 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
                 
                 present(alert, animated: true)
             case .failure(let failure):
-                // Create the alert
                 let alert = UIAlertController(
                     title: "Purchase Failed",
                     message: "We couldn't add this book to your library.\nError: \(failure.localizedDescription)",
                     preferredStyle: .alert
                 )
                 
-                // Add an "OK" button
                 let okAction = UIAlertAction(title: "OK", style: .default, handler: nil)
                 alert.addAction(okAction)
                 
-                // Present it
                 self.present(alert, animated: true)
             }
             
@@ -474,12 +510,12 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         
         let containingCollectionIDs = (book.collections as? Set<BookCollection>)?.map { $0.objectID } ?? []
         let containingSet = Set(containingCollectionIDs)
-
-        var customCollectionActions = allCollections
-            .filter { collection in
-                let name = collection.name ?? ""
-                return name != DefaultsName.wantToRead && name != DefaultsName.finiahed
+        let customCollections = allCollections
+            .filter { $0.isDefault == false }
+            .sorted {
+                ($0.createdAt ?? Date.distantPast) < ($1.createdAt ?? Date.distantPast)
             }
+        var customCollectionActions = customCollections
             .map { collection in
                 let isPresent = containingSet.contains(collection.objectID)
                 let collectionName = collection.name ?? "Untitled"
@@ -512,7 +548,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
             image: UIImage(systemName: "folder.badge.plus"),
             children: customCollectionActions
         )
-        menuItems.append(UIMenu(options: .displayInline, children: [addToCollectionMenu]))
+        menuItems.append(UIMenu(options: .displayInline, children: [setUpAddToCollectionView(book: book)]))
         
         
         
@@ -529,7 +565,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
                 switch result {
                 case .success:
                     Toast.show(message: "Removed from Library", icon: "trash", in: self.view)
-                    
+                    Haptics.shared.notify(.success)
                     self.isOwned = false
                     
                 case .failure(let error):
@@ -545,6 +581,30 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         return UIMenu(title: "", children: menuItems)
     }
     
+    func setUpAddToCollectionView(book: Book) -> UIAction {
+        return UIAction(title: "Add to Collection",
+                                           image: UIImage(systemName: "folder.badge.plus")) { [weak self] _ in
+            guard let self = self else { return }
+            let addToCollectionVC = AddToCollectionViewController(book: book)
+            addToCollectionVC.onDismiss = { [weak self] in
+                print("OnDismiss")
+                self?.setupMoreMenu()
+            }
+            let nav = UINavigationController(rootViewController: addToCollectionVC)
+            
+            if let sheet = nav.sheetPresentationController {
+                sheet.detents = [.medium(), .large()]
+                
+                sheet.prefersGrabberVisible = true
+                
+                sheet.prefersScrollingExpandsWhenScrolledToEdge = true
+            }
+            
+            self.present(nav, animated: true)
+        }
+        
+    }
+    
     func showAddItemAlert(book: Book) {
         let alertController = UIAlertController(
             title: "Add New Collection",
@@ -554,6 +614,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         
         alertController.addTextField { textField in
             textField.placeholder = "Collection name"
+            textField.delegate = self
         }
         
         let addAction = UIAlertAction(title: "Add", style: .default) { [weak self] _ in
@@ -657,6 +718,9 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
             starButtonStack.addArrangedSubview(starButton)
             starButton.setImage(UIImage(systemName: "star", withConfiguration: largeConfig), for: .normal)
             starButton.setImage(UIImage(systemName: "star.fill", withConfiguration: largeConfig), for: .selected)
+            starButton.setImage(UIImage(systemName: "star.fill", withConfiguration: largeConfig), for: .highlighted)
+            starButton.setImage(UIImage(systemName: "star.fill", withConfiguration: largeConfig), for: [.selected, .highlighted])
+            
             starButton.tintColor = AppColors.systemBlue
             starButton.tag = i
             starButton.addTarget(self, action: #selector(starTapped(_: )), for: .touchUpInside)
@@ -861,25 +925,22 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
                                        subtitle: genreEnum.rawValue,
                                        icon: true, genre: genreEnum)
         
-        // 2. Released Date
         let dateData = getReleasedDateStrings()
         let releasedView = makeInfoColumn(title: "Released",
                                           main: dateData.year,
                                           subtitle: dateData.date)
         
-        // 3. Language
         let langData = getLanguageStrings()
         let languageView = makeInfoColumn(title: "Language",
                                           main: langData.code,
                                           subtitle: langData.name)
         
-        // 4. Reading Stats (Length & Time)
         let stats = getReadingStats()
         
-        let lengthView = makeInfoColumn(title: "Length",
-                                        main: stats.pages,
-                                        subtitle: "Pages",
-                                        divider: true)
+//        let lengthView = makeInfoColumn(title: "Length",
+//                                        main: stats.pages,
+//                                        subtitle: "Pages",
+//                                        divider: true)
         
         let readingTimeView = makeInfoColumn(title: "Reading time",
                                              main: stats.timeMain,
@@ -1031,11 +1092,11 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         
         if divider {
             let divider = UIView()
-            divider.backgroundColor = .systemGray3
+            divider.backgroundColor = AppColors.separatorColor
             divider.translatesAutoresizingMaskIntoConstraints = false
             container.addSubview(divider)
             NSLayoutConstraint.activate([
-                divider.widthAnchor.constraint(equalToConstant: 1),
+                divider.widthAnchor.constraint(equalToConstant: 0.8),
                 divider.topAnchor.constraint(equalTo: container.topAnchor, constant: 14),
                 divider.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -14),
                 divider.trailingAnchor.constraint(equalTo: container.trailingAnchor)
@@ -1058,7 +1119,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         dismiss(animated: true, completion: nil)
     }
     
-    func makeVerticalSeparator(color: UIColor = .white,
+    func makeVerticalSeparator(color: UIColor = AppColors.separatorColor,
                                inset: CGFloat = 0) -> UIView {
         let lineView = UIView()
         lineView.backgroundColor = color
@@ -1082,6 +1143,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
     }
     
     @objc func starTapped(_ sender: UIButton) {
+        
         if !isOwned {
             let alert = UIAlertController(
                 title: "Purchase Required",
@@ -1092,6 +1154,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
             alert.addAction(UIAlertAction(title: "OK", style: .default))
             
             present(alert, animated: true)
+            Haptics.shared.notify(.error)
             return
         }
         updateTotalRatingText()
@@ -1102,6 +1165,8 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
             updateStarUI(rating: selectedRating)
             refreshHeaderUI()
             reviewCollectionView.reloadData()
+            Haptics.shared.play(.light)
+            Toast.show(message: "Rating Added", in: self.view)
             
         case .failure(let error):
             print("Error: \(error)")
@@ -1169,6 +1234,14 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ReviewCell", for: indexPath) as! ReviewCell
         cell.configure(with: viewModel.reviews[indexPath.item])
         return cell
+    }
+    
+    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+        let currentString = (textField.text ?? "") as NSString
+        
+        let newString = currentString.replacingCharacters(in: range, with: string)
+        
+        return newString.count <= ContentLimits.collectionMaxNameLength
     }
     
     //    override func viewDidLayoutSubviews() {

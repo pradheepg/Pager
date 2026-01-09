@@ -14,13 +14,13 @@ class SearchViewModel {
     private let bookRepository = BookRepository()
     private let collectionRepository = CollectionRepository()
     
-    func searchBooks(searchText: String, token: [UISearchToken]) -> Result<Bool, BookError> {
+    func searchBooks(searchText: String, token: [UISearchToken]) async -> Result<Bool, BookError> {
         var tokentext: String = ""
         if let category = token.first?.representedObject as? CategoryEnum {
             tokentext = category.rawValue
         }
         
-       let result =  bookRepository.searchBooks(searchText, tokenText: tokentext)
+       let result = await bookRepository.searchBooks(searchText, tokenText: tokentext)
         switch result {
         case .success(let books):
             filterMyBooks(books)
@@ -58,7 +58,7 @@ class SearchViewModel {
             $0.isDefault == true && $0.name == name
         })
         
-        if let collection = targetCollection, let books = collection.books as? Set<Book> {
+        if let collection = targetCollection, let books = collection.books {
             return books.contains(book)
         }
         return false
