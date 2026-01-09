@@ -327,6 +327,7 @@ class MyBooksViewController: UIViewController, UICollectionViewDataSource, UICol
             switch result {
             case .success():
                 if let self = self {
+                    Haptics.shared.notify(.success)
                     Toast.show(message: "Book Removed from Library ", in: view)
                 }
                 self?.didFinishTask?()
@@ -344,10 +345,31 @@ class MyBooksViewController: UIViewController, UICollectionViewDataSource, UICol
             children: [
                 detailsAction,
                 UIMenu(options: .displayInline, children: [wantToReadAction, finishedAction]),
-                addToCollectionMenu,
+                setUpAddToCollectionView(book: book),
                 UIMenu(options: .displayInline, children: [removeAction])
             ]
         )
+    }
+    
+    func setUpAddToCollectionView(book: Book) -> UIAction {
+        return UIAction(title: "Add to Collection",
+                                           image: UIImage(systemName: "folder.badge.plus")) { [weak self] _ in
+            guard let self = self else { return }
+            let addToCollectionVC = AddToCollectionViewController(book: book)
+            
+            let nav = UINavigationController(rootViewController: addToCollectionVC)
+            
+            if let sheet = nav.sheetPresentationController {
+                sheet.detents = [.medium(), .large()]
+                
+                sheet.prefersGrabberVisible = true
+                
+                sheet.prefersScrollingExpandsWhenScrolledToEdge = true
+            }
+            
+            self.present(nav, animated: true)
+        }
+        
     }
     
     func showAddItemAlert(book: Book) {
@@ -440,6 +462,11 @@ class MyBooksViewController: UIViewController, UICollectionViewDataSource, UICol
         let newString = currentString.replacingCharacters(in: range, with: string)
         
         return newString.count <= ContentLimits.collectionMaxNameLength
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        collectionView.reloadData()
     }
     
     required init?(coder: NSCoder) {

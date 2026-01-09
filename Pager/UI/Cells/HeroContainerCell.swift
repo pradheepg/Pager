@@ -17,7 +17,6 @@ class HeroContainerCell: UICollectionViewCell {
         contentView.addSubview(heroView)
         heroView.translatesAutoresizingMaskIntoConstraints = false
         
-        // Pin HeroView to the edges of the cell content
         NSLayoutConstraint.activate([
             heroView.topAnchor.constraint(equalTo: contentView.topAnchor),
             heroView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),

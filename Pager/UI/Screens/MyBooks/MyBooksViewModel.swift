@@ -16,31 +16,56 @@ class MyBooksViewModel {
     var books: [Book]
     private let collectionRepository: CollectionRepository
     private let userBookRecordRepository: UserBookRecordRepository
-    private(set) var currentSortOption: BookSortOption = .lastOpened
-    private(set) var currentSortOrder: SortOrder = .ascending
+    private let sortOptionKey = "MyBooks_SortOption"
+    private let sortOrderKey = "MyBooks_SortOrder"
+    
+    var currentSortOption: BookSortOption = .lastOpened {
+        didSet {
+            UserDefaults.standard.set(currentSortOption.rawValue, forKey: sortOptionKey)
+            applySort()
+        }
+    }
+    
+    var currentSortOrder: SortOrder = .ascending {
+        didSet {
+            UserDefaults.standard.set(currentSortOrder.rawValue, forKey: sortOrderKey)
+            applySort()
+        }
+    }
     
     init(books: [Book]) {
         self.books = books
         collectionRepository = CollectionRepository()
         userBookRecordRepository = UserBookRecordRepository()
+        if let savedOptionRaw = UserDefaults.standard.string(forKey: sortOptionKey),
+           let savedOption = BookSortOption(rawValue: savedOptionRaw) {
+            self.currentSortOption = savedOption
+        } else {
+            self.currentSortOption = .lastOpened
+        }
+        
+        if let savedOrderRaw = UserDefaults.standard.string(forKey: sortOrderKey),
+           let savedOrder = SortOrder(rawValue: savedOrderRaw) {
+            self.currentSortOrder = savedOrder
+        } else {
+            self.currentSortOrder = .ascending
+        }
         applySort()
     }
     
     
     func didSelectSortOption(_ option: BookSortOption) {
         self.currentSortOption = option
-        applySort()
     }
     
     func didSelectSortOrder(_ order: SortOrder) {
         self.currentSortOrder = order
-        applySort()
     }
     
     func applySort() {
         books.sort { [weak self] (book1: Book, book2: Book) in
             guard let self = self else { return false }
-
+            
             var isOrderedBefore = false
             
             switch self.currentSortOption {
@@ -86,7 +111,7 @@ class MyBooksViewModel {
     
     private func getDateAdded(for book: Book) -> Date? {
         return getRecord(for: book)?.pruchaseDate
-
+        
     }
     
     private func getLastOpened(for book: Book) -> Date? {
@@ -126,7 +151,7 @@ class MyBooksViewModel {
             return .failure(error)
         }
     }
-
+    
     
     func addToCollection(collection: BookCollection, book: Book) -> Result<Void, CollectionError> {
         let result = collectionRepository.addBook(book, to: collection)
@@ -195,10 +220,10 @@ class MyBooksViewModel {
         guard let user = UserSession.shared.currentUser else {
             return .failure(.notFound)
         }
-//        if user.lastOpenedBookId == book.bookId {
-//            user.lastOpenedBookId = nil
-//            try? user.managedObjectContext?.save()
-//        }
+        //        if user.lastOpenedBookId == book.bookId {
+        //            user.lastOpenedBookId = nil
+        //            try? user.managedObjectContext?.save()
+        //        }
         removeBookFromLastOpened(book: book)
         removeBookFromFinishedIfPresent(book: book)
         return userBookRecordRepository.deleteRecord(book: book, user: user)
@@ -209,7 +234,7 @@ class MyBooksViewModel {
         let finishedCollection = (user.collections?.allObjects as? [BookCollection])?.first(where: {
             $0.isDefault == true && $0.name == "Finished"
         })
-
+        
         if let collection = finishedCollection,
            let books = collection.books,
            books.contains(book) {
@@ -224,7 +249,7 @@ class MyBooksViewModel {
         guard let user = UserSession.shared.currentUser else {
             return
         }
-
+        
         if user.lastOpenedBookId == book.bookId {
             
             if let ownedBooks = user.owned?.allObjects as? [UserBookRecord] {

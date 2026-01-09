@@ -115,7 +115,7 @@ class ChangePasswordViewController: UIViewController, UITableViewDataSource, UIT
     private func setUpTableView() {
         navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .cancel, target: self, action: #selector(didTapCancel))
         let doneButton = UIBarButtonItem(barButtonSystemItem: .done, target: self, action: #selector(didTapDone))
-        doneButton.tintColor = AppColors.background
+        doneButton.tintColor = AppColors.systemBlue
         navigationItem.rightBarButtonItem = doneButton
         
         view.addSubview(tableView)
@@ -171,6 +171,7 @@ class ChangePasswordViewController: UIViewController, UITableViewDataSource, UIT
 //            self.navigationController?.popViewController(animated: true)
 //        }
 //    }
+    
     @objc func didTapDone() {
         let currentInput = currentPassword[0].value
         let newInput = newPassword[0].value
@@ -201,6 +202,7 @@ class ChangePasswordViewController: UIViewController, UITableViewDataSource, UIT
             self.navigationController?.popViewController(animated: true)
         }
     }
+    
     private func showAlert(title: String, message: String) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default))

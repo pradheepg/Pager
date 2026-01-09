@@ -70,11 +70,11 @@ final class UserRepository {
         finishedCollection.isDefault = true
         finishedCollection.owner = user
         
-        let name = user.profileName ?? "?"
-        let firstLetter = String(name.prefix(1)).uppercased()
-        if let avatarImage = UIImage.createImageWithLabel(text: firstLetter) {
-            user.profileImage = avatarImage.pngData()
-        }
+//        let name = user.profileName ?? "?"
+//        let firstLetter = String(name.prefix(1)).uppercased()
+//        if let avatarImage = UIImage.createImageWithLabel(text: firstLetter) {
+//            user.profileImage = avatarImage.pngData()
+//        }
         do {
             try CoreDataManager.shared.saveContext()
             return .success(user)
@@ -238,6 +238,27 @@ final class UserRepository {
         }
     }
     
+    func removeProflieImage(for user: User) async -> Result<Void, UserError> {
+        guard let context = user.managedObjectContext else {
+            return .failure(.saveFailed)
+        }
+        let userID = user.objectID
+        
+        do {
+            try await context.perform {
+                guard let safeUser = context.object(with: userID) as? User else {
+                    throw UserError.userNotFound
+                }
+                
+                safeUser.profileImage = nil
+                try context.save()
+            }
+            
+            return .success(())
+        } catch {
+            return .failure(.saveFailed)
+        }
+    }
     
     func getCurrentBookUUID(_ user: User) -> Result<UUID, UserError> {
         guard let bookId = user.lastOpenedBookId else {

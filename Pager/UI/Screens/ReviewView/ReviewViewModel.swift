@@ -67,7 +67,6 @@ class ReviewViewModel {
             
             return hasTitle || hasContent
         }
-
         self.reviews = filteredReviews.sorted { (first: Review, second: Review) -> Bool in
             return (first.dateEdited ?? Date.distantPast) > (second.dateEdited ?? Date.distantPast)
         }

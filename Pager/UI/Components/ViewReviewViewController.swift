@@ -145,11 +145,10 @@ class ViewReviewViewController: UIViewController, UICollectionViewDataSource, UI
         let writtenByText = review.postedBy?.profileName ?? ""
         let writtenByFont = UIFont.systemFont(ofSize: 14, weight: .regular)
         let writtenByHeight = writtenByText.height(
-            withConstrainedWidth: availableTextWidth / 0.5 ,
+            withConstrainedWidth: availableTextWidth / 2,
             font: writtenByFont
         )
-        
-        let totalHeight = titleHeight + bodyHeight + writtenByHeight + staticCellHeight + 10
+        let totalHeight = titleHeight + bodyHeight + writtenByHeight + staticCellHeight //+ 20
         
         return CGSize(width: cellWidth, height: totalHeight)
     }

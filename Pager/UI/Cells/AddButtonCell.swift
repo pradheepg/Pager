@@ -17,7 +17,7 @@ class AddButtonCell: UITableViewCell {
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
-        addButton.setImage(UIImage(systemName: "plus.app"), for: .normal)
+//        addButton.setImage(UIImage(systemName: "plus.app"), for: .normal)
         addButton.setTitle(" Add New Item", for: .normal)
         addButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .semibold)
         

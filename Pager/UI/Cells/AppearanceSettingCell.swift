@@ -59,6 +59,7 @@ class AppearanceSettingCell: UITableViewCell {
         ])
     }
     @objc private func didChangeTheme(_ sender: UISegmentedControl) {
+        Haptics.shared.play(.light)
         UserDefaults.standard.set(sender.selectedSegmentIndex, forKey: "selectedThemeIndex")
         let selectedStyle: UIUserInterfaceStyle
         
@@ -76,6 +77,7 @@ class AppearanceSettingCell: UITableViewCell {
         if let windowScene = self.window?.windowScene {
             for window in windowScene.windows {
                 window.overrideUserInterfaceStyle = selectedStyle
+                GobalProperty.systemTheme = selectedStyle
             }
         }
     }

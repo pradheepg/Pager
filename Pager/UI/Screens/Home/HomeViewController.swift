@@ -81,6 +81,10 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
 //        }
         
         viewModel.onError = { [weak self] errorMessage in
+            guard let self = self else {
+                return
+            }
+            Toast.show(message: "Error loading home data: \(errorMessage)", in: self.view)
             DispatchQueue.main.async {
                 print("Error loading home data: \(errorMessage)")
             }
@@ -88,7 +92,7 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
     }
     
     private func setupTitleAndProfile() {
-        profileButton.setImage(UIImage(systemName: "person"), for: .normal)//person.crop.circle.fill
+        profileButton.setImage(UIImage(systemName: "person"), for: .normal)
         profileButton.tintColor = .label
         profileButton.translatesAutoresizingMaskIntoConstraints = false
         profileButton.addTarget(self, action: #selector(profileButtonTapped), for: .touchUpInside)
@@ -235,6 +239,7 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
     }
     
     @objc func profileButtonTapped() {
+        Haptics.shared.play(.medium)
         let vc = ProfileViewController()
         vc.hidesBottomBarWhenPushed = true
         
@@ -285,7 +290,6 @@ class HomeViewController: UIViewController, UICollectionViewDelegate {
     }
     
     func handleDismissal() {
-        print("handelDismissal")
         if let _ = viewModel.onDataUpdated {
             viewModel.loadData()
         }
@@ -529,7 +533,7 @@ extension HomeViewController: UICollectionViewDataSource, UITextFieldDelegate {
             let isWantToRead = self.viewModel.isBookInCollection(book, collectionName: DefaultsName.wantToRead)
             
             let wantToReadAction = UIAction(
-                title: isWantToRead ? "Remove from Want to Read" : "Add to Want to Read",
+                title: "Want to Read",
                 image: UIImage(systemName: isWantToRead ? "bookmark.fill" : "bookmark"),
                 attributes: []//isWantToRead ? .destructive : []
             ) { _ in
@@ -577,9 +581,30 @@ extension HomeViewController: UICollectionViewDataSource, UITextFieldDelegate {
             return UIMenu(title: "", children: [
                 UIMenu(options: .displayInline, children: [detailsAction]),
                 UIMenu(options: .displayInline, children: [wantToReadAction]),
-                addToCollectionMenu
+                setUpAddToCollectionView(book: book)
             ])
         }
+    }
+    
+    func setUpAddToCollectionView(book: Book) -> UIAction {
+        return UIAction(title: "Add to Collection",
+                                           image: UIImage(systemName: "folder.badge.plus")) { [weak self] _ in
+            guard let self = self else { return }
+            let addToCollectionVC = AddToCollectionViewController(book: book)
+            
+            let nav = UINavigationController(rootViewController: addToCollectionVC)
+            
+            if let sheet = nav.sheetPresentationController {
+                sheet.detents = [.medium(), .large()]
+                
+                sheet.prefersGrabberVisible = true
+                
+                sheet.prefersScrollingExpandsWhenScrolledToEdge = true
+            }
+            
+            self.present(nav, animated: true)
+        }
+        
     }
     
     func showToast(result: Result<Void,CollectionError>?, collectionName: String?, isAdded: Bool) {

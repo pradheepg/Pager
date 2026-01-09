@@ -63,7 +63,7 @@ extension UIImage {
         let renderer = UIGraphicsImageRenderer(size: size)
         
         return renderer.image { context in
-            let colors: [UIColor] = [.systemBlue, .systemRed, .systemGreen, .systemOrange, .systemPurple, .systemTeal, .systemIndigo]
+            let colors: [UIColor] = [.systemPurple]//[.systemBlue, .systemRed, .systemGreen, .systemOrange, .systemPurple, .systemTeal, .systemIndigo]
             let randomColor = colors.randomElement() ?? .systemGray
             
             randomColor.setFill()
