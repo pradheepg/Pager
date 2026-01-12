@@ -173,8 +173,10 @@ class PageContentViewController: UIViewController {
         //        textView.textColor = AppColors.text
         view.backgroundColor = self.presentationViewModel?.appearance.themeMode.backgroundColor ?? AppColors.readBookBg
         textView.textColor = self.presentationViewModel?.appearance.themeMode.foregroundColor ?? AppColors.readBookFg
-        bookTitle.textColor = AppColors.secondaryText
-        pageNumber.textColor = AppColors.secondaryText
+        bookTitle.textColor = AppColors.readBookFg
+        bookTitle.alpha = 0.6
+        pageNumber.textColor = AppColors.readBookFg
+        pageNumber.alpha = 0.6
     }
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
@@ -256,6 +258,7 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        UIApplication.shared.isIdleTimerDisabled = true
         configureTransparentNavbar()
         startSession()
         setUpNavBarItem()
@@ -279,6 +282,7 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
         presentationViewModel.appearance.fontSize = CGFloat(viewModel.fontSize)
         presentationViewModel.appearance.themeMode = viewModel.theme
         presentationViewModel.appearance.font = viewModel.font
+        presentationViewModel.percentage = self.percentage
         presentationViewModel.onLoading = { [weak self] isLoading in
             DispatchQueue.main.async {
                 if isLoading {
@@ -683,11 +687,17 @@ class MainBookReaderViewController: UIViewController, SettingsViewControllerDele
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
+        UIApplication.shared.isIdleTimerDisabled = false
         viewModel.saveProgress(progressValue: currentIndex)
         viewModel.saveSetting()
         saveAndResetSession()
         restoreDefaultNavbar()
         
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        viewModel.changeSystemTheme()
     }
     
     override func viewDidDisappear(_ animated: Bool) {

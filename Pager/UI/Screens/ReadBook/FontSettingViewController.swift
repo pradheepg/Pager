@@ -320,7 +320,7 @@ class FontPickerViewController: UITableViewController {
     private func setupHeader() {
         let headerHeight: CGFloat = 60
         let headerView = UIView(frame: CGRect(x: 0, y: 0, width: tableView.bounds.width, height: headerHeight))
-        headerView.backgroundColor = .clear // Or AppColors.background
+        headerView.backgroundColor = .clear // AppColors.background
         let titleLabel = UILabel()
         titleLabel.text = "Select Font"
         titleLabel.font = .systemFont(ofSize: 24, weight: .semibold)
@@ -361,7 +361,6 @@ class FontPickerViewController: UITableViewController {
         return cell
     }
     
-    
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         
@@ -373,5 +372,13 @@ class FontPickerViewController: UITableViewController {
         didSelectFont?(selected)
         
         dismiss(animated: true)
+    }
+    
+    override func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        return 20
+    }
+
+    override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        return UIView()
     }
 }

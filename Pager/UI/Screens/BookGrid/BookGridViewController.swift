@@ -495,9 +495,13 @@ class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayo
         searchController.searchResultsUpdater = self
         searchController.obscuresBackgroundDuringPresentation = false
         searchController.searchBar.placeholder = "Search..."
-        searchController.searchBar.barTintColor = AppColors.gridViewBGColor
+        //        searchController.searchBar.barTintColor = AppColors.gridViewBGColor
+        searchController.searchBar.searchTextField.backgroundColor = AppColors.gridViewSecondaryColor
+        searchController.searchBar.backgroundImage = UIImage()
+        searchController.searchBar.backgroundColor = .clear
+        searchController.searchBar.barTintColor = .clear
         navigationItem.searchController = searchController
-        navigationItem.hidesSearchBarWhenScrolling = false
+        navigationItem.hidesSearchBarWhenScrolling = true
         definesPresentationContext = true
     }
     
@@ -689,7 +693,11 @@ class BookGridViewController: UIViewController, UICollectionViewDelegateFlowLayo
                                            image: UIImage(systemName: "folder.badge.plus")) { [weak self] _ in
             guard let self = self else { return }
             let addToCollectionVC = AddToCollectionViewController(book: book)
-            
+            addToCollectionVC.onDismiss = { [weak self] in
+                if let self = self {
+                    self.refreshData()
+                }
+            }
             let nav = UINavigationController(rootViewController: addToCollectionVC)
             
             if let sheet = nav.sheetPresentationController {
