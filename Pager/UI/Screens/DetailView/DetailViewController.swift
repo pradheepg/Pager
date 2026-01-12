@@ -195,7 +195,6 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         reviewCollectionView.translatesAutoresizingMaskIntoConstraints = false
         reviewCollectionView.dataSource = self
         reviewCollectionView.delegate = self
-        reviewCollectionView.isPagingEnabled = true
         reviewCollectionView.register(ReviewCell.self, forCellWithReuseIdentifier: "ReviewCell")
         //        reviewCollectionView.register(DemoCell.self, forCellWithReuseIdentifier: "DemoCell")
         
@@ -288,7 +287,9 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         
         descriptionView.addSubview(readMoreButton)
         readMoreButton.addTarget(self, action: #selector(toggleDescription), for: .allTouchEvents)
-
+        if descriptionContentLable.text?.isEmpty ?? false {
+            descriptionContentLable.text = "Description not available! "
+        }
         if (descriptionContentLable.text?.count ?? 0) < 150 {
             readMoreButton.isHidden = true
             descriptionContentLable.numberOfLines = 0

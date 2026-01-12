@@ -31,7 +31,7 @@ class ChangePasswordViewController: UIViewController, UITableViewDataSource, UIT
         table.backgroundColor = .systemGroupedBackground
         return table
     }()
-    
+    var onSuccessDismiss: (() -> Void)?
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -198,9 +198,9 @@ class ChangePasswordViewController: UIViewController, UITableViewDataSource, UIT
         }
 
         viewModel.changePassword(currentInput, newInput)
-        showToast(title: "Success", message: "Password Changed!") {
+        
             self.navigationController?.popViewController(animated: true)
-        }
+        onSuccessDismiss?()
     }
     
     private func showAlert(title: String, message: String) {

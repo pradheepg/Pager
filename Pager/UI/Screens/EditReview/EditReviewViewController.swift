@@ -9,7 +9,10 @@ import UIKit
 
 class EditReviewViewController: UIViewController, UITextFieldDelegate, UITextViewDelegate {
     
-
+    private var initialRating: Int = 0
+    private var initialTitle: String = ""
+    private var initialBody: String = ""
+    
     private let placeholderText = "Enter what's on your mind..."
     
     var onToastDismiss: ((_ message: String) -> Void)?
@@ -127,7 +130,32 @@ class EditReviewViewController: UIViewController, UITextFieldDelegate, UITextVie
         setupNavBar()
         setupKeyboardObservers()
         populateExistingData()
+        captureInitialState()
     }
+    
+    private func captureInitialState() {
+        initialRating = viewModel.currentRating
+        initialTitle = titleTextField.text ?? ""
+        
+        if bodyTextView.textColor == .placeholderText {
+            initialBody = ""
+        } else {
+            initialBody = bodyTextView.text
+        }
+    }
+    private var hasUnsavedChanges: Bool {
+            let currentRating = viewModel.currentRating
+            let currentTitle = titleTextField.text ?? ""
+            
+            var currentBody = bodyTextView.text ?? ""
+            if bodyTextView.textColor == .placeholderText || currentBody == placeholderText {
+                currentBody = ""
+            }
+            
+            return currentRating != initialRating ||
+                   currentTitle != initialTitle ||
+                   currentBody != initialBody
+        }
     
     deinit {
         NotificationCenter.default.removeObserver(self)
@@ -210,16 +238,57 @@ class EditReviewViewController: UIViewController, UITextFieldDelegate, UITextVie
     
     private func setupNavBar() {
         let editBarButton = UIBarButtonItem(image: UIImage(systemName: "checkmark"),
-                                          style: .done,
-                                          target: self,
-                                          action: #selector(saveButtonTapped))
+                                            style: .done,
+                                            target: self,
+                                            action: #selector(saveButtonTapped))
         editBarButton.tintColor = AppColors.background
         navigationItem.rightBarButtonItem = editBarButton
+        
+        let backButton = UIBarButtonItem(image: UIImage(systemName: "chevron.left"),
+                                                 style: .plain,
+                                                 target: self,
+                                                 action: #selector(didTapBackButton))
+        backButton.tintColor = .label
+                navigationItem.leftBarButtonItem = backButton
+                
+                navigationController?.interactivePopGestureRecognizer?.delegate = nil
         
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboards))
         tapGesture.cancelsTouchesInView = false
         view.addGestureRecognizer(tapGesture)
     }
+    
+    @objc func didTapBackButton() {
+            if hasUnsavedChanges {
+                showDiscardAlert()
+            } else {
+                navigationController?.popViewController(animated: true)
+            }
+        }
+
+        private func showDiscardAlert() {
+            let alert = UIAlertController(
+                title: "Unsaved Changes",
+                message: "You have unsaved changes. Are you sure you want to discard them?",
+                preferredStyle: .actionSheet
+            )
+            
+            let discardAction = UIAlertAction(title: "Discard Changes", style: .destructive) { [weak self] _ in
+                self?.navigationController?.popViewController(animated: true)
+            }
+            
+            let keepEditingAction = UIAlertAction(title: "Keep Editing", style: .cancel)
+            
+            alert.addAction(discardAction)
+            alert.addAction(keepEditingAction)
+            
+            if let popover = alert.popoverPresentationController {
+                popover.barButtonItem = navigationItem.leftBarButtonItem
+            }
+            
+            present(alert, animated: true)
+            Haptics.shared.notify(.warning)
+        }
     
     private func populateExistingData() {
         bodyTextView.text = placeholderText
@@ -275,8 +344,8 @@ class EditReviewViewController: UIViewController, UITextFieldDelegate, UITextVie
             }
             if titleText.count > ContentLimits.reviewMaxTitleLength {
                 showAlert(title: "Title too long", message: "Please keep the title under \(ContentLimits.reviewMaxTitleLength) characters. You are currently at \(titleText.count).")
-                        return
-                    }
+                return
+            }
             if bodyText.count < ContentLimits.reviewMinBodyLength {
                 showAlert(title: "Review too short", message: "Please write at least \(ContentLimits.reviewMinBodyLength) characters so others understand your opinion.")
                 return
@@ -297,10 +366,10 @@ class EditReviewViewController: UIViewController, UITextFieldDelegate, UITextVie
         switch result {
         case .success():
             Haptics.shared.notify(.success)
-//            Toast.show(message: "Review saved", in: self.view)
+            //            Toast.show(message: "Review saved", in: self.view)
             navigationController?.popViewController(animated: true)
             onToastDismiss?("Review saved")
-
+            
         case .failure(let error):
             showAlert(title: "Error", message: error.localizedDescription)
         }
@@ -325,7 +394,7 @@ class EditReviewViewController: UIViewController, UITextFieldDelegate, UITextVie
             self.navigationController?.popViewController(animated: true)
             Haptics.shared.notify(.success)
             onToastDismiss?("Review deleted")
-//            Toast.show(message: "Review deleted", in: view)
+            //            Toast.show(message: "Review deleted", in: view)
         case .failure(let error):
             self.navigationController?.popViewController(animated: true)
             Haptics.shared.notify(.error)
@@ -386,12 +455,12 @@ class EditReviewViewController: UIViewController, UITextFieldDelegate, UITextVie
     func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
         
         guard textView == bodyTextView else { return true }
-
+        
         let currentText = textView.text ?? ""
         guard let stringRange = Range(range, in: currentText) else { return false }
-
+        
         let updatedText = currentText.replacingCharacters(in: stringRange, with: text)
-
+        
         return updatedText.count <= ContentLimits.reviewMaxBodyLength
     }
     
@@ -402,7 +471,7 @@ class EditReviewViewController: UIViewController, UITextFieldDelegate, UITextVie
         }
         return true
     }
-
+    
 }
 
 extension EditReviewViewController {
@@ -421,13 +490,4 @@ extension EditReviewViewController {
         }
     }
     
-//    func textViewDidChange(_ textView: UITextView) {
-//        // Because Scrolling is disabled, the Intrinsic Content Size updates automatically
-//        // We just need to tell the View to layout again if inside a stack
-//        /*
-//         Note: In modern UIStackViews with isScrollEnabled = false on the TextView,
-//         resize happens automatically. If you notice jumpiness, you can uncomment the line below:
-//         */
-//        // UIView.animate(withDuration: 0.1) { self.view.layoutIfNeeded() }
-//    }
 }

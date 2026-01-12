@@ -14,7 +14,7 @@ class NewReleaseHeroView: UIView {
     private let containerView: UIView = {
         let view = UIView()
         view.backgroundColor = UIColor(red: 0.1, green: 0.1, blue: 0.15, alpha: 1.0)
-        view.layer.cornerRadius = 24
+        view.layer.cornerRadius = 14
         view.layer.cornerCurve = .continuous
         view.clipsToBounds = true
         return view

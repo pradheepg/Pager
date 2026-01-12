@@ -342,7 +342,7 @@ class ThemeSettingViewController: UIViewController {
                 button.layer.borderColor = AppColors.systemBlue.cgColor
             } else {
                 button.layer.borderWidth = 1
-                button.layer.borderColor = UIColor.systemGray4.cgColor
+                button.layer.borderColor = UIColor.lightGray.cgColor
             }
         }
     }

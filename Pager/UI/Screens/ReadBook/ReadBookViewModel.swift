@@ -73,6 +73,9 @@ class ReadBookViewModel {
             let index = defaults.integer(forKey: fontKey)
             font = FontEnum.from(index: index)
         }
+    }
+    
+    func changeSystemTheme() {
         if theme.index == 4 || theme.index == 3 {
             setTheme(style: .dark)
         } else {

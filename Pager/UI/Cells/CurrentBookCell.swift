@@ -138,7 +138,6 @@ class CurrentBookCell: UICollectionViewCell {
             UIMenu(options: .displayInline, children: [removeAction])
         ])
         
-        // 4. Attach to the button
         moreButton.menu = menu
         moreButton.showsMenuAsPrimaryAction = true
     }
