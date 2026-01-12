@@ -134,7 +134,7 @@ struct ImportReview: Decodable {
 }
 
 struct CommunityRawData {
-    static let indianNames = [
+    static let names = [
         "Aarav Patel", "Vihaan Gupta", "Aditya Kumar", "Sai Reddy", "Arjun Nair",
         "Reyansh Sharma", "Ishaan Verma", "Krishna Iyer", "Rohan Mehta", "Vivaan Malhotra",
         "Ananya Joshi", "Diya Shah", "Saanvi Chopra", "Aadhya Desai", "Kiara Singh",
@@ -180,7 +180,7 @@ extension DataLoader {
             
             var createdUsers: [User] = []
             
-            for name in CommunityRawData.indianNames {
+            for name in CommunityRawData.names {
                 let newUser = User(context: context)
                 newUser.userId = UUID()
                 newUser.profileName = name

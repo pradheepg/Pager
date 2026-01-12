@@ -16,6 +16,7 @@ class ReaderPresentationViewModel {
     var appearance = ReaderAppearance()
     var currentPageIndex: Int = 0
     var totalPages: Int { return pageRanges.count }
+    var percentage: Double? = nil
     
     var onReloadNeeded: (() -> Void)?
     var onLoading: ((Bool) -> Void)?
@@ -36,63 +37,70 @@ class ReaderPresentationViewModel {
         repaginate(textAreaSize: textAreaSize)
     }
     
-//    private func repaginate(textAreaSize: CGSize) {
-//        let currentStartChar = pageRanges.isEmpty ? 0 : pageRanges[currentPageIndex].location
-//        
-//        onLoading?(true)
-//
-//        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-//            guard let self = self else { return }
-//            
-//            let newPaginator = OptimizedPaginator(bookText: self.bookContent, appearance: self.appearance)
-//            let newRanges = newPaginator.computePageRanges(textAreaSize: textAreaSize)
-//            
-//            let newIndex = newPaginator.getPageIndex(forCharacterIndex: currentStartChar, in: newRanges)
-//            
-//            DispatchQueue.main.async {
-//                self.paginator = newPaginator
-//                self.pageRanges = newRanges
-//                self.currentPageIndex = newIndex
-//                self.onLoading?(false)
-//                self.onReloadNeeded?()
-//            }
-//        }
-//    }
+    //    private func repaginate(textAreaSize: CGSize) {
+    //        let currentStartChar = pageRanges.isEmpty ? 0 : pageRanges[currentPageIndex].location
+    //
+    //        onLoading?(true)
+    //
+    //        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+    //            guard let self = self else { return }
+    //
+    //            let newPaginator = OptimizedPaginator(bookText: self.bookContent, appearance: self.appearance)
+    //            let newRanges = newPaginator.computePageRanges(textAreaSize: textAreaSize)
+    //
+    //            let newIndex = newPaginator.getPageIndex(forCharacterIndex: currentStartChar, in: newRanges)
+    //
+    //            DispatchQueue.main.async {
+    //                self.paginator = newPaginator
+    //                self.pageRanges = newRanges
+    //                self.currentPageIndex = newIndex
+    //                self.onLoading?(false)
+    //                self.onReloadNeeded?()
+    //            }
+    //        }
+    //    }
     
     private func repaginate(textAreaSize: CGSize) {
-            onLoading?(true)
+        onLoading?(true)
+        
+        var currentStartChar: Int = 0
+
+        
+        if !isFirstLoad && !pageRanges.isEmpty && currentPageIndex < pageRanges.count {
+            currentStartChar = pageRanges[currentPageIndex].location
+        }
+        
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
             
-            var currentStartChar: Int = 0
+            let newPaginator = OptimizedPaginator(bookText: self.bookContent, appearance: self.appearance)
+            let newRanges = newPaginator.computePageRanges(textAreaSize: textAreaSize)
             
-            if !isFirstLoad && !pageRanges.isEmpty && currentPageIndex < pageRanges.count {
-                currentStartChar = pageRanges[currentPageIndex].location
-            }
-            
-            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-                guard let self = self else { return }
-                
-                let newPaginator = OptimizedPaginator(bookText: self.bookContent, appearance: self.appearance)
-                let newRanges = newPaginator.computePageRanges(textAreaSize: textAreaSize)
-                
-                DispatchQueue.main.async {
-                    self.paginator = newPaginator
-                    self.pageRanges = newRanges
-                    
-                    if self.isFirstLoad {
-                        if self.currentPageIndex >= newRanges.count {
-                            self.currentPageIndex = max(0, newRanges.count - 1)
-                        }
-                        self.isFirstLoad = false
-                    } else {
-                        let newIndex = newPaginator.getPageIndex(forCharacterIndex: currentStartChar, in: newRanges)
-                        self.currentPageIndex = newIndex
-                    }
-                    
-                    self.onLoading?(false)
-                    self.onReloadNeeded?()
+            DispatchQueue.main.async {
+                self.paginator = newPaginator
+                self.pageRanges = newRanges
+                if let percentage = self.percentage, self.isFirstLoad {
+                    let totalChars = Double(self.bookContent.count)
+                    let targetCharIndex = Int(totalChars * (percentage / 100.0)) - 1
+                    let newIndex = newPaginator.getPageIndex(forCharacterIndex: targetCharIndex, in: self.pageRanges)
+                    self.currentPageIndex = max(0, min(newIndex, self.pageRanges.count - 1))
                 }
+                if self.isFirstLoad {
+                    if self.currentPageIndex >= newRanges.count {
+                        self.currentPageIndex = max(0, newRanges.count - 1)
+                    } else if self.currentPageIndex < 0 {
+                        self.currentPageIndex = 0
+                    }
+                    self.isFirstLoad = false
+                } else {
+                    let newIndex = newPaginator.getPageIndex(forCharacterIndex: currentStartChar, in: newRanges)
+                    self.currentPageIndex = newIndex
+                }
+                self.onLoading?(false)
+                self.onReloadNeeded?()
             }
         }
+    }
     
     func getPageContent(at index: Int) -> NSAttributedString? {
         guard index >= 0 && index < pageRanges.count else { return nil }

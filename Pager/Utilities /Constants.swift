@@ -279,19 +279,20 @@ enum CategoryEnum: String, CaseIterable {
 
 extension UIViewController {
     
-    func showToast(title: String? = nil, message: String, duration: TimeInterval = 1.2, completion: (() -> Void)? = nil) {
-        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        
-        self.present(alert, animated: true)
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
-            alert.dismiss(animated: true) {
-                completion?()
-            }
-//            completion?()
-
-        }
-    }
+//
+//    func showToast(title: String? = nil, message: String, duration: TimeInterval = 1.2, completion: (() -> Void)? = nil) {
+//        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+//        
+//        self.present(alert, animated: true)
+//        
+//        DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
+//            alert.dismiss(animated: true) {
+//                completion?()
+//            }
+////            completion?()
+//
+//        }
+//    }
     
     var isModal: Bool {
             if let nav = navigationController {
@@ -324,7 +325,7 @@ enum ContentLimits {
     static let passwordMinLength = 6
 //    static let passwordMaxLength = 
     
-    static let collectiomMinNameLength = 5
+    static let collectiomMinNameLength = 5//not needed for current version
     static let collectionMaxNameLength = 70
     
     

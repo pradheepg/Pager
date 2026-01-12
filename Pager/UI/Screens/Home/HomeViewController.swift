@@ -591,7 +591,12 @@ extension HomeViewController: UICollectionViewDataSource, UITextFieldDelegate {
                                            image: UIImage(systemName: "folder.badge.plus")) { [weak self] _ in
             guard let self = self else { return }
             let addToCollectionVC = AddToCollectionViewController(book: book)
-            
+            addToCollectionVC.onDismiss = { [weak self] in
+                if let self = self {
+                    
+                    self.viewModel.updateData()
+                }
+            }
             let nav = UINavigationController(rootViewController: addToCollectionVC)
             
             if let sheet = nav.sheetPresentationController {

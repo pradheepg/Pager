@@ -362,6 +362,11 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
                 book = viewModel.books[indexPath.item]
             }
             let vc = DetailViewController(book: book)
+            vc.onDismiss = { [weak self] in
+                if let self = self {
+                    self.updateSearchResults(for: self.searchController)
+                }
+            }
             let nav = UINavigationController(rootViewController: vc)
             nav.modalPresentationStyle = .fullScreen
             present(nav, animated: true)
@@ -390,7 +395,8 @@ class SearchViewController: UIViewController, UISearchResultsUpdating, UISearchC
             
             let isCollapsed = collapsedSections.contains(indexPath.section)
             let title = indexPath.section == 0 ? "My Books" : "Book Store"
-            header.configure(title: title, isCollapsed: isCollapsed)
+            let count = indexPath.section == 0 ? viewModel.myBooks.count : viewModel.books.count
+            header.configure(title: title, count: count, isCollapsed: isCollapsed)
             header.onToggle = { [weak self] in
                 guard let self = self else { return }
                 
@@ -717,11 +723,31 @@ class CollapsibleCollectionHeader: UICollectionReusableView {
         onToggle?()
     }
     
-    func configure(title: String, isCollapsed: Bool) {
-        titleLabel.text = title
+//    func configure(title: String,count: Int, isCollapsed: Bool) {
+//        titleLabel.text = "\(title) (\(count))"
+//        
+//        let angle: CGFloat = isCollapsed ? .pi : 0
+//        
+//        UIView.animate(withDuration: 0.3) {
+//            self.arrowImageView.transform = CGAffineTransform(rotationAngle: angle)
+//        }
+//    }
+    
+    func configure(title: String, count: Int, isCollapsed: Bool) {
+        let fullText = "\(title) (\(count))"
+        let attributedString = NSMutableAttributedString(string: fullText)
+        
+        if let countRange = fullText.range(of: "(\(count))") {
+            let nsRange = NSRange(countRange, in: fullText)
+            attributedString.addAttributes([
+                .foregroundColor: UIColor.secondaryLabel,
+                .font: UIFont.systemFont(ofSize: 16, weight: .regular)
+            ], range: nsRange)
+        }
+        
+        titleLabel.attributedText = attributedString
         
         let angle: CGFloat = isCollapsed ? .pi : 0
-        
         UIView.animate(withDuration: 0.3) {
             self.arrowImageView.transform = CGAffineTransform(rotationAngle: angle)
         }
