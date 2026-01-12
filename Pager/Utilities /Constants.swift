@@ -325,7 +325,7 @@ enum ContentLimits {
     static let passwordMinLength = 6
 //    static let passwordMaxLength = 
     
-    static let collectiomMinNameLength = 5
+    static let collectiomMinNameLength = 5//not needed for current version
     static let collectionMaxNameLength = 70
     
     

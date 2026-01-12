@@ -279,7 +279,7 @@ class DetailViewController: UIViewController, UICollectionViewDataSource, UIColl
         descriptionContentLable.text = viewModel.book.descriptionText
         descriptionContentLable.textAlignment = .left
         descriptionContentLable.font = UIFont.systemFont(ofSize: 16)
-        descriptionContentLable.numberOfLines = 4
+        descriptionContentLable.numberOfLines = 2
         descriptionContentLable.translatesAutoresizingMaskIntoConstraints = false
         let tapGestore = UITapGestureRecognizer(target: self, action: #selector(toggleDescription))
         descriptionView.addGestureRecognizer(tapGestore)
